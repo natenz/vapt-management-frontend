@@ -1,0 +1,66 @@
+/*
+ * Base layer.
+ *
+ * Menetapkan default yang dipakai spec: page putih, ink sebagai tinta,
+ * Geist, hairline sebagai warna border default, dan aturan reduced-motion.
+ */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Spec 3: body copy default adalah style `body`. */
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Spec Iconography: outline icons, 24px canvas, 1.5px stroke, round caps
+   * dan joins. lucide-react default-nya 2px, jadi diturunkan di sini supaya
+   * tidak perlu diingat di setiap pemakaian.
+   */
+  svg[data-lucide],
+  .lucide {
+    stroke-width: var(--stroke-icon);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /*
+   * Spec 8: "with prefers-reduced-motion, all transitions become instant
+   * and the chevron flips without rotation."
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    [data-chevron] {
+      transform: none !important;
+    }
+
+    .animate-cli-line-primary,
+    .animate-cli-line-secondary {
+      clip-path: inset(0) !important;
+    }
+
+    .animate-cli-cursor {
+      opacity: 1 !important;
+    }
+  }
+}

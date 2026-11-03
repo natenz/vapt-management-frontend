@@ -1,0 +1,177 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, Bug, FileText } from "lucide-react";
+import { Link, useParams } from "react-router";
+import { changeProjectStatus, getProject, listStatuses } from "@/entities/project/api";
+import { useSession } from "@/entities/session";
+import { PROJECT_STATUSES } from "@/shared/api/schemas";
+import { fmtDate, fmtRange } from "@/shared/lib/format";
+import { Alert } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { PageHeader } from "@/shared/ui/page-header";
+import { ProjectStatusBadge } from "@/shared/ui/project-status-badge";
+import { Gantt, type GanttItem } from "@/shared/ui/gantt";
+import { Progress } from "@/shared/ui/progress";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Stepper } from "@/shared/ui/stepper";
+import { notify } from "@/shared/ui/toast";
+import { ManageAssets, DeleteAssetButton } from "@/pages/project-detail/manage-assets";
+import { AssignMandays } from "@/pages/project-detail/assign-mandays";
+import { FindingsPanel } from "@/pages/project-detail/findings-panel";
+
+// Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
+// tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
+const NEXT: Record<string, { to: string; label: string; roles: string[] }> = {
+  Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
+  Planning: { to: "Pentest", label: "Mulai Pentest", roles: ["project_manager", "super_admin"] },
+  Pentest: { to: "Reporting", label: "Selesai Pentest, mulai Reporting", roles: ["project_manager", "super_admin"] },
+  Reporting: { to: "Remediation", label: "Serahkan laporan untuk Remediasi", roles: ["technical_writer", "project_manager", "super_admin"] },
+  Remediation: { to: "Retest", label: "Minta Retest", roles: ["project_manager", "super_admin"] },
+  Retest: { to: "Done", label: "Tandai Selesai", roles: ["project_manager", "super_admin"] },
+};
+
+export function ProjectDetailPage() {
+  const { projectId } = useParams();
+  const id = Number(projectId);
+  const queryClient = useQueryClient();
+  const sessionUser = useSession((s) => s.user);
+  const role = sessionUser?.role?.role_name ?? "";
+  const project = useQuery({ queryKey: ["project", id], queryFn: () => getProject(id), enabled: Number.isFinite(id) });
+  const statuses = useQuery({ queryKey: ["statuses"], queryFn: listStatuses });
+
+  const advance = useMutation({
+    mutationFn: (statusId: number) => changeProjectStatus(id, statusId),
+    onSuccess: (p) => {
+      void queryClient.invalidateQueries({ queryKey: ["project", id] });
+      void queryClient.invalidateQueries({ queryKey: ["projects"] });
+      notify.success("Status diperbarui", { description: `Sekarang: ${p.status?.status_name ?? "-"}` });
+    },
+  });
+
+  if (project.isLoading) return <Skeleton className="h-96" />;
+  if (project.error || !project.data) {
+    return <Alert tone="error" title="Proyek tidak ditemukan">{project.error?.message ?? "Anda tidak punya akses ke proyek ini."}</Alert>;
+  }
+
+  const p = project.data;
+  const current = p.status?.status_name ?? "Draft";
+  // PM baru melihat proyek setelah Tech Lead menyerahkannya (keluar dari Draft).
+  if (role === "project_manager" && current === "Draft") {
+    return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih Draft di Tech Lead.</Alert>;
+  }
+  const currentIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
+  const next = NEXT[current];
+  const nextStatus = statuses.data?.find((s) => s.status_name === next?.to);
+  // BE: PM hanya boleh mengelola proyek miliknya (pm_id); TL dan Superadmin untuk semua.
+  const ownsAsPm = role !== "project_manager" || p.pm_id === sessionUser?.sys_user_id;
+  const canAdvance = Boolean(next && nextStatus && next.roles.includes(role) && ownsAsPm);
+  // BE: aset hanya bisa diubah saat Draft/Planning oleh PM pemilik (atau admin).
+  const ganttItems: GanttItem[] = p.mandays
+    .filter((m) => m.start_date && m.end_date)
+    .map((m) => ({
+      id: String(m.mandays_id),
+      label: `${m.asset?.asset_name ?? `Aset ${m.asset_id}`} · ${m.pentester?.profile?.full_name ?? m.pentester?.username ?? "-"}`,
+      startsAt: m.start_date as string,
+      endsAt: m.end_date as string,
+      state: m.status === "done" ? "done" : m.status === "in_progress" ? "current" : "todo",
+    }));
+  const canEditAssets = current === "Planning" && ownsAsPm && (role === "project_manager" || role === "super_admin");
+  // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
+  const canAssign = current === "Planning" && role === "project_manager" && ownsAsPm;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title={p.project_name}
+        description={`${p.client_name} · ${fmtRange(p.start_date, p.end_date)} · PM: ${p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}`}
+        action={
+          canAdvance ? (
+            <Button variant="solid" trailingIcon={<ArrowRight />} loading={advance.isPending} onClick={() => nextStatus && advance.mutate(nextStatus.status_process_id)}>
+              {next!.label}
+            </Button>
+          ) : (
+            <ProjectStatusBadge name={current} />
+          )
+        }
+      />
+
+      {advance.error ? <Alert tone="error" title="Status belum bisa diubah">{advance.error.message}</Alert> : null}
+
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-4">
+        {[
+          ["Rentang tanggal", fmtRange(p.start_date, p.end_date)],
+          ["Project Manager", p.pm?.profile?.full_name ?? p.pm?.username ?? "-"],
+          ["Total mandays", `${p.total_mandays} md`],
+          ["Aset / anggota tim", `${p.assets.length} aset · ${p.resources.length} orang`],
+        ].map(([k, v]) => (
+          <div key={k} className="flex flex-col gap-1 bg-surface p-4">
+            <dt className="text-caption text-ink-muted">{k}</dt>
+            <dd className="text-title-sm text-ink tabular">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
+        <Progress value={(currentIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
+        <Stepper steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))} currentIndex={currentIndex} allDone={current === "Done"} />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2" aria-label="Aset dan tim">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
+          <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
+          {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
+            <ul className="flex flex-col divide-y divide-border">
+              {p.assets.map((a) => (
+                <li key={a.assets_id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <span className="flex flex-col">
+                    <span className="text-title-sm text-ink">{a.asset_name}</span>
+                    <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
+                  </span>
+                  <span className="flex items-center gap-2 text-body-sm text-ink-secondary tabular">
+                    {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
+                    {canEditAssets ? <DeleteAssetButton projectId={id} asset={a} /> : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
+          <h2 className="text-title-md text-ink">Tim proyek</h2>
+          {p.resources.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada anggota.</p> : (
+            <ul className="flex flex-col divide-y divide-border">
+              {p.resources.map((r) => (
+                <li key={r.resource_id} className="flex items-center justify-between py-3">
+                  <span className="text-title-sm text-ink">{r.user?.full_name ?? `User ${r.user_id}`}</span>
+                  <span className="text-body-sm text-ink-muted">{r.user?.sys_user?.role?.role_name ?? ""}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {ganttItems.length > 0 ? (
+        <section aria-labelledby="timeline" className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
+          <h2 id="timeline" className="text-title-md text-ink">Timeline pengujian</h2>
+          <Gantt items={ganttItems} initialMonth={ganttItems[0] ? new Date(ganttItems[0].startsAt) : undefined} />
+        </section>
+      ) : null}
+
+      {canEditAssets ? <ManageAssets projectId={id} /> : null}
+
+      {canAssign ? <AssignMandays project={p} /> : null}
+
+      {["Pentest", "Reporting", "Remediation", "Retest", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
+
+      <footer className="flex flex-wrap gap-3">
+        {(role === "pentester" || role === "super_admin") && ["Pentest", "Retest"].includes(current) ? (
+          <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
+        ) : null}
+        {["Reporting", "Remediation", "Retest", "Done"].includes(current) ? (
+          <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
+        ) : null}
+        <span className="self-center text-caption text-ink-muted">Diperbarui {fmtDate(p.end_date)}</span>
+      </footer>
+    </div>
+  );
+}

@@ -1,0 +1,449 @@
+/*
+ * GENERATED FILE - JANGAN DIEDIT TANGAN.
+ *
+ * Sumber : Design.md (Appendix A) -> design/tokens.json
+ *          design/tokens.extension.json   (severity VAPT, derived)
+ *          design/tokens.dark.json        (tema gelap, derived)
+ * Perintah: npm run tokens
+ *
+ * Vermilion v1.
+ * Token bertanda 'derived' tidak ada di Design.md.
+ */
+
+@theme {
+
+  /* Warna - 54 token spec + 56 derived */
+  --color-bg: #ffffff;
+  --color-bg-wash: #fff5f5;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f5f5f6;
+  --color-surface-inverse: #1c1c1e;
+  --color-surface-inverse-raised: #3a3a3d;
+  --color-surface-brand: #d8232a; /* = {red-600} */
+  --color-ink: #0b0b0c;
+  --color-ink-secondary: #5e5e66;
+  --color-ink-muted: #6f6f77;
+  --color-ink-disabled: #a1a1a8;
+  --color-ink-inverse: #ffffff;
+  --color-ink-inverse-muted: #d4d4d8;
+  --color-on-brand: #ffffff;
+  --color-border: #e7e7ea;
+  --color-border-strong: #cfcfd4;
+  --color-border-control: #8a8a93;
+  --color-border-brand: #d8232a; /* = {red-600} */
+  --color-border-brand-soft: #f3b7b7;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fde4e4;
+  --color-red-200: #f8c6c6;
+  --color-red-400: #ec5b57;
+  --color-red-500: #ef1010;
+  --color-red-600: #d8232a;
+  --color-red-700: #b3141f;
+  --color-red-800: #7f1218;
+  --color-red-900: #4a0a0d;
+  --color-red-950: #250304;
+  --color-brand: #d8232a; /* = {red-600} */
+  --color-brand-hover: #b3141f; /* = {red-700} */
+  --color-brand-pressed: #7f1218; /* = {red-800} */
+  --color-brand-tint: #fef2f2; /* = {red-50} */
+  --color-brand-soft: #fde4e4; /* = {red-100} */
+  --color-focus: #b3141f; /* = {red-700} */
+  --color-focus-inverse: #ffffff;
+  --color-success: #116b33;
+  --color-success-bg: #eaf7ef;
+  --color-success-border: #a9d8bb;
+  --color-warning: #9a5b00;
+  --color-warning-bg: #fff6e0;
+  --color-warning-border: #f0d089;
+  --color-error: #b42318;
+  --color-error-bg: #fef0ef;
+  --color-error-border: #f4b6b2;
+  --color-info: #3a4557;
+  --color-info-bg: #f1f3f6;
+  --color-info-border: #c9d0da;
+  --color-viz-1: #d8232a; /* = {red-600} */
+  --color-viz-2: #2b2b2e;
+  --color-viz-3: #8a8a93;
+  --color-viz-4: #ec5b57; /* = {red-400} */
+  --color-viz-5: #f8c6c6; /* = {red-200} */
+  --color-viz-grid: #ededf0;
+  --color-surface-brand-hover: #b3141f; /* = {red-700} */ /* derived */
+  --color-surface-brand-pressed: #7f1218; /* = {red-800} */ /* derived */
+  --color-sev-critical: #7f1218; /* = {red-800} */ /* derived */
+  --color-sev-critical-bg: #7f1218; /* = {red-800} */ /* derived */
+  --color-sev-critical-fg: #ffffff; /* = {ink-inverse} */ /* derived */
+  --color-sev-critical-border: #7f1218; /* = {red-800} */ /* derived */
+  --color-sev-high: #b42318; /* = {error} */ /* derived */
+  --color-sev-high-bg: #fef0ef; /* = {error-bg} */ /* derived */
+  --color-sev-high-fg: #b42318; /* = {error} */ /* derived */
+  --color-sev-high-border: #f4b6b2; /* = {error-border} */ /* derived */
+  --color-sev-medium: #9a5b00; /* = {warning} */ /* derived */
+  --color-sev-medium-bg: #fff6e0; /* = {warning-bg} */ /* derived */
+  --color-sev-medium-fg: #9a5b00; /* = {warning} */ /* derived */
+  --color-sev-medium-border: #f0d089; /* = {warning-border} */ /* derived */
+  --color-sev-low: #3a4557; /* = {info} */ /* derived */
+  --color-sev-low-bg: #f1f3f6; /* = {info-bg} */ /* derived */
+  --color-sev-low-fg: #3a4557; /* = {info} */ /* derived */
+  --color-sev-low-border: #c9d0da; /* = {info-border} */ /* derived */
+  --color-sev-info: #6f6f77; /* = {ink-muted} */ /* derived */
+  --color-sev-info-bg: #f5f5f6; /* = {surface-subtle} */ /* derived */
+  --color-sev-info-fg: #6f6f77; /* = {ink-muted} */ /* derived */
+  --color-sev-info-border: #e7e7ea; /* = {border} */ /* derived */
+  --color-activity-project: #4f6bff; /* derived */
+  --color-activity-project-bg: #eef2ff; /* derived */
+  --color-activity-assessment: #6b5cc5; /* derived */
+  --color-activity-assessment-bg: #f1eefa; /* derived */
+  --color-activity-scope: #b56a00; /* derived */
+  --color-activity-scope-bg: #fff6e0; /* = {warning-bg} */ /* derived */
+  --color-activity-technical: #116b33; /* derived */
+  --color-activity-technical-bg: #eaf7ef; /* = {success-bg} */ /* derived */
+  --color-activity-schedule: #7c5cba; /* derived */
+  --color-activity-schedule-bg: #f3eefa; /* derived */
+  --color-activity-report: #198fa8; /* derived */
+  --color-activity-report-bg: #e8f7fa; /* derived */
+  --color-activity-approval: #d8232a; /* = {red-600} */ /* derived */
+  --color-activity-approval-bg: #fef2f2; /* = {brand-tint} */ /* derived */
+  --color-activity-archive: #6f6f77; /* derived */
+  --color-activity-archive-bg: #f5f5f6; /* = {surface-subtle} */ /* derived */
+  --color-stage-assessment: #2563eb; /* derived */
+  --color-stage-assessment-bg: #eaf1fe; /* derived */
+  --color-stage-analysis: #6d4ed8; /* derived */
+  --color-stage-analysis-bg: #f1edfd; /* derived */
+  --color-stage-initial-report: #0f7f86; /* derived */
+  --color-stage-initial-report-bg: #e5f6f7; /* derived */
+  --color-stage-remedial: #c2530a; /* derived */
+  --color-stage-remedial-bg: #fff0e5; /* derived */
+  --color-stage-final-presentation: #15803d; /* derived */
+  --color-stage-final-presentation-bg: #eaf7ef; /* = {success-bg} */ /* derived */
+  --color-stage-pending: #a16207; /* derived */
+  --color-stage-pending-bg: #fef7dc; /* derived */
+  --color-stage-done: #d8232a; /* = {red-600} */ /* derived */
+  --color-stage-done-bg: #fef2f2; /* = {brand-tint} */ /* derived */
+  --color-inverse-warning: #ffd666; /* derived */
+  --color-inverse-warning-bg: #3a2a08; /* derived */
+  --color-inverse-warning-border: #8a6414; /* derived */
+  --color-inverse-success: #7ee2a3; /* derived */
+
+  /* Spacing - space-N identik dengan skala Tailwind (p-6 = space-6 = 24px) */
+  --spacing: 4px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadow - hanya untuk hover/overlay/focus, tidak pernah saat rest */
+  --shadow-float: 0 2px 12px 0 rgba(20,20,24,0.08);
+  --shadow-raised: 0 8px 24px -4px rgba(20,20,24,0.10);
+  --shadow-overlay: 0 24px 48px -12px rgba(20,20,24,0.24);
+  --shadow-ring: 0 0 0 4px rgba(20,20,24,0.05);
+  /* disusun dari var() agar gap ikut ground tema; lihat build-tokens.mjs */
+  --shadow-focus: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus);
+  --shadow-glow: 0 0 120px 20px rgba(236,91,87,0.30);
+
+  /* Container - max-w-copy / max-w-default / max-w-nav / max-w-wide */
+  --container-copy: 640px;
+  --container-default: 1120px;
+  --container-nav: 1200px;
+  --container-wide: 1280px;
+
+  /* Breakpoint */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  /* Font family */
+  --font-sans: "Geist Variable", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Type - 18 style, tiap utility membawa size + leading + weight + tracking */
+  /* Display */
+  --text-display: 40px;
+  --text-display--line-height: 46px;
+  --text-display--font-weight: 500;
+  --text-display--letter-spacing: -0.02em;
+  --text-heading-1: 36px;
+  --text-heading-1--line-height: 44px;
+  --text-heading-1--font-weight: 500;
+  --text-heading-1--letter-spacing: -0.02em;
+  --text-heading-page: 36px;
+  --text-heading-page--line-height: 44px;
+  --text-heading-page--font-weight: 600;
+  --text-heading-page--letter-spacing: -0.02em;
+  /* Titles */
+  --text-title-lg: 20px;
+  --text-title-lg--line-height: 32px;
+  --text-title-lg--font-weight: 500;
+  --text-title-lg--letter-spacing: 0em;
+  --text-title-md: 18px;
+  --text-title-md--line-height: 28px;
+  --text-title-md--font-weight: 500;
+  --text-title-md--letter-spacing: 0em;
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 24px;
+  --text-title-sm--font-weight: 500;
+  --text-title-sm--letter-spacing: 0em;
+  /* Body */
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+  --text-body-lg--letter-spacing: 0.01em;
+  --text-body: 15px;
+  --text-body--line-height: 24px;
+  --text-body--font-weight: 400;
+  --text-body--letter-spacing: 0.01em;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 24px;
+  --text-body-sm--font-weight: 400;
+  --text-body-sm--letter-spacing: 0.01em;
+  --text-caption: 12px;
+  --text-caption--line-height: 18px;
+  --text-caption--font-weight: 400;
+  --text-caption--letter-spacing: 0.01em;
+  /* UI */
+  --text-eyebrow: 14px;
+  --text-eyebrow--line-height: 20px;
+  --text-eyebrow--font-weight: 400;
+  --text-eyebrow--letter-spacing: 0.02em;
+  --text-overline: 12px;
+  --text-overline--line-height: 16px;
+  --text-overline--font-weight: 400;
+  --text-overline--letter-spacing: 0.12em;
+  --text-button: 14px;
+  --text-button--line-height: 20px;
+  --text-button--font-weight: 500;
+  --text-button--letter-spacing: 0em;
+  --text-nav-link: 14px;
+  --text-nav-link--line-height: 20px;
+  --text-nav-link--font-weight: 400;
+  --text-nav-link--letter-spacing: 0em;
+  --text-badge: 12px;
+  --text-badge--line-height: 16px;
+  --text-badge--font-weight: 500;
+  --text-badge--letter-spacing: 0em;
+  --text-input: 14px;
+  --text-input--line-height: 20px;
+  --text-input--font-weight: 400;
+  --text-input--letter-spacing: 0em;
+  /* Metrics */
+  --text-stat-number: 40px;
+  --text-stat-number--line-height: 48px;
+  --text-stat-number--font-weight: 600;
+  --text-stat-number--letter-spacing: -0.01em;
+  --text-stat-label: 20px;
+  --text-stat-label--line-height: 28px;
+  --text-stat-label--font-weight: 500;
+  --text-stat-label--letter-spacing: 0em;
+}
+
+/* Famili tanpa namespace Tailwind - dipakai lewat var() di @utility dan CSS mentah. */
+:root {
+
+  /* Stroke */
+  --stroke-hairline: 1px;
+  --stroke-strong: 2px;
+  --stroke-icon: 1.5px;
+
+  /* Z-index */
+  --z-base: 0;
+  --z-nav: 50;
+  --z-overlay: 100;
+  --z-modal: 200;
+}
+
+/*
+ * Tema gelap (derived - Design.md hanya mendefinisikan tema terang).
+ *
+ * shadow-focus sengaja TIDAK ditimpa: ia disusun dari var(--color-bg)
+ * dan var(--color-focus), jadi ia mengikuti tema dengan sendirinya.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Warna - 80 token berubah, sisanya mewarisi tema terang */
+  --color-bg: #0e0e10;
+  --color-bg-wash: #1a1214;
+  --color-surface: #17171a;
+  --color-surface-subtle: #202024;
+  --color-surface-inverse: #2a2a2e;
+  --color-surface-inverse-raised: #3f3f44;
+  --color-ink: #f5f5f6;
+  --color-ink-secondary: #b4b4bd;
+  --color-ink-muted: #90909a;
+  --color-ink-disabled: #5e5e66;
+  --color-border: #2a2a2e;
+  --color-border-strong: #3f3f44;
+  --color-border-control: #6e6e78;
+  --color-border-brand: #ec5b57; /* = {red-400} */
+  --color-border-brand-soft: #5a2326;
+  --color-brand: #ec5b57; /* = {red-400} */
+  --color-brand-hover: #f8c6c6; /* = {red-200} */
+  --color-brand-pressed: #ef1010; /* = {red-500} */
+  --color-brand-tint: #2a1416;
+  --color-brand-soft: #3d1a1d;
+  --color-focus: #ec5b57; /* = {red-400} */
+  --color-success: #4ec97f;
+  --color-success-bg: #0e2a1a;
+  --color-success-border: #1f5c38;
+  --color-warning: #e0a33a;
+  --color-warning-bg: #2b1f08;
+  --color-warning-border: #6b4a10;
+  --color-error: #f27166;
+  --color-error-bg: #2b1210;
+  --color-error-border: #6e2a24;
+  --color-info: #a8b4c6;
+  --color-info-bg: #1a1e26;
+  --color-info-border: #3a4557;
+  --color-viz-1: #ec5b57; /* = {red-400} */
+  --color-viz-2: #e4e4e8;
+  --color-viz-4: #f8c6c6; /* = {red-200} */
+  --color-viz-5: #b3141f; /* = {red-700} */
+  --color-viz-grid: #26262a;
+  --color-sev-critical: #b3141f; /* = {red-700} */
+  --color-sev-critical-bg: #b3141f; /* = {red-700} */
+  --color-sev-critical-border: #b3141f; /* = {red-700} */
+  --color-sev-high: #f27166; /* = {error} */
+  --color-sev-high-bg: #2b1210; /* = {error-bg} */
+  --color-sev-high-fg: #f27166; /* = {error} */
+  --color-sev-high-border: #6e2a24; /* = {error-border} */
+  --color-sev-medium: #e0a33a; /* = {warning} */
+  --color-sev-medium-bg: #2b1f08; /* = {warning-bg} */
+  --color-sev-medium-fg: #e0a33a; /* = {warning} */
+  --color-sev-medium-border: #6b4a10; /* = {warning-border} */
+  --color-sev-low: #a8b4c6; /* = {info} */
+  --color-sev-low-bg: #1a1e26; /* = {info-bg} */
+  --color-sev-low-fg: #a8b4c6; /* = {info} */
+  --color-sev-low-border: #3a4557; /* = {info-border} */
+  --color-sev-info: #90909a; /* = {ink-muted} */
+  --color-sev-info-bg: #202024; /* = {surface-subtle} */
+  --color-sev-info-fg: #90909a; /* = {ink-muted} */
+  --color-sev-info-border: #2a2a2e; /* = {border} */
+  --color-activity-project-bg: #151a33;
+  --color-activity-assessment-bg: #1c1830;
+  --color-activity-scope-bg: #2b1f08;
+  --color-activity-technical: #1a8f4a;
+  --color-activity-technical-bg: #0e2a1a;
+  --color-activity-schedule-bg: #1e1830;
+  --color-activity-report-bg: #0c2328;
+  --color-activity-approval-bg: #2a1416;
+  --color-activity-archive-bg: #202024;
+  --color-stage-assessment: #6f9cf5;
+  --color-stage-assessment-bg: #131c33;
+  --color-stage-analysis: #a390f0;
+  --color-stage-analysis-bg: #1c1830;
+  --color-stage-initial-report: #4cc3ca;
+  --color-stage-initial-report-bg: #0c2328;
+  --color-stage-remedial: #f28c45;
+  --color-stage-remedial-bg: #2b1a0c;
+  --color-stage-final-presentation: #4cc77a;
+  --color-stage-final-presentation-bg: #0e2a1a;
+  --color-stage-pending: #e8b43a;
+  --color-stage-pending-bg: #2b2208;
+  --color-stage-done: #f26b70;
+  --color-stage-done-bg: #2a1416;
+
+  /* Shadow - nilai terang memakai rgba(20,20,24,...) yang tak terlihat di ground gelap */
+  --shadow-float: 0 2px 12px 0 rgba(0,0,0,0.40);
+  --shadow-raised: 0 8px 24px -4px rgba(0,0,0,0.50);
+  --shadow-overlay: 0 24px 48px -12px rgba(0,0,0,0.65);
+  --shadow-ring: 0 0 0 4px rgba(255,255,255,0.06);
+}
+
+/* Ikuti preferensi sistem, kecuali user memilih terang secara eksplisit. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    /* Warna - 80 token berubah, sisanya mewarisi tema terang */
+    --color-bg: #0e0e10;
+    --color-bg-wash: #1a1214;
+    --color-surface: #17171a;
+    --color-surface-subtle: #202024;
+    --color-surface-inverse: #2a2a2e;
+    --color-surface-inverse-raised: #3f3f44;
+    --color-ink: #f5f5f6;
+    --color-ink-secondary: #b4b4bd;
+    --color-ink-muted: #90909a;
+    --color-ink-disabled: #5e5e66;
+    --color-border: #2a2a2e;
+    --color-border-strong: #3f3f44;
+    --color-border-control: #6e6e78;
+    --color-border-brand: #ec5b57; /* = {red-400} */
+    --color-border-brand-soft: #5a2326;
+    --color-brand: #ec5b57; /* = {red-400} */
+    --color-brand-hover: #f8c6c6; /* = {red-200} */
+    --color-brand-pressed: #ef1010; /* = {red-500} */
+    --color-brand-tint: #2a1416;
+    --color-brand-soft: #3d1a1d;
+    --color-focus: #ec5b57; /* = {red-400} */
+    --color-success: #4ec97f;
+    --color-success-bg: #0e2a1a;
+    --color-success-border: #1f5c38;
+    --color-warning: #e0a33a;
+    --color-warning-bg: #2b1f08;
+    --color-warning-border: #6b4a10;
+    --color-error: #f27166;
+    --color-error-bg: #2b1210;
+    --color-error-border: #6e2a24;
+    --color-info: #a8b4c6;
+    --color-info-bg: #1a1e26;
+    --color-info-border: #3a4557;
+    --color-viz-1: #ec5b57; /* = {red-400} */
+    --color-viz-2: #e4e4e8;
+    --color-viz-4: #f8c6c6; /* = {red-200} */
+    --color-viz-5: #b3141f; /* = {red-700} */
+    --color-viz-grid: #26262a;
+    --color-sev-critical: #b3141f; /* = {red-700} */
+    --color-sev-critical-bg: #b3141f; /* = {red-700} */
+    --color-sev-critical-border: #b3141f; /* = {red-700} */
+    --color-sev-high: #f27166; /* = {error} */
+    --color-sev-high-bg: #2b1210; /* = {error-bg} */
+    --color-sev-high-fg: #f27166; /* = {error} */
+    --color-sev-high-border: #6e2a24; /* = {error-border} */
+    --color-sev-medium: #e0a33a; /* = {warning} */
+    --color-sev-medium-bg: #2b1f08; /* = {warning-bg} */
+    --color-sev-medium-fg: #e0a33a; /* = {warning} */
+    --color-sev-medium-border: #6b4a10; /* = {warning-border} */
+    --color-sev-low: #a8b4c6; /* = {info} */
+    --color-sev-low-bg: #1a1e26; /* = {info-bg} */
+    --color-sev-low-fg: #a8b4c6; /* = {info} */
+    --color-sev-low-border: #3a4557; /* = {info-border} */
+    --color-sev-info: #90909a; /* = {ink-muted} */
+    --color-sev-info-bg: #202024; /* = {surface-subtle} */
+    --color-sev-info-fg: #90909a; /* = {ink-muted} */
+    --color-sev-info-border: #2a2a2e; /* = {border} */
+    --color-activity-project-bg: #151a33;
+    --color-activity-assessment-bg: #1c1830;
+    --color-activity-scope-bg: #2b1f08;
+    --color-activity-technical: #1a8f4a;
+    --color-activity-technical-bg: #0e2a1a;
+    --color-activity-schedule-bg: #1e1830;
+    --color-activity-report-bg: #0c2328;
+    --color-activity-approval-bg: #2a1416;
+    --color-activity-archive-bg: #202024;
+    --color-stage-assessment: #6f9cf5;
+    --color-stage-assessment-bg: #131c33;
+    --color-stage-analysis: #a390f0;
+    --color-stage-analysis-bg: #1c1830;
+    --color-stage-initial-report: #4cc3ca;
+    --color-stage-initial-report-bg: #0c2328;
+    --color-stage-remedial: #f28c45;
+    --color-stage-remedial-bg: #2b1a0c;
+    --color-stage-final-presentation: #4cc77a;
+    --color-stage-final-presentation-bg: #0e2a1a;
+    --color-stage-pending: #e8b43a;
+    --color-stage-pending-bg: #2b2208;
+    --color-stage-done: #f26b70;
+    --color-stage-done-bg: #2a1416;
+
+    /* Shadow - nilai terang memakai rgba(20,20,24,...) yang tak terlihat di ground gelap */
+    --shadow-float: 0 2px 12px 0 rgba(0,0,0,0.40);
+    --shadow-raised: 0 8px 24px -4px rgba(0,0,0,0.50);
+    --shadow-overlay: 0 24px 48px -12px rgba(0,0,0,0.65);
+    --shadow-ring: 0 0 0 4px rgba(255,255,255,0.06);
+  }
+}

@@ -1,0 +1,15 @@
+/*
+ * Entry stylesheet.
+ *
+ * Urutan penting:
+ *   1. font  2. tailwind  3. token (generated)  4. bridge shadcn
+ *   5. utility  6. base
+ */
+@import "@fontsource-variable/geist";
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@import "./tokens.css";
+@import "./theme.css";
+@import "./utilities.css";
+@import "./base.css";

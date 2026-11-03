@@ -1,0 +1,299 @@
+/*
+ * Utility milik Vermilion.
+ *
+ * Aturan spec yang dipaksakan di sini supaya tidak bisa dilupakan per
+ * komponen: focus ring, angka tabular, dan ukuran stroke ikon.
+ */
+
+/*
+ * Spec 8: "Keyboard focus draws shadow-focus: a 2px white gap and a 2px
+ * focus ring. Never remove it; never rely on color alone (the ring is a
+ * solid shape)."
+ */
+@utility focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+/* Varian netral untuk field autentikasi yang tidak memakai aksen brand saat fokus. */
+@utility focus-ring-neutral {
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-bg),
+      0 0 0 4px var(--color-border-control);
+  }
+}
+
+/* Varian untuk ground gelap (surface-inverse atau red-600 ke bawah). */
+@utility focus-ring-inverse {
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-surface-inverse),
+      0 0 0 4px var(--color-focus-inverse);
+  }
+}
+
+@utility logo-adaptive {
+  [data-theme="dark"] & {
+    filter: brightness(0) invert(1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) & {
+      filter: brightness(0) invert(1);
+    }
+  }
+}
+
+/* Spec 13 + 10: "Use tabular figures when values change" - tabel, metrik, chart. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Spec Iconography: outline, 24px canvas, stroke 1.5px, round caps. */
+@utility icon-stroke {
+  stroke-width: var(--stroke-icon);
+}
+
+/* Scrollbar ringkas untuk panel data padat; tetap terlihat tanpa mendominasi card. */
+@utility scrollbar-minimal {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background-color: var(--color-border-strong);
+    background-clip: content-box;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--color-ink-disabled);
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+/*
+ * Disclosure (accordion, dropdown, dialog).
+ *
+ * Spec 8: "200ms for disclosure (accordion height, menus, modals);
+ * ease-out for entrances, ease-in for exits." Tinggi diambil dari CSS var
+ * yang disediakan Radix.
+ */
+@theme {
+  --animate-accordion-down: accordion-down 200ms ease-out;
+  --animate-accordion-up: accordion-up 200ms ease-in;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+      opacity: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+      opacity: 1;
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+      opacity: 1;
+    }
+    to {
+      height: 0;
+      opacity: 0;
+    }
+  }
+}
+
+/*
+ * Loading dan status.
+ *
+ * Spec 7 > Loading and empty states: "Skeletons are surface-subtle blocks at
+ * the real component shape with radius-sm, no shimmer beyond a slow 1.2s
+ * fade." Jadi fade opacity, bukan shimmer gradient.
+ *
+ * Spec 7 > Status indicators: "No animation on static status; a 1.5s soft
+ * pulse is allowed only on a live-connection dot."
+ */
+@theme {
+  --animate-skeleton: skeleton 1.2s ease-in-out infinite;
+  --animate-live-pulse: live-pulse 1.5s ease-in-out infinite;
+  --animate-emblem-float: emblem-float 7s ease-in-out infinite;
+  --animate-cli-line-primary: cli-type 900ms steps(24, end) 250ms both;
+  --animate-cli-line-secondary: cli-type 1050ms steps(28, end) 1250ms both;
+  --animate-cli-cursor: cli-cursor 800ms steps(1, end) 2300ms infinite;
+  --animate-form-feedback-in: form-feedback-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-control-icon-swap: control-icon-swap 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes skeleton {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  @keyframes live-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes cli-type {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
+
+  @keyframes cli-cursor {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes form-feedback-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+      clip-path: inset(0 0 30% 0);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      clip-path: inset(0);
+    }
+  }
+
+  @keyframes control-icon-swap {
+    from {
+      opacity: 0.35;
+      transform: scale(0.82) rotate(-8deg);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) rotate(0);
+    }
+  }
+}
+
+/*
+ * Gradient recipes — Design.md 2 "Gradients (recipes)".
+ *
+ * "Tokens cannot carry gradients, so these recipes reference tokens."
+ * Dikumpulkan di sini sebagai utility bernama supaya resepnya hidup di satu
+ * tempat, bukan disalin ke tiap komponen.
+ */
+
+/* Tile metrik dan feature. */
+@utility gradient-charcoal-tile {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-surface-inverse),
+    var(--color-surface-inverse-raised)
+  );
+}
+
+/* Satu tile metrik yang disorot. Spec: maksimal satu per grid. */
+@utility gradient-brand-tile {
+  background-image: linear-gradient(135deg, var(--color-red-600), var(--color-red-800));
+}
+
+@utility gradient-brand-deep-tile {
+  background-image: linear-gradient(135deg, var(--color-red-800), var(--color-red-950));
+}
+
+/* Di belakang hero: pink naik dari bawah lalu pudar ke putih. */
+@utility gradient-hero-wash {
+  background-image: radial-gradient(60% 50% at 50% 100%, var(--color-bg-wash), var(--color-bg));
+}
+
+/* Banner judul halaman sekunder, dengan heading-page putih di atasnya. */
+@utility gradient-page-banner {
+  background-image: linear-gradient(
+    120deg,
+    var(--color-red-950) 0%,
+    var(--color-red-800) 45%,
+    var(--color-red-500) 100%
+  );
+}
+
+/*
+ * Panel brand halaman autentikasi: banner merah dengan kilau terang di pojok
+ * kanan atas, ditimpa grid titik halus. Titiknya on-brand transparan supaya
+ * tetap dekorasi, bukan konten.
+ */
+@utility gradient-auth-panel {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.14) 1px, transparent 0),
+    radial-gradient(70% 55% at 100% 0%, var(--color-red-500), transparent 70%),
+    linear-gradient(
+      160deg,
+      var(--color-red-800) 0%,
+      var(--color-red-900) 55%,
+      var(--color-red-950) 100%
+    );
+  background-size:
+    14px 14px,
+    100% 100%,
+    100% 100%;
+}
+
+/* Wajib dipasang di bawah teks yang duduk di atas foto. */
+@utility gradient-photo-scrim {
+  background-image: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0) 60%);
+}
+
+/* Penanda lane workflow milik role aktif; sengaja netral agar bukan status baru. */
+@utility gradient-role-lane {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-surface-subtle) 88%, transparent),
+    color-mix(in srgb, var(--color-surface-subtle) 52%, transparent) 58%,
+    transparent
+  );
+}
+
+/*
+ * Emphasis pada frasa penutup headline.
+ * Spec 3 + SectionHeader: "Gradient text is 24px or larger only", dan tidak
+ * boleh dipakai bersamaan dengan underline brand.
+ */
+@utility text-emphasis-gradient {
+  background-image: linear-gradient(90deg, var(--color-ink), var(--color-red-400));
+  background-clip: text;
+  color: transparent;
+}

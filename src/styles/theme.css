@@ -1,0 +1,73 @@
+/*
+ * Bridge shadcn/ui -> Vermilion.
+ *
+ * shadcn punya layer semantiknya sendiri (--primary, --muted, --ring, ...).
+ * Aturan di proyek ini: token Vermilion adalah lapisan dasar, var shadcn
+ * hanya alias yang menunjuk ke sana. Tidak boleh ada nilai literal di file
+ * ini - semuanya var(--color-*) dari tokens.css.
+ *
+ * Tidak ada blok .dark: Vermilion hanya punya tema 'light'. Ground gelap
+ * datang dari token surface-inverse, bukan dari tema kedua.
+ */
+
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-ink);
+
+  /* Card = putih yang SAMA dengan page; dipisah hairline, bukan tone (spec 2). */
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+
+  --primary: var(--color-brand);
+  --primary-foreground: var(--color-on-brand);
+
+  --secondary: var(--color-surface-subtle);
+  --secondary-foreground: var(--color-ink);
+
+  --muted: var(--color-surface-subtle);
+  --muted-foreground: var(--color-ink-muted);
+
+  /* Spec melarang teks muted di atas red-100; teks accent harus red-700. */
+  --accent: var(--color-brand-soft);
+  --accent-foreground: var(--color-red-700);
+
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-on-brand);
+
+  /* Hairline untuk grouping ... */
+  --border: var(--color-border);
+  /* ... tapi kontrol form wajib border 3:1 agar bisa ditemukan tanpa warna. */
+  --input: var(--color-border-control);
+  --ring: var(--color-focus);
+
+  --chart-1: var(--color-viz-1);
+  --chart-2: var(--color-viz-2);
+  --chart-3: var(--color-viz-3);
+  --chart-4: var(--color-viz-4);
+  --chart-5: var(--color-viz-5);
+
+  /* Radius default shadcn diganti skala Vermilion (Button & Input = radius-sm). */
+  --radius: var(--radius-sm);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+}

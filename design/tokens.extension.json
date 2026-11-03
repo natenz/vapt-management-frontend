@@ -1,0 +1,294 @@
+{
+  "name": "Vermilion VAPT extension",
+  "version": 1,
+  "evidence": "derived",
+  "basedOn": {
+    "name": "Vermilion",
+    "version": 1
+  },
+  "note": "Token yang tidak ada di Design.md tapi dibutuhkan dashboard VAPT. Mengikuti konvensi evidence tag milik spec: semuanya (derived). Nilai ditulis sebagai alias {token} ke token spec sedapat mungkin, supaya perubahan di Design.md otomatis turun ke sini.",
+  "color": {
+    "tokens": [
+      {
+        "name": "surface-brand-hover",
+        "value": "{red-700}",
+        "usage": "Isian brand saat hover (tombol Solid). Terpisah dari brand-hover karena brand-hover adalah warna TINTA: di tema gelap tinta harus lebih terang, sedangkan isian harus tetap gelap agar teks putih di atasnya tetap terbaca."
+      },
+      {
+        "name": "surface-brand-pressed",
+        "value": "{red-800}",
+        "usage": "Isian brand saat pressed. Alasan pemisahannya sama dengan surface-brand-hover."
+      },
+      {
+        "name": "sev-critical",
+        "value": "{red-800}",
+        "usage": "Identitas severity Critical: warna seri chart dan ground badge. Satu-satunya badge solid di sistem - meminjam pola 'emphasis by fill' StatTile. Sengaja BUKAN brand (red-600), karena spec mengunci brand untuk action dan wayfinding."
+      },
+      {
+        "name": "sev-critical-bg",
+        "value": "{red-800}",
+        "usage": "Ground badge Critical (solid)."
+      },
+      {
+        "name": "sev-critical-fg",
+        "value": "{ink-inverse}",
+        "usage": "Teks dan ikon Critical di atas ground solid."
+      },
+      {
+        "name": "sev-critical-border",
+        "value": "{red-800}",
+        "usage": "Border Critical, sewarna ground."
+      },
+      {
+        "name": "sev-high",
+        "value": "{error}",
+        "usage": "Identitas severity High."
+      },
+      {
+        "name": "sev-high-bg",
+        "value": "{error-bg}",
+        "usage": "Ground badge High (tinted)."
+      },
+      {
+        "name": "sev-high-fg",
+        "value": "{error}",
+        "usage": "Teks dan ikon High."
+      },
+      {
+        "name": "sev-high-border",
+        "value": "{error-border}",
+        "usage": "Border badge High."
+      },
+      {
+        "name": "sev-medium",
+        "value": "{warning}",
+        "usage": "Identitas severity Medium."
+      },
+      {
+        "name": "sev-medium-bg",
+        "value": "{warning-bg}",
+        "usage": "Ground badge Medium (tinted)."
+      },
+      {
+        "name": "sev-medium-fg",
+        "value": "{warning}",
+        "usage": "Teks dan ikon Medium."
+      },
+      {
+        "name": "sev-medium-border",
+        "value": "{warning-border}",
+        "usage": "Border badge Medium."
+      },
+      {
+        "name": "sev-low",
+        "value": "{info}",
+        "usage": "Identitas severity Low. Slate netral, bukan hue baru (spec: 'Info uses neutral slate, not a new hue')."
+      },
+      {
+        "name": "sev-low-bg",
+        "value": "{info-bg}",
+        "usage": "Ground badge Low (tinted)."
+      },
+      {
+        "name": "sev-low-fg",
+        "value": "{info}",
+        "usage": "Teks dan ikon Low."
+      },
+      {
+        "name": "sev-low-border",
+        "value": "{info-border}",
+        "usage": "Border badge Low."
+      },
+      {
+        "name": "sev-info",
+        "value": "{ink-muted}",
+        "usage": "Identitas severity Informational: paling ringan, murni netral."
+      },
+      {
+        "name": "sev-info-bg",
+        "value": "{surface-subtle}",
+        "usage": "Ground badge Informational."
+      },
+      {
+        "name": "sev-info-fg",
+        "value": "{ink-muted}",
+        "usage": "Teks dan ikon Informational."
+      },
+      {
+        "name": "sev-info-border",
+        "value": "{border}",
+        "usage": "Border badge Informational."
+      },
+      {
+        "name": "activity-project",
+        "value": "#4f6bff",
+        "usage": "Isian penanda aktivitas Proyek (proyek dibuat/diubah). Ikon putih di atasnya 4.3:1. Isian tidak ikut tema, sama seperti surface-brand."
+      },
+      {
+        "name": "activity-project-bg",
+        "value": "#eef2ff",
+        "usage": "Ground varian soft penanda Proyek."
+      },
+      {
+        "name": "activity-assessment",
+        "value": "#6b5cc5",
+        "usage": "Isian penanda aktivitas Asesmen."
+      },
+      {
+        "name": "activity-assessment-bg",
+        "value": "#f1eefa",
+        "usage": "Ground varian soft penanda Asesmen."
+      },
+      {
+        "name": "activity-scope",
+        "value": "#b56a00",
+        "usage": "Isian penanda aktivitas Ruang lingkup."
+      },
+      {
+        "name": "activity-scope-bg",
+        "value": "{warning-bg}",
+        "usage": "Ground varian soft penanda Ruang lingkup."
+      },
+      {
+        "name": "activity-technical",
+        "value": "#116b33",
+        "usage": "Isian penanda aktivitas Teknis. Nilainya sama dengan success terang, tapi sengaja literal: success naik terang di tema gelap dan ikon putih akan gagal kontras."
+      },
+      {
+        "name": "activity-technical-bg",
+        "value": "{success-bg}",
+        "usage": "Ground varian soft penanda Teknis."
+      },
+      {
+        "name": "activity-schedule",
+        "value": "#7c5cba",
+        "usage": "Isian penanda aktivitas Jadwal. Catatan: hampir sewarna dengan activity-assessment (1.03:1) - bedakan lewat ikon."
+      },
+      {
+        "name": "activity-schedule-bg",
+        "value": "#f3eefa",
+        "usage": "Ground varian soft penanda Jadwal."
+      },
+      {
+        "name": "activity-report",
+        "value": "#198fa8",
+        "usage": "Isian penanda aktivitas Laporan."
+      },
+      {
+        "name": "activity-report-bg",
+        "value": "#e8f7fa",
+        "usage": "Ground varian soft penanda Laporan."
+      },
+      {
+        "name": "activity-approval",
+        "value": "{red-600}",
+        "usage": "Isian penanda aktivitas Persetujuan."
+      },
+      {
+        "name": "activity-approval-bg",
+        "value": "{brand-tint}",
+        "usage": "Ground varian soft penanda Persetujuan."
+      },
+      {
+        "name": "activity-archive",
+        "value": "#6f6f77",
+        "usage": "Isian penanda aktivitas Arsip. Literal, bukan {ink-muted}, karena ink-muted naik terang di tema gelap."
+      },
+      {
+        "name": "activity-archive-bg",
+        "value": "{surface-subtle}",
+        "usage": "Ground varian soft penanda Arsip."
+      },
+      {
+        "name": "stage-assessment",
+        "value": "#2563eb",
+        "usage": "Ikon dan aksen tahap Assessment (FileSearch)."
+      },
+      {
+        "name": "stage-assessment-bg",
+        "value": "#eaf1fe",
+        "usage": "Ground ikon dan kartu tahap Assessment."
+      },
+      {
+        "name": "stage-analysis",
+        "value": "#6d4ed8",
+        "usage": "Ikon dan aksen tahap Analysis (BarChart3)."
+      },
+      {
+        "name": "stage-analysis-bg",
+        "value": "#f1edfd",
+        "usage": "Ground ikon dan kartu tahap Analysis."
+      },
+      {
+        "name": "stage-initial-report",
+        "value": "#0f7f86",
+        "usage": "Ikon dan aksen tahap Initial Report (FileText)."
+      },
+      {
+        "name": "stage-initial-report-bg",
+        "value": "#e5f6f7",
+        "usage": "Ground ikon dan kartu tahap Initial Report."
+      },
+      {
+        "name": "stage-remedial",
+        "value": "#c2530a",
+        "usage": "Ikon dan aksen tahap Remedial (Wrench)."
+      },
+      {
+        "name": "stage-remedial-bg",
+        "value": "#fff0e5",
+        "usage": "Ground ikon dan kartu tahap Remedial."
+      },
+      {
+        "name": "stage-final-presentation",
+        "value": "#15803d",
+        "usage": "Ikon dan aksen tahap Final Presentation (Presentation)."
+      },
+      {
+        "name": "stage-final-presentation-bg",
+        "value": "{success-bg}",
+        "usage": "Ground ikon dan kartu tahap Final Presentation."
+      },
+      {
+        "name": "stage-pending",
+        "value": "#a16207",
+        "usage": "Ikon dan aksen status Pending (Clock). Kuning digelapkan ke amber agar ikon lolos 3:1."
+      },
+      {
+        "name": "stage-pending-bg",
+        "value": "#fef7dc",
+        "usage": "Ground ikon dan kartu status Pending."
+      },
+      {
+        "name": "stage-done",
+        "value": "{red-600}",
+        "usage": "Ikon dan aksen status DONE (CircleCheck). Merah brand, bukan hijau, mengikuti referensi desain."
+      },
+      {
+        "name": "stage-done-bg",
+        "value": "{brand-tint}",
+        "usage": "Ground ikon dan kartu status DONE."
+      },
+      {
+        "name": "inverse-warning",
+        "value": "#ffd666",
+        "usage": "Teks/ikon warning di atas surface-inverse (kartu gelap). Tidak ikut tema karena surface-inverse gelap di kedua tema."
+      },
+      {
+        "name": "inverse-warning-bg",
+        "value": "#3a2a08",
+        "usage": "Ground badge warning di atas surface-inverse."
+      },
+      {
+        "name": "inverse-warning-border",
+        "value": "#8a6414",
+        "usage": "Border badge warning di atas surface-inverse."
+      },
+      {
+        "name": "inverse-success",
+        "value": "#7ee2a3",
+        "usage": "Teks/ikon success di atas surface-inverse."
+      }
+    ]
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "name": "Vermilion dark",
+  "version": 1,
+  "evidence": "derived",
+  "basedOn": { "name": "Vermilion", "version": 1 },
+  "note": "Tema kedua. Design.md mengunci satu tema ('Themes: one (light)'), jadi seluruh isi file ini derived. Prinsipnya: MENGARAHKAN ULANG peran semantik ke langkah skala yang sudah ada, bukan mengarang 54 warna baru. Token yang tidak disebut di sini mewarisi nilai terangnya - itu disengaja: skala merah, surface-brand, ink-inverse, on-brand dan focus-inverse tetap sama di kedua tema.",
+
+  "decisions": [
+    "surface-inverse TIDAK dibalik jadi terang. Ia mempertahankan identitasnya sebagai ground gelap yang terangkat, hanya dinaikkan satu langkah (#2a2a2e) supaya tetap terbaca di atas kartu gelap. Konsekuensinya StatTile tetap tile gelap di kedua tema dan ink-inverse tetap putih - nol cabang kode di komponen.",
+    "Tangga elevation dark: bg #0e0e10 < surface #17171a < surface-subtle #202024 < surface-inverse #2a2a2e < surface-inverse-raised #3f3f44. Monoton, jadi 'lebih terang = lebih terangkat' berlaku konsisten.",
+    "brand di tema gelap memakai red-400, bukan red-600. red-600 hanya mencapai ~3.9:1 di atas ground gelap dan gagal AA sebagai teks. red-600 tetap dipakai untuk ISIAN solid (surface-brand), yang tetap lolos karena tekstnya putih.",
+    "sev-critical naik dari red-800 ke red-700. red-800 di atas halaman gelap hanya ~1.8:1 sebagai bentuk, jadi badge solidnya hilang. red-700 tetap berbeda jelas dari brand (red-400) sehingga aturan 'merah = aksi' tidak tertabrak."
+  ],
+
+  "color": {
+    "tokens": [
+      { "name": "bg", "value": "#0e0e10", "usage": "Ground halaman, paling gelap di tangga elevation." },
+      { "name": "bg-wash", "value": "#1a1214", "usage": "Wash hero: rona merah yang sama, dipindah ke ujung gelap." },
+      { "name": "surface", "value": "#17171a", "usage": "Kartu dan panel. Sedikit di atas bg supaya terangkat tanpa perlu shadow." },
+      { "name": "surface-subtle", "value": "#202024", "usage": "Isian netral tenang: nav aktif, hover baris, kontrol nonaktif." },
+      { "name": "surface-inverse", "value": "#2a2a2e", "usage": "Ground gelap terangkat (tile metrik). Naik satu langkah dari nilai terangnya supaya tetap terpisah dari kartu." },
+      { "name": "surface-inverse-raised", "value": "#3f3f44", "usage": "Ujung terang gradient tile charcoal." },
+
+      { "name": "ink", "value": "#f5f5f6", "usage": "Judul dan nilai. Sengaja bukan putih murni untuk menekan halation di atas ground gelap." },
+      { "name": "ink-secondary", "value": "#b4b4bd", "usage": "Body copy." },
+      { "name": "ink-muted", "value": "#90909a", "usage": "Metadata, caption, placeholder. Dipilih supaya tetap lolos AA di atas bg dan surface-subtle." },
+      { "name": "ink-disabled", "value": "#5e5e66", "usage": "Label kontrol nonaktif." },
+
+      { "name": "border", "value": "#2a2a2e", "usage": "Hairline pengelompokan, lembut seperti di tema terang." },
+      { "name": "border-strong", "value": "#3f3f44", "usage": "Hairline hover." },
+      { "name": "border-control", "value": "#6e6e78", "usage": "Border kontrol form. Tetap wajib 3:1 di atas surface gelap." },
+      { "name": "border-brand", "value": "{red-400}", "usage": "Border tombol outline, mengikuti brand tema gelap." },
+      { "name": "border-brand-soft", "value": "#5a2326", "usage": "Border chip terpilih." },
+
+      { "name": "brand", "value": "{red-400}", "usage": "Teks link, label eyebrow, item nav aktif. Dinaikkan dari red-600 karena red-600 gagal AA di atas ground gelap." },
+      { "name": "brand-hover", "value": "{red-200}", "usage": "Hover: lebih terang, bukan lebih gelap - kebalikan logika tema terang." },
+      { "name": "brand-pressed", "value": "{red-500}", "usage": "Pressed: lebih pekat." },
+      { "name": "brand-tint", "value": "#2a1416", "usage": "Isian hover tombol outline. Padanan gelap dari red-50." },
+      { "name": "brand-soft", "value": "#3d1a1d", "usage": "Ground state terpilih pada chip dan baris. Padanan gelap dari red-100." },
+      { "name": "focus", "value": "{red-400}", "usage": "Ring fokus. Harus terbaca di atas ground gelap." },
+
+      { "name": "success", "value": "#4ec97f", "usage": "Teks dan ikon success." },
+      { "name": "success-bg", "value": "#0e2a1a", "usage": "Ground alert success." },
+      { "name": "success-border", "value": "#1f5c38", "usage": "Border alert success." },
+      { "name": "warning", "value": "#e0a33a", "usage": "Teks dan ikon warning." },
+      { "name": "warning-bg", "value": "#2b1f08", "usage": "Ground alert warning." },
+      { "name": "warning-border", "value": "#6b4a10", "usage": "Border alert warning." },
+      { "name": "error", "value": "#f27166", "usage": "Teks dan ikon error. Sengaja berbeda jelas dari brand (red-400) supaya error tidak tertukar dengan aksi." },
+      { "name": "error-bg", "value": "#2b1210", "usage": "Ground alert error." },
+      { "name": "error-border", "value": "#6e2a24", "usage": "Border alert error." },
+      { "name": "info", "value": "#a8b4c6", "usage": "Teks info. Tetap slate netral, bukan hue baru." },
+      { "name": "info-bg", "value": "#1a1e26", "usage": "Ground alert info." },
+      { "name": "info-border", "value": "#3a4557", "usage": "Border alert info - memakai nilai `info` milik tema terang." },
+
+      { "name": "viz-1", "value": "{red-400}", "usage": "Seri yang disorot." },
+      { "name": "viz-2", "value": "#e4e4e8", "usage": "Netral terkuat; di tema gelap artinya terang, bukan charcoal." },
+      { "name": "viz-3", "value": "#8a8a93", "usage": "Seri konteks. Satu-satunya viz yang sama di kedua tema." },
+      { "name": "viz-4", "value": "{red-200}", "usage": "Seri tambahan." },
+      { "name": "viz-5", "value": "{red-700}", "usage": "Seri tambahan." },
+      { "name": "viz-grid", "value": "#26262a", "usage": "Gridline horizontal." },
+
+      { "name": "sev-critical", "value": "{red-700}", "usage": "Naik dari red-800: red-800 nyaris hilang sebagai bentuk di atas halaman gelap." },
+      { "name": "sev-critical-bg", "value": "{red-700}", "usage": "Ground badge Critical (solid)." },
+      { "name": "sev-critical-border", "value": "{red-700}", "usage": "Border Critical, sewarna ground." },
+
+      { "name": "sev-high", "value": "{error}", "usage": "Identitas High mengikuti error tema gelap." },
+      { "name": "sev-high-bg", "value": "{error-bg}", "usage": "Ground badge High." },
+      { "name": "sev-high-fg", "value": "{error}", "usage": "Teks dan ikon High." },
+      { "name": "sev-high-border", "value": "{error-border}", "usage": "Border badge High." },
+
+      { "name": "sev-medium", "value": "{warning}", "usage": "Identitas Medium." },
+      { "name": "sev-medium-bg", "value": "{warning-bg}", "usage": "Ground badge Medium." },
+      { "name": "sev-medium-fg", "value": "{warning}", "usage": "Teks dan ikon Medium." },
+      { "name": "sev-medium-border", "value": "{warning-border}", "usage": "Border badge Medium." },
+
+      { "name": "sev-low", "value": "{info}", "usage": "Identitas Low." },
+      { "name": "sev-low-bg", "value": "{info-bg}", "usage": "Ground badge Low." },
+      { "name": "sev-low-fg", "value": "{info}", "usage": "Teks dan ikon Low." },
+      { "name": "sev-low-border", "value": "{info-border}", "usage": "Border badge Low." },
+
+      { "name": "sev-info", "value": "{ink-muted}", "usage": "Identitas Informational." },
+      { "name": "sev-info-bg", "value": "{surface-subtle}", "usage": "Ground badge Informational." },
+      { "name": "sev-info-fg", "value": "{ink-muted}", "usage": "Teks dan ikon Informational." },
+      { "name": "sev-info-border", "value": "{border}", "usage": "Border badge Informational." },
+      { "name": "activity-project-bg", "value": "#151a33", "usage": "Ground soft Proyek di tema gelap." },
+      { "name": "activity-assessment-bg", "value": "#1c1830", "usage": "Ground soft Asesmen di tema gelap." },
+      { "name": "activity-technical", "value": "#1a8f4a", "usage": "Hijau terang satu langkah: #116b33 hanya 2.9:1 di atas bg gelap. Ikon putih tetap 4.1:1." },
+      { "name": "activity-schedule-bg", "value": "#1e1830", "usage": "Ground soft Jadwal di tema gelap." },
+      { "name": "activity-report-bg", "value": "#0c2328", "usage": "Ground soft Laporan di tema gelap." },
+      { "name": "stage-assessment", "value": "#6f9cf5", "usage": "Biru dinaikkan: tahap hanya punya varian soft, jadi ikon bebas terang." },
+      { "name": "stage-assessment-bg", "value": "#131c33", "usage": "Ground tahap Assessment di tema gelap." },
+      { "name": "stage-analysis", "value": "#a390f0", "usage": "Ungu dinaikkan untuk ground gelap." },
+      { "name": "stage-analysis-bg", "value": "#1c1830", "usage": "Ground tahap Analysis di tema gelap." },
+      { "name": "stage-initial-report", "value": "#4cc3ca", "usage": "Teal dinaikkan untuk ground gelap." },
+      { "name": "stage-initial-report-bg", "value": "#0c2328", "usage": "Ground tahap Initial Report di tema gelap." },
+      { "name": "stage-remedial", "value": "#f28c45", "usage": "Oranye dinaikkan untuk ground gelap." },
+      { "name": "stage-remedial-bg", "value": "#2b1a0c", "usage": "Ground tahap Remedial di tema gelap." },
+      { "name": "stage-final-presentation", "value": "#4cc77a", "usage": "Hijau dinaikkan untuk ground gelap." },
+      { "name": "stage-final-presentation-bg", "value": "#0e2a1a", "usage": "Ground tahap Final Presentation di tema gelap." },
+      { "name": "stage-pending", "value": "#e8b43a", "usage": "Amber dinaikkan untuk ground gelap." },
+      { "name": "stage-pending-bg", "value": "#2b2208", "usage": "Ground status Pending di tema gelap." },
+      { "name": "stage-done", "value": "#f26b70", "usage": "Merah dinaikkan untuk ground gelap." },
+      { "name": "stage-done-bg", "value": "#2a1416", "usage": "Ground status DONE di tema gelap." }
+    ]
+  },
+
+  "shadow": {
+    "note": "Shadow terang memakai rgba(20,20,24,0.08-0.24) yang tidak terlihat sama sekali di atas ground gelap. Di tema gelap shadow harus hitam pekat. shadow-focus punya masalah terpisah: gap 2px-nya bernilai putih di spec, dan di atas ground gelap itu menjadi garis putih yang salah - lihat build-tokens.mjs, gap dan ring keduanya disusun dari var() sehingga ikut tema dengan sendirinya.",
+    "tokens": [
+      { "name": "shadow-float", "value": "0 2px 12px 0 rgba(0,0,0,0.40)" },
+      { "name": "shadow-raised", "value": "0 8px 24px -4px rgba(0,0,0,0.50)" },
+      { "name": "shadow-overlay", "value": "0 24px 48px -12px rgba(0,0,0,0.65)" },
+      { "name": "shadow-ring", "value": "0 0 0 4px rgba(255,255,255,0.06)" }
+    ]
+  }
+}
