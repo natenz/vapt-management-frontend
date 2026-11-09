@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { LoginResult, User } from "@/shared/api/schemas";
 
-type SessionState = {
+export type SessionState = {
   token: string | null;
   expiresAt: string | null;
   user: User | null;

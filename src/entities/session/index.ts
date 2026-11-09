@@ -1,1 +1,1 @@
-export { useSession, isExpired } from "@/entities/session/store";
+export { useSession, isExpired, type SessionState } from "./model/store";
