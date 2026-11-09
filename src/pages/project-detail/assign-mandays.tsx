@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { createMandays } from "@/entities/project/api";
+import { createMandays, deleteMandays } from "@/entities/project/api";
 import { getErrorDetails } from "@/shared/api/api-error";
-import type { ProjectDetail } from "@/shared/api/schemas";
+import type { Mandays, ProjectDetail } from "@/shared/api/schemas";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field, Input } from "@/shared/ui/input";
@@ -19,6 +20,21 @@ const schema = z.object({
   allocated_mandays: z.coerce.number().gt(0, "Harus lebih dari 0"),
 });
 type Values = z.input<typeof schema>;
+
+function DeleteAssignmentButton({ projectId, m }: { projectId: number; m: Mandays }) {
+  const qc = useQueryClient();
+  const del = useMutation({
+    mutationFn: () => deleteMandays(m.mandays_id),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["project", projectId] }); void qc.invalidateQueries({ queryKey: ["workload"] }); notify.success("Penugasan dihapus"); },
+    onError: (e) => notify.info("Penugasan belum bisa dihapus", { description: e.message }),
+  });
+  const who = m.pentester?.profile?.full_name ?? m.pentester?.username ?? "pentester";
+  return (
+    <Button type="button" variant="quiet" aria-label={`Hapus penugasan ${who} di ${m.asset?.asset_name ?? "aset"}`} loading={del.isPending} onClick={() => del.mutate()}>
+      <Trash2 />
+    </Button>
+  );
+}
 
 /** PM menugaskan pentester ke aset + jadwalnya (POST /projects/:id/mandays). */
 export function AssignMandays({ project }: { project: ProjectDetail }) {
@@ -40,6 +56,7 @@ export function AssignMandays({ project }: { project: ProjectDetail }) {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["project", project.project_id] });
+      void queryClient.invalidateQueries({ queryKey: ["workload"] });
       notify.success("Pentester ditugaskan");
       reset();
     },
@@ -58,8 +75,9 @@ export function AssignMandays({ project }: { project: ProjectDetail }) {
           {project.mandays.map((m) => (
             <li key={m.mandays_id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-body-sm">
               <span className="text-ink">{m.asset?.asset_name ?? `Aset ${m.asset_id}`}</span>
-              <span className="text-ink-secondary">
+              <span className="flex items-center gap-2 text-ink-secondary">
                 {m.pentester?.profile?.full_name ?? m.pentester?.username} · {fmtRange(m.start_date, m.end_date)} · {m.allocated_mandays} md
+                <DeleteAssignmentButton projectId={project.project_id} m={m} />
               </span>
             </li>
           ))}
@@ -91,7 +109,7 @@ export function AssignMandays({ project }: { project: ProjectDetail }) {
         </Field>
         <Field label="Mulai" error={errors.start_date?.message}>{(f) => <Input type="date" {...f} {...register("start_date")} />}</Field>
         <Field label="Selesai" error={errors.end_date?.message}>{(f) => <Input type="date" {...f} {...register("end_date")} />}</Field>
-        <Field label="Mandays" error={errors.allocated_mandays?.message}>{(f) => <Input type="number" step="0.5" min={0} {...f} {...register("allocated_mandays")} />}</Field>
+        <Field label="Mandays" error={errors.allocated_mandays?.message}>{(f) => <Input type="number" step="0.5" min={0.5} {...f} {...register("allocated_mandays")} />}</Field>
         <div className="md:col-span-5">
           <Button type="submit" variant="solid" loading={mutation.isPending}>Simpan penugasan</Button>
         </div>

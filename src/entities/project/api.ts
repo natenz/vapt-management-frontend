@@ -62,6 +62,12 @@ export type MandaysInput = {
 export const createMandays = async (id: number, body: MandaysInput) =>
   (await apiRequest(`/projects/${id}/mandays`, { method: "POST", body }, mandaysSchema)).data;
 
+export const updateMandays = async (id: number, body: Partial<Pick<MandaysInput, "status" | "allocated_mandays" | "pentester_id" | "start_date" | "end_date">>) =>
+  (await apiRequest(`/mandays/${id}`, { method: "PUT", body }, mandaysSchema)).data;
+
+export const deleteMandays = async (id: number) =>
+  (await apiRequest(`/mandays/${id}`, { method: "DELETE" }, z.unknown())).data;
+
 export const createAsset = async (id: number, body: AssetInput) =>
   (await apiRequest(`/projects/${id}/assets`, { method: "POST", body }, assetSchema)).data;
 
