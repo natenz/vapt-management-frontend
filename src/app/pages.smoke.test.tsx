@@ -47,10 +47,14 @@ vi.mock("@/entities/catalog/api", () => ({
   listCatalog: async () => [],
 }));
 
-vi.mock("@/entities/user/api", () => ({
-  listUsers: async () => [],
-  listRoles: async () => [],
-}));
+vi.mock("@/entities/user", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/user")>();
+  return {
+    ...actual,
+    listUsers: async () => [],
+    listRoles: async () => [],
+  };
+});
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();

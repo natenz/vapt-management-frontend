@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-import { listRoles, listUsers } from "@/entities/user/api";
-import type { User } from "@/shared/api/schemas";
+import { listRoles, listUsers, type User } from "@/entities/user";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { Alert } from "@/shared/ui/alert";
 import { DataTable } from "@/shared/ui/data-table";

@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 import { createProject, getWorkload } from "@/entities/project/api";
-import { listUsers } from "@/entities/user/api";
+import { listUsers } from "@/entities/user";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field, FieldGroup, Input } from "@/shared/ui/input";
