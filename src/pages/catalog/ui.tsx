@@ -7,7 +7,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { z } from "zod";
 import { createCatalog, listCatalog, type CatalogVulna } from "@/entities/catalog";
 import { useSession } from "@/entities/session";
-import { SEVERITIES } from "@/shared/api/schemas";
+import { SeverityBadge, SEVERITIES } from "@/entities/finding";
 import { toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -15,7 +15,6 @@ import { DataTable } from "@/shared/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Field, FieldGroup, Input, SearchInput } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/page-header";
-import { SeverityBadge } from "@/entities/finding";
 import { Textarea } from "@/shared/ui/textarea";
 import { notify } from "@/shared/ui/toast";
 

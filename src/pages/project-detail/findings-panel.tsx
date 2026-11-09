@@ -13,7 +13,7 @@ import {
   type FindingStatus,
 } from "@/entities/finding";
 import { useSession } from "@/entities/session";
-import type { ProjectDetail } from "@/shared/api/schemas";
+import type { ProjectDetail } from "@/entities/project";
 import { Button } from "@/shared/ui/button";
 import { Field, Input } from "@/shared/ui/input";
 import { notify } from "@/shared/ui/toast";

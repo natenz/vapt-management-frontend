@@ -8,7 +8,15 @@ import {
   Lock,
   UsersRound,
 } from "lucide-react";
-import type { RoleName } from "@/shared/api/schemas";
+
+export const ROLES = [
+  "super_admin",
+  "tech_lead",
+  "project_manager",
+  "pentester",
+  "technical_writer",
+] as const;
+export type RoleName = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<RoleName, string> = {
   super_admin: "Superadmin",
@@ -20,13 +28,7 @@ export const ROLE_LABEL: Record<RoleName, string> = {
 
 export type NavItem = { label: string; to: string; icon: LucideIcon; roles: readonly RoleName[] };
 
-const ALL: readonly RoleName[] = [
-  "super_admin",
-  "tech_lead",
-  "project_manager",
-  "pentester",
-  "technical_writer",
-];
+const ALL: readonly RoleName[] = ROLES;
 
 // Menu per role. Mengikuti mockup Figma "VAPT Command Center" dan aturan akses di BE.
 export const NAV: readonly NavItem[] = [

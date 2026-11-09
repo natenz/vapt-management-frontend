@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Finding } from "@/shared/api/schemas";
+import type { Finding } from "@/entities/finding";
 import { statusActions } from "./findings-panel";
 
 const f = (status: string) => ({ status }) as Finding;

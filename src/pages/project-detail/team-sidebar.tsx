@@ -1,5 +1,5 @@
 import { isRole, ROLE_LABEL } from "@/shared/config/roles";
-import type { ProjectDetail } from "@/shared/api/schemas";
+import type { ProjectDetail } from "@/entities/project";
 
 export type TeamRow = { id: number; name: string; role: string; total: number; assets: { name: string; md: number }[] };
 

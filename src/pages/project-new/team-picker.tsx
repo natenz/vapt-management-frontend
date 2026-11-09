@@ -1,5 +1,5 @@
 import { Circle, OctagonAlert, Trash2 } from "lucide-react";
-import type { User } from "@/shared/api/schemas";
+import type { User } from "@/entities/user";
 import { Button } from "@/shared/ui/button";
 import { Combobox, type ComboOption } from "@/shared/ui/combobox";
 import { StatusBadge } from "@/shared/ui/badge";

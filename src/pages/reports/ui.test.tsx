@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import type { ProjectReport } from "@/shared/api/schemas";
+import type { ProjectReport } from "@/entities/finding";
 
 const report = {
   generated_at: "2026-11-09T00:00:00Z",

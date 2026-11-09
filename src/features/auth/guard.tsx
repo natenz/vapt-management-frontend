@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 import { isExpired, useSession } from "@/entities/session";
-import { isRole } from "@/shared/config/roles";
-import type { RoleName } from "@/shared/api/schemas";
+import { isRole, type RoleName } from "@/shared/config/roles";
 import { Alert } from "@/shared/ui/alert";
 
 export function RequireAuth({ children, roles }: { children: ReactNode; roles?: readonly RoleName[] }) {

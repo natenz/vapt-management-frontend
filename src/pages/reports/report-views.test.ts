@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectReport } from "@/shared/api/schemas";
+import type { ProjectReport } from "@/entities/finding";
 import { groupByAsset } from "./report-views";
 
 const asset = (id: number) => ({ assets_id: id, asset_name: `A${id}` }) as ProjectReport["assets"][number];

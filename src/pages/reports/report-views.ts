@@ -1,4 +1,4 @@
-import type { ProjectReport } from "@/shared/api/schemas";
+import type { ProjectReport } from "@/entities/finding";
 
 export type AssetReport = {
   asset: ProjectReport["assets"][number];
