@@ -1,8 +1,14 @@
-node_modules
-dist
-.DS_Store
+# dotfile
 *.local
+.DS_Store
 .env
+.prettierrc.json
+
+# folder
+dist
+node_modules
+
+# md file
 INTEGRASI_ARSITEKTUR.md
 BLUEPRINT_ARSITEKTUR.md
 Design.md
