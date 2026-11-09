@@ -11,7 +11,7 @@ import { Field, FieldGroup, Input } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { notify } from "@/shared/ui/toast";
-import { TeamPicker } from "@/pages/project-new/team-picker";
+import { TeamPicker } from "@/features/assign-project-team";
 import { getErrorDetails } from "@/shared/api";
 
 const schema = z

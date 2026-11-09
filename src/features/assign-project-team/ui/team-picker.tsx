@@ -8,7 +8,7 @@ import { Field } from "@/shared/ui/input";
 // Kebijakan batas beban per orang (md). Bukan data, jadi tetap konstanta.
 const MANDAYS_LIMIT = 20;
 
-type Props = {
+export type TeamPickerProps = {
   value: number[];
   onChange: (ids: number[]) => void;
   pentesters: User[];
@@ -20,7 +20,7 @@ type Props = {
 const name = (u: User) => u.profile?.full_name ?? u.username;
 
 /** Pilih anggota tim lewat select + tombol tambah. Beban mandays tiap orang merah bila >= batas. */
-export function TeamPicker({ value, onChange, pentesters, writers, workload }: Props) {
+export function TeamPicker({ value, onChange, pentesters, writers, workload }: TeamPickerProps) {
   const mdOf = (u: User) => workload[u.sys_user_id] ?? 0;
   const isPentester = (u: User) => u.role?.role_name === "pentester";
   const over = (u: User) => isPentester(u) && mdOf(u) >= MANDAYS_LIMIT;
