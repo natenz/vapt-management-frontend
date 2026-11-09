@@ -1,3 +1,4 @@
+import type { RouteObject } from "react-router";
 import { createBrowserRouter, Navigate } from "react-router";
 import { AuthLayout, DashboardLayout } from "@/app/layouts";
 import { RequireAuth, RequireGuest } from "@/features/auth";
@@ -11,7 +12,7 @@ import { ProjectsPage } from "@/pages/projects/ui";
 import { ReportPage, ReportsIndexPage } from "@/pages/reports/ui";
 import { RolesPage, UsersPage } from "@/pages/users/ui";
 
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
     element: (
       <RequireGuest>
@@ -69,4 +70,6 @@ export const router = createBrowserRouter([
     ],
   },
   { path: "*", element: <Navigate to="/dashboard" replace /> },
-]);
+];
+
+export const router = createBrowserRouter(routes);
