@@ -31,17 +31,21 @@ vi.mock("@/entities/project/api", () => ({
   getWorkload: async () => ({}),
 }));
 
-vi.mock("@/entities/finding/api", () => ({
-  listFindings: async () => [],
-  getReport: async () => ({
-    generated_at: "2026-11-09T00:00:00Z",
-    project: mockProject,
-    assets: [],
-    summary: { total_findings: 0, by_severity: {}, by_status: {} },
-    findings: [],
-  }),
-  createFinding: async () => ({}),
-}));
+vi.mock("@/entities/finding", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/finding")>();
+  return {
+    ...actual,
+    listFindings: async () => [],
+    getReport: async () => ({
+      generated_at: "2026-11-09T00:00:00Z",
+      project: mockProject,
+      assets: [],
+      summary: { total_findings: 0, by_severity: {}, by_status: {} },
+      findings: [],
+    }),
+    createFinding: async () => ({}),
+  };
+});
 
 vi.mock("@/entities/catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/catalog")>();

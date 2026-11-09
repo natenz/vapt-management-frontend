@@ -1,15 +1,13 @@
 import { z } from "zod";
 import { apiRequest } from "@/shared/api";
-import { evidenceSchema, findingSchema, reportSchema, type FindingStatus } from "@/shared/api/schemas";
-
-export type FindingInput = {
-  asset_id: number;
-  catalog_vulna_id?: number;
-  custom_title?: string;
-  severity?: string;
-  cvss_score?: number;
-  endpoint?: string;
-};
+import {
+  evidenceSchema,
+  findingSchema,
+  reportSchema,
+  type EvidenceInput,
+  type FindingInput,
+  type FindingStatus,
+} from "../model/types";
 
 export const listFindings = async (
   projectId: number,
@@ -28,7 +26,6 @@ export const updateFinding = async (id: number, body: Partial<FindingInput>) =>
 export const changeFindingStatus = async (id: number, status: FindingStatus) =>
   (await apiRequest(`/vulnas/${id}/status`, { method: "PATCH", body: { status } }, findingSchema)).data;
 
-export type EvidenceInput = { file_name: string; s3_bucket: string; s3_key: string; s3_url?: string };
 export const addEvidence = async (id: number, body: EvidenceInput) =>
   (await apiRequest(`/vulnas/${id}/evidences`, { method: "POST", body }, evidenceSchema)).data;
 

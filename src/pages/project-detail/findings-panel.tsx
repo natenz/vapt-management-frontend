@@ -3,17 +3,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { changeFindingStatus, listFindings, updateFinding } from "@/entities/finding/api";
+import {
+  changeFindingStatus,
+  listFindings,
+  updateFinding,
+  SeverityBadge,
+  SEVERITIES,
+  type Finding,
+  type FindingStatus,
+} from "@/entities/finding";
 import { useSession } from "@/entities/session";
-import type { Finding, FindingStatus, ProjectDetail } from "@/shared/api/schemas";
+import type { ProjectDetail } from "@/shared/api/schemas";
 import { Button } from "@/shared/ui/button";
 import { Field, Input } from "@/shared/ui/input";
 import { notify } from "@/shared/ui/toast";
 import { toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
-import { SeverityBadge } from "@/shared/ui/severity-badge";
-import { SEVERITIES } from "@/shared/api/schemas";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 // BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; hanya saat Pentest/Reporting/Remediation/Retest.

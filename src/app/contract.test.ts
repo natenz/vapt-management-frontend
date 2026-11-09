@@ -2,7 +2,7 @@
 //   CONTRACT_API=http://localhost:8088/api/v1 npx vitest run src/app/contract.test.ts
 import { beforeAll, describe, expect, it } from "vitest";
 import { listCatalog } from "@/entities/catalog";
-import { getReport, listFindings } from "@/entities/finding/api";
+import { getReport, listFindings } from "@/entities/finding";
 import { getProject, listMandays, listProjects, listResources, listStatuses, listStatusLogs } from "@/entities/project/api";
 import { listRoles, listUsers } from "@/entities/user";
 import { useSession } from "@/entities/session";

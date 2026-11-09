@@ -21,7 +21,13 @@ const report = {
   ],
 } as unknown as ProjectReport;
 
-vi.mock("@/entities/finding/api", () => ({ getReport: async () => report }));
+vi.mock("@/entities/finding", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/finding")>();
+  return {
+    ...actual,
+    getReport: async () => report,
+  };
+});
 
 // jsdom tidak punya dua API ini; Tabs memakainya untuk chevron dan auto-scroll chip.
 beforeAll(() => {

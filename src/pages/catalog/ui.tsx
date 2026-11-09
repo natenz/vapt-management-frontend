@@ -15,7 +15,7 @@ import { DataTable } from "@/shared/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Field, FieldGroup, Input, SearchInput } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/page-header";
-import { SeverityBadge } from "@/shared/ui/severity-badge";
+import { SeverityBadge } from "@/entities/finding";
 import { Textarea } from "@/shared/ui/textarea";
 import { notify } from "@/shared/ui/toast";
 
