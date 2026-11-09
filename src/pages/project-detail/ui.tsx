@@ -21,7 +21,7 @@ import { Stepper } from "@/shared/ui/stepper";
 import { notify } from "@/shared/ui/toast";
 import { ManageAssets, DeleteAssetButton } from "@/features/manage-assets";
 import { AssignMandays } from "@/features/assign-mandays";
-import { FindingsPanel } from "@/pages/project-detail/findings-panel";
+import { FindingsPanel } from "@/widgets/project-findings-panel";
 import { mandaysState } from "@/pages/project-detail/gantt-state";
 import { TeamSidebar } from "@/pages/project-detail/team-sidebar";
 

@@ -35,7 +35,7 @@ type EditValues = z.infer<typeof editSchema>;
 
 const STATUS_LABEL: Record<string, string> = { open: "Terbuka", remediated: "Sudah diperbaiki", closed: "Selesai (lolos retest)", reopened: "Masih rentan" };
 
-type StatusAction = { to: FindingStatus; label: string };
+export type StatusAction = { to: FindingStatus; label: string };
 
 /**
  * Aksi status yang boleh dilakukan user ini. Cermin vulna_service.ChangeStatus (BE tetap yang menegakkan):
