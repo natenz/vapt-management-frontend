@@ -1,78 +1,13 @@
-import { LogOut } from "lucide-react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSession } from "@/entities/session";
-import { ThemeToggle } from "@/features/toggle-theme";
+import { Outlet } from "react-router";
+import { AppHeader } from "@/widgets/app-header";
 import { AppSidebar } from "@/widgets/app-sidebar";
-import { navFor, ROLE_LABEL, isRole } from "@/shared/config/roles";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
-import { Breadcrumb } from "@/shared/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
 
 export function DashboardLayout() {
-  const { user, clear } = useSession();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { pathname } = useLocation();
-  const roleName = user?.role?.role_name;
-  const items = navFor(roleName);
-  const roleLabel = isRole(roleName) ? ROLE_LABEL[roleName] : "Pengguna";
-  const name = user?.profile?.full_name ?? user?.username ?? "Pengguna";
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
-  const current = items.find((i) => pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to)));
-
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-bg">
       <AppSidebar />
-
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-nav flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg px-4 lg:px-6">
-          <Breadcrumb
-            items={[{ label: "VAPT", href: "/dashboard" }, { label: current?.label ?? "Detail" }]}
-            className="min-w-0 flex-1"
-            renderLink={(crumb, className) => (
-              <NavLink to={crumb.href} className={className}>
-                {crumb.label}
-              </NavLink>
-            )}
-          />
-          <span className="hidden rounded-full border border-border px-3 py-1 text-caption text-ink-secondary sm:inline-flex">
-            {roleLabel}
-          </span>
-          <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger aria-label="Menu akun" className="shrink-0 rounded-full focus-ring">
-              <Avatar size="sm">
-                <AvatarFallback>{initials || "PG"}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-52">
-              <DropdownMenuLabel>{name}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  clear();
-                  queryClient.clear();
-                  navigate("/login", { replace: true });
-                }}
-              >
-                <LogOut className="size-4" aria-hidden />
-                Keluar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
+        <AppHeader />
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-8 lg:px-6">
           <div className="mx-auto max-w-wide">
             <Outlet />
