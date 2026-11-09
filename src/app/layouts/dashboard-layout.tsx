@@ -9,7 +9,12 @@ import { cn } from "@/shared/lib/cn";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Breadcrumb } from "@/shared/ui/breadcrumb";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
 function Brand({ collapsed }: { collapsed: boolean }) {
@@ -33,7 +38,11 @@ export function DashboardLayout() {
   const items = navFor(roleName);
   const roleLabel = isRole(roleName) ? ROLE_LABEL[roleName] : "Pengguna";
   const name = user?.profile?.full_name ?? user?.username ?? "Pengguna";
-  const initials = name.split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
   const current = items.find((i) => pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to)));
 
   return (
@@ -45,11 +54,18 @@ export function DashboardLayout() {
           collapsed ? "w-16" : "w-64",
         )}
       >
-        <div className={cn("flex h-16 shrink-0 items-center border-b border-border", collapsed ? "justify-center" : "px-4")}>
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center border-b border-border",
+            collapsed ? "justify-center" : "px-4",
+          )}
+        >
           <Brand collapsed={collapsed} />
         </div>
         <nav aria-label="Navigasi utama" className="flex-1 overflow-y-auto px-3 py-4">
-          <p className={cn("mb-2 px-3 text-overline text-ink-muted uppercase", collapsed && "lg:sr-only")}>Operasi</p>
+          <p className={cn("mb-2 px-3 text-overline text-ink-muted uppercase", collapsed && "lg:sr-only")}>
+            Operasi
+          </p>
           <ul className="flex flex-col gap-1">
             {items.map((item) => {
               const Icon = item.icon;
@@ -63,7 +79,9 @@ export function DashboardLayout() {
                       cn(
                         "flex h-10 items-center gap-3 rounded-sm px-3 text-nav-link focus-ring transition-colors duration-150 ease-out",
                         collapsed && "justify-center px-0",
-                        isActive ? "bg-surface-subtle text-brand" : "text-ink-secondary hover:bg-surface-subtle hover:text-ink",
+                        isActive
+                          ? "bg-surface-subtle text-brand"
+                          : "text-ink-secondary hover:bg-surface-subtle hover:text-ink",
                       )
                     }
                   >
@@ -123,40 +141,6 @@ export function DashboardLayout() {
           </div>
         </main>
       </div>
-    </div>
-  );
-}
-
-export function AuthLayout() {
-  return (
-    <div className="grid min-h-screen bg-bg lg:grid-cols-2">
-      <div className="flex flex-col px-6 py-8 lg:px-12">
-        <div className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-sm bg-surface-brand text-on-brand">
-            <ShieldCheck className="size-5" aria-hidden />
-          </span>
-          <span className="text-title-md text-ink">VAPT Management</span>
-        </div>
-        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-12">
-          <Outlet />
-        </div>
-      </div>
-      <aside
-        aria-hidden
-        className="relative m-4 hidden flex-col justify-end overflow-hidden rounded-xl gradient-auth-panel p-12 text-ink-inverse lg:flex"
-      >
-        <ul className="mb-8 flex gap-3">
-          {["Assess", "Validate", "Report"].map((t) => (
-            <li key={t} className="rounded-full bg-ink-inverse/15 px-4 py-1.5 text-badge text-ink-inverse backdrop-blur-sm">
-              {t}
-            </li>
-          ))}
-        </ul>
-        <p className="text-heading-1 max-w-md text-ink-inverse">Satu tempat untuk seluruh temuan keamanan.</p>
-        <p className="mt-3 max-w-md text-body-sm text-ink-inverse-muted">
-          Dari template proyek sampai laporan akhir, tiap temuan tercatat, ditugaskan, dan bisa dilacak sampai tuntas.
-        </p>
-      </aside>
     </div>
   );
 }
