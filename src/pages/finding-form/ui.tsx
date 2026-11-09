@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
-import { listCatalog } from "@/entities/catalog/api";
+import { listCatalog } from "@/entities/catalog";
 import { createFinding } from "@/entities/finding/api";
 import { getProject } from "@/entities/project/api";
 import { useSession } from "@/entities/session";

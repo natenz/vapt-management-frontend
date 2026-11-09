@@ -43,9 +43,14 @@ vi.mock("@/entities/finding/api", () => ({
   createFinding: async () => ({}),
 }));
 
-vi.mock("@/entities/catalog/api", () => ({
-  listCatalog: async () => [],
-}));
+vi.mock("@/entities/catalog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/catalog")>();
+  return {
+    ...actual,
+    listCatalog: async () => [],
+    createCatalog: async () => ({}),
+  };
+});
 
 vi.mock("@/entities/user", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/user")>();

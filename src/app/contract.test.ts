@@ -1,7 +1,7 @@
 // Tes kontrak FE <-> BE asli. Jalan hanya bila BE hidup dan seed sudah diisi:
 //   CONTRACT_API=http://localhost:8088/api/v1 npx vitest run src/app/contract.test.ts
 import { beforeAll, describe, expect, it } from "vitest";
-import { listCatalog } from "@/entities/catalog/api";
+import { listCatalog } from "@/entities/catalog";
 import { getReport, listFindings } from "@/entities/finding/api";
 import { getProject, listMandays, listProjects, listResources, listStatuses, listStatusLogs } from "@/entities/project/api";
 import { listRoles, listUsers } from "@/entities/user";
