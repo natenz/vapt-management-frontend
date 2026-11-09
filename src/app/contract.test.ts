@@ -6,7 +6,7 @@ import { getReport, listFindings } from "@/entities/finding";
 import { getProject, listMandays, listProjects, listResources, listStatuses, listStatusLogs } from "@/entities/project";
 import { listRoles, listUsers } from "@/entities/user";
 import { useSession } from "@/entities/session";
-import { login, me } from "@/features/auth/api";
+import { login, me } from "@/features/auth";
 import { configureHttpAuth } from "@/shared/api";
 
 const API = process.env.CONTRACT_API;
