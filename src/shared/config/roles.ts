@@ -7,7 +7,6 @@ import {
   LayoutTemplate,
   Lock,
   UsersRound,
-  Bug,
 } from "lucide-react";
 import type { RoleName } from "@/shared/api/schemas";
 
@@ -34,7 +33,6 @@ export const NAV: readonly NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, roles: ALL },
   { label: "Proyek", to: "/projects", icon: FolderKanban, roles: ALL },
   { label: "Project Template", to: "/projects/new", icon: LayoutTemplate, roles: ["super_admin", "tech_lead"] },
-  { label: "Temuan", to: "/findings", icon: Bug, roles: ["pentester", "technical_writer", "project_manager"] },
   { label: "Koreksi & Laporan", to: "/reports", icon: ClipboardCheck, roles: ["technical_writer", "project_manager"] },
   { label: "Katalog Kerentanan", to: "/catalog", icon: FileText, roles: ALL },
   { label: "Kelola User", to: "/users", icon: UsersRound, roles: ["super_admin"] },

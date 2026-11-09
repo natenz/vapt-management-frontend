@@ -67,3 +67,17 @@ export const createAsset = async (id: number, body: AssetInput) =>
 
 export const deleteAsset = async (assetId: number) =>
   (await apiRequest(`/assets/${assetId}`, { method: "DELETE" }, z.unknown())).data;
+
+/**
+ * Beban mandays per pentester (key = sys_user_id), dijumlah dari trx_mandays lintas proyek yang belum Done.
+ * ponytail: BE belum punya endpoint beban kerja, jadi ini 1 request list + 1 request mandays per proyek.
+ * Cukup untuk puluhan proyek; kalau lambat, minta BE tambah GET /workload lalu ganti isi fungsi ini.
+ */
+export const getWorkload = async (): Promise<Record<number, number>> => {
+  const { data: projects } = await listProjects({ limit: 100 });
+  const active = projects.filter((p) => p.status?.status_name !== "Done");
+  const lists = await Promise.all(active.map((p) => listMandays(p.project_id)));
+  const total: Record<number, number> = {};
+  for (const m of lists.flat()) total[m.pentester_id] = (total[m.pentester_id] ?? 0) + m.allocated_mandays;
+  return total;
+};

@@ -75,6 +75,7 @@ export const projectSchema = z.object({
   status: statusSchema.optional().nullable(),
   pm_id: z.number(),
   pm: userSchema.optional().nullable(),
+  updated_at: z.string().optional().nullable(),
 });
 export type Project = z.infer<typeof projectSchema>;
 

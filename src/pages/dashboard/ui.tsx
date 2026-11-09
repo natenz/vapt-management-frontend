@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Bug, CheckCheck, ClipboardCheck, FolderKanban, Hourglass, LayoutTemplate, Workflow } from "lucide-react";
 import { Link } from "react-router";
-import { listProjects, listStatuses } from "@/entities/project/api";
+import { listProjects } from "@/entities/project/api";
 import { useSession } from "@/entities/session";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { fmtRange } from "@/shared/lib/format";
@@ -29,7 +29,6 @@ export function DashboardPage() {
   const user = useSession((s) => s.user);
   const role = user?.role?.role_name ?? "";
   const projects = useQuery({ queryKey: ["projects", "all"], queryFn: () => listProjects({ limit: 100 }) });
-  const statuses = useQuery({ queryKey: ["statuses"], queryFn: listStatuses });
 
   // PM tidak melihat proyek Draft (belum diserahkan Tech Lead).
   const list = (projects.data?.data ?? []).filter((p) => !(role === "project_manager" && p.status?.status_name === "Draft"));
@@ -126,7 +125,6 @@ export function DashboardPage() {
           Buka sebuah proyek untuk {role === "pentester" ? "mencatat temuan" : "mengoreksi temuan dan membuat laporan"}.
         </p>
       ) : null}
-      {statuses.isError ? null : null}
     </div>
   );
 }

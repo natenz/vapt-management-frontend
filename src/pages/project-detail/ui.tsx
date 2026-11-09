@@ -3,6 +3,7 @@ import { ArrowRight, Bug, FileText } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { changeProjectStatus, getProject, listStatuses } from "@/entities/project/api";
 import { useSession } from "@/entities/session";
+import { getErrorDetails } from "@/shared/api/api-error";
 import { PROJECT_STATUSES } from "@/shared/api/schemas";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
@@ -20,13 +21,13 @@ import { FindingsPanel } from "@/pages/project-detail/findings-panel";
 
 // Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
-const NEXT: Record<string, { to: string; label: string; roles: string[] }> = {
+const NEXT: Record<string, { to: string; label: string; roles: string[]; back?: { to: string; label: string } }> = {
   Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
   Planning: { to: "Pentest", label: "Mulai Pentest", roles: ["project_manager", "super_admin"] },
   Pentest: { to: "Reporting", label: "Selesai Pentest, mulai Reporting", roles: ["project_manager", "super_admin"] },
   Reporting: { to: "Remediation", label: "Serahkan laporan untuk Remediasi", roles: ["technical_writer", "project_manager", "super_admin"] },
   Remediation: { to: "Retest", label: "Minta Retest", roles: ["project_manager", "super_admin"] },
-  Retest: { to: "Done", label: "Tandai Selesai", roles: ["project_manager", "super_admin"] },
+  Retest: { to: "Done", label: "Tandai Selesai", roles: ["project_manager", "super_admin"], back: { to: "Remediation", label: "Masih ada yang rentan, kembali ke Remediasi" } },
 };
 
 export function ProjectDetailPage() {
@@ -61,9 +62,28 @@ export function ProjectDetailPage() {
   const currentIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
   const next = NEXT[current];
   const nextStatus = statuses.data?.find((s) => s.status_name === next?.to);
+  const backStatus = statuses.data?.find((s) => s.status_name === next?.back?.to);
   // BE: PM hanya boleh mengelola proyek miliknya (pm_id); TL dan Superadmin untuk semua.
   const ownsAsPm = role !== "project_manager" || p.pm_id === sessionUser?.sys_user_id;
   const canAdvance = Boolean(next && nextStatus && next.roles.includes(role) && ownsAsPm);
+
+  let advanceBlockReason: string | null = null;
+  if (current === "Draft" && next?.to === "Planning") {
+    if (p.resources.length === 0) {
+      advanceBlockReason = "Proyek harus memiliki minimal 1 resource tim.";
+    }
+  } else if (current === "Planning" && next?.to === "Pentest") {
+    if (p.assets.length === 0) {
+      advanceBlockReason = "Tambahkan minimal 1 aset sebelum memulai pentest.";
+    } else {
+      const allocatedAssetIds = new Set(p.mandays.map((m) => m.asset_id));
+      const unallocated = p.assets.find((a) => !allocatedAssetIds.has(a.assets_id));
+      if (unallocated) {
+        advanceBlockReason = `Aset "${unallocated.asset_name}" belum di-assign pentester di timeline.`;
+      }
+    }
+  }
+
   // BE: aset hanya bisa diubah saat Draft/Planning oleh PM pemilik (atau admin).
   const ganttItems: GanttItem[] = p.mandays
     .filter((m) => m.start_date && m.end_date)
@@ -85,16 +105,39 @@ export function ProjectDetailPage() {
         description={`${p.client_name} · ${fmtRange(p.start_date, p.end_date)} · PM: ${p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}`}
         action={
           canAdvance ? (
-            <Button variant="solid" trailingIcon={<ArrowRight />} loading={advance.isPending} onClick={() => nextStatus && advance.mutate(nextStatus.status_process_id)}>
-              {next!.label}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                variant="solid"
+                trailingIcon={<ArrowRight />}
+                loading={advance.isPending}
+                disabled={Boolean(advanceBlockReason)}
+                title={advanceBlockReason ?? undefined}
+                onClick={() => nextStatus && advance.mutate(nextStatus.status_process_id)}
+              >
+                {next!.label}
+              </Button>
+              {next?.back && backStatus ? (
+                <Button variant="outline" loading={advance.isPending} onClick={() => advance.mutate(backStatus.status_process_id)}>
+                  {next.back.label}
+                </Button>
+              ) : null}
+              {advanceBlockReason ? (
+                <span className="text-caption text-ink-muted">{advanceBlockReason}</span>
+              ) : null}
+            </div>
           ) : (
             <ProjectStatusBadge name={current} />
           )
         }
       />
 
-      {advance.error ? <Alert tone="error" title="Status belum bisa diubah">{advance.error.message}</Alert> : null}
+      {advance.error ? (
+        <Alert tone="error" title="Status belum bisa diubah">
+          {getErrorDetails(advance.error).length > 0
+            ? getErrorDetails(advance.error).join(", ")
+            : advance.error.message}
+        </Alert>
+      ) : null}
 
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-4">
         {[
@@ -170,7 +213,7 @@ export function ProjectDetailPage() {
         {["Reporting", "Remediation", "Retest", "Done"].includes(current) ? (
           <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
         ) : null}
-        <span className="self-center text-caption text-ink-muted">Diperbarui {fmtDate(p.end_date)}</span>
+        <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
       </footer>
     </div>
   );

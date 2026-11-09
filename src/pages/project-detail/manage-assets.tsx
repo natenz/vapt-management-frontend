@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createAsset, deleteAsset } from "@/entities/project/api";
+import { getErrorDetails } from "@/shared/api/api-error";
 import type { Asset } from "@/shared/api/schemas";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -15,8 +16,15 @@ const schema = z.object({
   asset_name: z.string().trim().min(1, "Nama aset wajib diisi"),
   asset_type: z.string().min(1),
   domain: z.string().optional(),
-  ip_address: z.string().optional(),
-  mandays: z.coerce.number().min(0, "Tidak boleh negatif"),
+  ip_address: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || z.ipv4().safeParse(val).success || z.ipv6().safeParse(val).success,
+      "Format IP address tidak valid (contoh: 192.168.1.1 atau 10.0.0.1)",
+    ),
+  mandays: z.coerce.number().gt(0, "Mandays harus lebih dari 0 (contoh: 1 atau 0.5)"),
 });
 type Values = z.input<typeof schema>;
 
@@ -30,7 +38,7 @@ export function ManageAssets({ projectId }: { projectId: number }) {
   const qc = useQueryClient();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { asset_type: "web", mandays: 0 },
+    defaultValues: { asset_type: "web", mandays: 1 },
   });
   const mutation = useMutation({
     mutationFn: (v: z.output<typeof schema>) =>
@@ -38,13 +46,13 @@ export function ManageAssets({ projectId }: { projectId: number }) {
         asset_name: v.asset_name,
         asset_type: v.asset_type,
         mandays: v.mandays,
-        domain: v.domain || undefined,
-        ip_address: v.ip_address || undefined,
+        domain: v.domain?.trim() || undefined,
+        ip_address: v.ip_address?.trim() || undefined,
       }),
     onSuccess: () => {
       refresh(qc, projectId);
       notify.success("Aset ditambahkan");
-      reset({ asset_type: "web", mandays: 0 });
+      reset({ asset_type: "web", mandays: 1 });
     },
   });
 
@@ -54,7 +62,13 @@ export function ManageAssets({ projectId }: { projectId: number }) {
         <h2 id="add-asset" className="text-title-md text-ink">Tambah aset yang diuji</h2>
         <p className="text-body-sm text-ink-muted">PM menentukan aset apa saja yang masuk proyek ini. Total mandays dihitung otomatis.</p>
       </div>
-      {mutation.error ? <Alert tone="error" title="Gagal menambah aset" compact>{mutation.error.message}</Alert> : null}
+      {mutation.error ? (
+        <Alert tone="error" title="Gagal menambah aset" compact>
+          {getErrorDetails(mutation.error).length > 0
+            ? getErrorDetails(mutation.error).join(", ")
+            : mutation.error.message}
+        </Alert>
+      ) : null}
       <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="grid gap-4 md:grid-cols-[2fr_1fr_2fr_1.5fr_1fr] md:items-start">
         <Field label="Nama aset" error={errors.asset_name?.message}>{(f) => <Input {...f} {...register("asset_name")} />}</Field>
         <Field label="Tipe">
@@ -66,7 +80,7 @@ export function ManageAssets({ projectId }: { projectId: number }) {
         </Field>
         <Field label="Domain">{(f) => <Input {...f} {...register("domain")} placeholder="portal.contoh.co.id" />}</Field>
         <Field label="IP address" error={errors.ip_address?.message}>{(f) => <Input {...f} {...register("ip_address")} placeholder="10.0.0.1" />}</Field>
-        <Field label="Mandays" error={errors.mandays?.message}>{(f) => <Input type="number" min={0} step="0.5" {...f} {...register("mandays")} />}</Field>
+        <Field label="Mandays" error={errors.mandays?.message}>{(f) => <Input type="number" min={0.5} step="0.5" placeholder="1" {...f} {...register("mandays")} />}</Field>
         <div className="md:col-span-5"><Button type="submit" variant="solid" loading={mutation.isPending}>Tambah aset</Button></div>
       </form>
     </section>

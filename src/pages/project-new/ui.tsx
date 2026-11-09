@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import { createProject } from "@/entities/project/api";
+import { createProject, getWorkload } from "@/entities/project/api";
 import { listUsers } from "@/entities/user/api";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -34,6 +34,7 @@ export function ProjectNewPage() {
   const queryClient = useQueryClient();
   const pms = useQuery({ queryKey: ["users", "project_manager"], queryFn: () => listUsers({ role: "project_manager" }) });
   const pentesters = useQuery({ queryKey: ["users", "pentester"], queryFn: () => listUsers({ role: "pentester" }) });
+  const workload = useQuery({ queryKey: ["workload"], queryFn: getWorkload });
   const writers = useQuery({ queryKey: ["users", "technical_writer"], queryFn: () => listUsers({ role: "technical_writer" }) });
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<FormValues>({
@@ -114,7 +115,7 @@ export function ProjectNewPage() {
           control={control}
           name="resource_user_ids"
           render={({ field }) => (
-            <TeamPicker value={field.value ?? []} onChange={field.onChange} pentesters={pentesters.data ?? []} writers={writers.data ?? []} />
+            <TeamPicker value={field.value ?? []} onChange={field.onChange} pentesters={pentesters.data ?? []} writers={writers.data ?? []} workload={workload.data ?? {}} />
           )}
         />
       </section>

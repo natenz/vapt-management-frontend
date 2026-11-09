@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createMandays } from "@/entities/project/api";
+import { getErrorDetails } from "@/shared/api/api-error";
 import type { ProjectDetail } from "@/shared/api/schemas";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -64,7 +65,13 @@ export function AssignMandays({ project }: { project: ProjectDetail }) {
           ))}
         </ul>
       ) : null}
-      {mutation.error ? <Alert tone="error" title="Gagal menugaskan" compact>{mutation.error.message}</Alert> : null}
+      {mutation.error ? (
+        <Alert tone="error" title="Gagal menugaskan" compact>
+          {getErrorDetails(mutation.error).length > 0
+            ? getErrorDetails(mutation.error).join(", ")
+            : mutation.error.message}
+        </Alert>
+      ) : null}
       <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="grid gap-4 md:grid-cols-5 md:items-start">
         <Field label="Aset" error={errors.asset_id?.message}>
           {(f) => (

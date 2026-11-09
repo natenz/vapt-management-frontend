@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import { ApiError } from "@/shared/api/api-error";
+import { ApiError, humanizeErrorMessage } from "@/shared/api/api-error";
 import { getApiBaseUrl } from "@/shared/config/env";
 import { envelope } from "@/shared/api/schemas";
 
@@ -58,10 +58,13 @@ export async function apiRequest<T>(
   if (!response.ok) {
     if (response.status === 401 && auth) adapter?.onUnauthorized();
     const p = payload as { message?: string; errors?: unknown } | null;
+    const rawMessage = p?.message ?? `Permintaan gagal dengan status ${response.status}`;
+    const rawErrors = p?.errors && typeof p.errors === "object" ? p.errors : undefined;
+    const humanMessage = humanizeErrorMessage(rawMessage, rawErrors);
     throw new ApiError(
-      p?.message ?? `Permintaan gagal dengan status ${response.status}`,
+      humanMessage,
       response.status,
-      p?.errors && typeof p.errors === "object" ? Object.entries(p.errors).map(([k, v]) => `${k}: ${String(v)}`) : undefined,
+      rawErrors ? Object.entries(rawErrors).map(([k, v]) => `${k}: ${String(v)}`) : undefined,
     );
   }
 

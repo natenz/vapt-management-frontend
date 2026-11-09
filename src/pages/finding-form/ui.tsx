@@ -6,6 +6,7 @@ import { z } from "zod";
 import { listCatalog } from "@/entities/catalog/api";
 import { createFinding } from "@/entities/finding/api";
 import { getProject } from "@/entities/project/api";
+import { useSession } from "@/entities/session";
 import { SEVERITIES } from "@/shared/api/schemas";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -43,6 +44,14 @@ export function FindingFormPage() {
   const catalog = useQuery({ queryKey: ["catalog"], queryFn: () => listCatalog() });
   const { register, handleSubmit, watch, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
   const fromCatalog = Boolean(watch("catalog_vulna_id"));
+  const sessionUser = useSession((s) => s.user);
+  // Pentester hanya boleh mencatat temuan di aset yang ditugaskan ke dia (baris mandays).
+  // ponytail: cuma filter FE; BE belum mengecek assignment, minta Adrian tambah validasi.
+  const isPentester = sessionUser?.role?.role_name === "pentester";
+  const assignedIds = new Set(
+    (project.data?.mandays ?? []).filter((m) => m.pentester_id === sessionUser?.sys_user_id).map((m) => m.asset_id),
+  );
+  const assets = (project.data?.assets ?? []).filter((a) => !isPentester || assignedIds.has(a.assets_id));
 
   const mutation = useMutation({
     mutationFn: (v: Values) =>
@@ -71,11 +80,11 @@ export function FindingFormPage() {
       {mutation.error ? <Alert tone="error" title="Gagal menyimpan temuan">{mutation.error.message}</Alert> : null}
       <div className="flex flex-col gap-4 rounded-md border border-border bg-surface p-6">
         <FieldGroup>
-          <Field label="Aset" error={errors.asset_id?.message}>
+          <Field label="Aset" error={errors.asset_id?.message} helper={isPentester && assets.length === 0 ? "Belum ada aset yang ditugaskan ke kamu di proyek ini. Minta PM menugaskan lewat Assign Pentester." : undefined}>
             {(f) => (
               <select className={selectClass} defaultValue="" {...f} {...register("asset_id")}>
                 <option value="" disabled>Pilih aset</option>
-                {(project.data?.assets ?? []).map((a) => (<option key={a.assets_id} value={a.assets_id}>{a.asset_name}</option>))}
+                {assets.map((a) => (<option key={a.assets_id} value={a.assets_id}>{a.asset_name}</option>))}
               </select>
             )}
           </Field>
