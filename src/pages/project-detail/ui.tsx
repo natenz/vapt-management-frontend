@@ -19,7 +19,7 @@ import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Stepper } from "@/shared/ui/stepper";
 import { notify } from "@/shared/ui/toast";
-import { ManageAssets, DeleteAssetButton } from "@/pages/project-detail/manage-assets";
+import { ManageAssets, DeleteAssetButton } from "@/features/manage-assets";
 import { AssignMandays } from "@/pages/project-detail/assign-mandays";
 import { FindingsPanel } from "@/pages/project-detail/findings-panel";
 import { mandaysState } from "@/pages/project-detail/gantt-state";
