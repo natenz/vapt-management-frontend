@@ -86,6 +86,7 @@ export const resourceSchema = z.object({
     .object({
       user_id: z.number(),
       full_name: z.string(),
+      sys_user_id: z.number().optional().nullable(),
       sys_user: userSchema.optional().nullable(),
     })
     .optional()

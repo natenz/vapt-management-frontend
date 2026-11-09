@@ -18,6 +18,8 @@ import { notify } from "@/shared/ui/toast";
 import { ManageAssets, DeleteAssetButton } from "@/pages/project-detail/manage-assets";
 import { AssignMandays } from "@/pages/project-detail/assign-mandays";
 import { FindingsPanel } from "@/pages/project-detail/findings-panel";
+import { mandaysState } from "@/pages/project-detail/gantt-state";
+import { TeamSidebar } from "@/pages/project-detail/team-sidebar";
 
 // Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
@@ -92,7 +94,7 @@ export function ProjectDetailPage() {
       label: `${m.asset?.asset_name ?? `Aset ${m.asset_id}`} · ${m.pentester?.profile?.full_name ?? m.pentester?.username ?? "-"}`,
       startsAt: m.start_date as string,
       endsAt: m.end_date as string,
-      state: m.status === "done" ? "done" : m.status === "in_progress" ? "current" : "todo",
+      state: mandaysState(m, current),
     }));
   const canEditAssets = current === "Planning" && ownsAsPm && (role === "project_manager" || role === "super_admin");
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
@@ -153,12 +155,14 @@ export function ProjectDetailPage() {
         ))}
       </dl>
 
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-8">
       <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
         <Progress value={(currentIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
         <Stepper steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))} currentIndex={currentIndex} allDone={current === "Done"} />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2" aria-label="Aset dan tim">
+      <section aria-label="Aset">
         <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
           <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
           {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
@@ -173,19 +177,6 @@ export function ProjectDetailPage() {
                     {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
                     {canEditAssets ? <DeleteAssetButton projectId={id} asset={a} /> : null}
                   </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
-          <h2 className="text-title-md text-ink">Tim proyek</h2>
-          {p.resources.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada anggota.</p> : (
-            <ul className="flex flex-col divide-y divide-border">
-              {p.resources.map((r) => (
-                <li key={r.resource_id} className="flex items-center justify-between py-3">
-                  <span className="text-title-sm text-ink">{r.user?.full_name ?? `User ${r.user_id}`}</span>
-                  <span className="text-body-sm text-ink-muted">{r.user?.sys_user?.role?.role_name ?? ""}</span>
                 </li>
               ))}
             </ul>
@@ -215,6 +206,9 @@ export function ProjectDetailPage() {
         ) : null}
         <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
       </footer>
+        </div>
+        <TeamSidebar project={p} />
+      </div>
     </div>
   );
 }
