@@ -3,16 +3,14 @@ import { FolderKanban } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { listProjects } from "@/entities/project/api";
+import { listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
-import type { Project } from "@/shared/api/schemas";
 import { fmtRange } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { SearchInput } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/page-header";
-import { ProjectStatusBadge } from "@/shared/ui/project-status-badge";
 import { Alert } from "@/shared/ui/alert";
 
 const columns: ColumnDef<Project>[] = [

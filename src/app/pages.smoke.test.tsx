@@ -18,18 +18,22 @@ const mockProject = {
   pm: { sys_user_id: 1, username: "pm", email: "pm@test.com", role_id: 3 },
 };
 
-vi.mock("@/entities/project/api", () => ({
-  listProjects: async () => ({ data: [mockProject], meta: { page: 1, limit: 10, total: 1 } }),
-  getProject: async () => mockProject,
-  listStatuses: async () => [{ status_process_id: 1, status_name: "Planning" }],
-  listStatusLogs: async () => [],
-  listResources: async () => [],
-  listAssets: async () => [],
-  listMandays: async () => [],
-  changeProjectStatus: async () => mockProject,
-  createProject: async () => mockProject,
-  getWorkload: async () => ({}),
-}));
+vi.mock("@/entities/project", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/project")>();
+  return {
+    ...actual,
+    listProjects: async () => ({ data: [mockProject], meta: { page: 1, limit: 10, total: 1 } }),
+    getProject: async () => mockProject,
+    listStatuses: async () => [{ status_process_id: 1, status_name: "Planning" }],
+    listStatusLogs: async () => [],
+    listResources: async () => [],
+    listAssets: async () => [],
+    listMandays: async () => [],
+    changeProjectStatus: async () => mockProject,
+    createProject: async () => mockProject,
+    getWorkload: async () => ({}),
+  };
+});
 
 vi.mock("@/entities/finding", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/finding")>();

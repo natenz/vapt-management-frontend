@@ -1,30 +1,22 @@
 import { z } from "zod";
 import { apiRequest } from "@/shared/api";
 import {
-  mandaysSchema, projectDetailSchema, projectSchema, resourceSchema, statusLogSchema, statusSchema, assetSchema,
-} from "@/shared/api/schemas";
-
-export type AssetInput = {
-  asset_name: string;
-  asset_type: string;
-  mandays: number;
-  ip_address?: string;
-  domain?: string;
-};
-export type CreateProjectInput = {
-  project_name: string;
-  client_name: string;
-  start_date: string;
-  end_date: string;
-  pm_id: number;
-  assets: AssetInput[];
-  resource_user_ids: number[];
-};
+  assetSchema,
+  mandaysSchema,
+  projectDetailSchema,
+  projectSchema,
+  resourceSchema,
+  statusLogSchema,
+  statusSchema,
+  type AssetInput,
+  type CreateProjectInput,
+  type MandaysInput,
+} from "../model/types";
 
 export const listStatuses = async () =>
   (await apiRequest("/statuses", { method: "GET" }, z.array(statusSchema))).data;
 
-export const listProjects = async (q: { status_id?: number; search?: string; page?: number; limit?: number }) =>
+export const listProjects = async (q: { status_id?: number; search?: string; page?: number; limit?: number } = {}) =>
   apiRequest("/projects", { method: "GET", query: q }, z.array(projectSchema));
 
 export const getProject = async (id: number) =>
@@ -51,18 +43,13 @@ export const listAssets = async (id: number) =>
 export const listMandays = async (id: number) =>
   (await apiRequest(`/projects/${id}/mandays`, { method: "GET" }, z.array(mandaysSchema))).data;
 
-export type MandaysInput = {
-  asset_id: number;
-  pentester_id: number;
-  start_date: string;
-  end_date: string;
-  allocated_mandays: number;
-  status?: "planned" | "in_progress" | "done";
-};
 export const createMandays = async (id: number, body: MandaysInput) =>
   (await apiRequest(`/projects/${id}/mandays`, { method: "POST", body }, mandaysSchema)).data;
 
-export const updateMandays = async (id: number, body: Partial<Pick<MandaysInput, "status" | "allocated_mandays" | "pentester_id" | "start_date" | "end_date">>) =>
+export const updateMandays = async (
+  id: number,
+  body: Partial<Pick<MandaysInput, "status" | "allocated_mandays" | "pentester_id" | "start_date" | "end_date">>,
+) =>
   (await apiRequest(`/mandays/${id}`, { method: "PUT", body }, mandaysSchema)).data;
 
 export const deleteMandays = async (id: number) =>

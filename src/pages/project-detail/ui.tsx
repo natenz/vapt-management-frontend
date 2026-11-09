@@ -1,15 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bug, FileText } from "lucide-react";
 import { Link, useParams } from "react-router";
-import { changeProjectStatus, getProject, listStatuses } from "@/entities/project/api";
+import {
+  changeProjectStatus,
+  getProject,
+  listStatuses,
+  ProjectStatusBadge,
+  PROJECT_STATUSES,
+} from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { getErrorDetails } from "@/shared/api/api-error";
-import { PROJECT_STATUSES } from "@/shared/api/schemas";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/ui/page-header";
-import { ProjectStatusBadge } from "@/shared/ui/project-status-badge";
 import { Gantt, type GanttItem } from "@/shared/ui/gantt";
 import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";

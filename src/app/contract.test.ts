@@ -3,7 +3,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { listCatalog } from "@/entities/catalog";
 import { getReport, listFindings } from "@/entities/finding";
-import { getProject, listMandays, listProjects, listResources, listStatuses, listStatusLogs } from "@/entities/project/api";
+import { getProject, listMandays, listProjects, listResources, listStatuses, listStatusLogs } from "@/entities/project";
 import { listRoles, listUsers } from "@/entities/user";
 import { useSession } from "@/entities/session";
 import { login, me } from "@/features/auth/api";

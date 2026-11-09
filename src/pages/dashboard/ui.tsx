@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Bug, CheckCheck, ClipboardCheck, FolderKanban, Hourglass, LayoutTemplate, Workflow } from "lucide-react";
 import { Link } from "react-router";
-import { listProjects } from "@/entities/project/api";
+import { listProjects, ProjectStatusBadge, PROJECT_STATUSES } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { fmtRange } from "@/shared/lib/format";
@@ -9,10 +9,8 @@ import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Progress } from "@/shared/ui/progress";
 import { SummaryTile } from "@/shared/ui/summary-tile";
-import { PROJECT_STATUSES } from "@/shared/api/schemas";
 import { cn } from "@/shared/lib/cn";
 import { PageHeader } from "@/shared/ui/page-header";
-import { ProjectStatusBadge } from "@/shared/ui/project-status-badge";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Alert } from "@/shared/ui/alert";
 

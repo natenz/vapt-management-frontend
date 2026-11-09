@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { z } from "zod";
 import { listCatalog } from "@/entities/catalog";
 import { createFinding } from "@/entities/finding";
-import { getProject } from "@/entities/project/api";
+import { getProject } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { SEVERITIES } from "@/shared/api/schemas";
 import { Alert } from "@/shared/ui/alert";

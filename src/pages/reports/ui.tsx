@@ -4,13 +4,12 @@ import { Link, useParams } from "react-router";
 import { groupByAsset } from "@/pages/reports/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
 import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
-import { listProjects } from "@/entities/project/api";
+import { listProjects, ProjectStatusBadge } from "@/entities/project";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
-import { ProjectStatusBadge } from "@/shared/ui/project-status-badge";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 /** Daftar proyek yang laporannya bisa dibuka (tahap Reporting dan sesudahnya). */
