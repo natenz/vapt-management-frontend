@@ -104,12 +104,12 @@ export function LoginPage() {
           </div>
 
           <FieldGroup className="mb-6">
-            <Field label="Username atau email" error={errors.login?.message}>
+            <Field label="Email" error={errors.login?.message}>
               {(field) => (
                 <Input
                   type="text"
                   autoComplete="username"
-                  placeholder="Username atau email"
+                  placeholder="myemail@example.com"
                   className="border-border bg-surface-subtle focus-ring-neutral hover:border-border-control focus-visible:border-border-control"
                   disabled={mutation.isPending}
                   {...field}
@@ -124,7 +124,7 @@ export function LoginPage() {
                   <Input
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
-                    placeholder="Password"
+                    placeholder="••••••••"
                     className="border-border bg-surface-subtle pr-12 focus-ring-neutral hover:border-border-control focus-visible:border-border-control"
                     disabled={mutation.isPending}
                     {...field}
@@ -172,7 +172,6 @@ export function LoginPage() {
             <ShieldCheck className="size-4.5" aria-hidden />
           </span>
           <div className="flex flex-col gap-0.5">
-            <p className="text-button text-ink">Akses akun perusahaan</p>
             <p className="text-body-sm text-ink-muted">
               Belum punya akun?{" "}
               <a
