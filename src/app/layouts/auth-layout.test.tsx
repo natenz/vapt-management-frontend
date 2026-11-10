@@ -21,7 +21,7 @@ describe("AuthLayout", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Assess your security. Validate your defenses.",
+        name: "VAPT Management",
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Login" })).toBeVisible();
