@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import { Field, FieldGroup, Input } from "@/shared/ui/input";
 
 const schema = z.object({
-  login: z.string().trim().min(1, "Username atau email wajib diisi"),
+  login: z.string().trim().min(1, "Username wajib diisi"),
   password: z.string().min(1, "Password wajib diisi"),
 });
 
@@ -104,12 +104,12 @@ export function LoginPage() {
           </div>
 
           <FieldGroup className="mb-8 gap-6">
-            <Field label="Email" error={errors.login?.message}>
+            <Field label="Username" error={errors.login?.message}>
               {(field) => (
                 <Input
                   type="text"
                   autoComplete="username"
-                  placeholder="myemail@example.com"
+                  placeholder="Username"
                   className="border-border bg-surface-subtle focus-ring-neutral hover:border-border-control focus-visible:border-border-control"
                   disabled={mutation.isPending}
                   {...field}
