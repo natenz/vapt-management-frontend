@@ -17,7 +17,7 @@ function BrandPanel() {
         className="absolute inset-x-8 bottom-8 flex flex-col text-ink-inverse sm:inset-x-10 sm:bottom-10 xl:inset-x-12 xl:bottom-12"
       >
         <div className="flex flex-col font-sans uppercase leading-[0.82] tracking-[-0.04em]">
-          <span className="text-stroke-inverse text-7xl font-black tracking-[-0.05em] sm:text-8xl xl:text-stroke-inverse-thick xl:text-[6.75rem] 2xl:text-[8.5rem]">
+          <span className="text-7xl font-black tracking-[-0.05em] text-ink-inverse sm:text-8xl xl:text-[6.75rem] 2xl:text-[8.5rem]">
             VAPT
           </span>
           <span className="text-4xl font-light tracking-[-0.02em] text-ink-inverse/90 sm:text-5xl xl:text-[4.25rem] 2xl:text-[5.5rem]">
