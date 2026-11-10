@@ -2,13 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { useSession } from "@/entities/session";
 import { login } from "@/features/auth";
-import authVisual from "@/shared/assets/holographic-server-scan-alert.webp";
-import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 import { cn } from "@/shared/lib/cn";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -50,49 +48,11 @@ export function LoginPage() {
   const isLoginAlertVisible = hasLoginError && !isLoginAlertClosing;
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-raised">
-      {/* Side image ditampilkan sebagian di atas pada tampilan responsif (mobile/tablet) */}
-      <div className="relative h-36 w-full overflow-hidden bg-surface-inverse sm:h-44 lg:hidden">
-        <img
-          src={authVisual}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 size-full object-cover object-center"
-        />
-        <div className="gradient-photo-scrim absolute inset-0" aria-hidden="true" />
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-5 bottom-4 flex flex-col font-sans uppercase leading-[0.84] tracking-[-0.04em] text-ink-inverse sm:inset-x-6 sm:bottom-5"
-        >
-          <span className="text-3xl font-black tracking-[-0.05em] sm:text-4xl">
-            VAPT
-          </span>
-          <span className="text-xl font-light tracking-[-0.02em] text-ink-inverse/90 sm:text-2xl">
-            MANAGEMENT
-          </span>
-        </div>
-      </div>
-
-      {/* Konten Card */}
-      <div className="flex flex-col gap-6 p-6 sm:p-8">
-        {/* Logo Trustera masuk ke dalam card (tumpang tindih di batas banner pada mobile) */}
-        <div className="-mt-14 mb-1 flex justify-center sm:-mt-16 lg:mt-0 lg:mb-1">
-          <Link
-            to="/"
-            aria-label="Kembali ke beranda"
-            className="flex size-16 items-center justify-center rounded-full border-4 border-surface bg-surface p-2.5 shadow-raised transition-transform duration-150 ease-out focus-ring hover:scale-105 sm:size-20 sm:p-3"
-          >
-            <img
-              src={trusteraMark}
-              alt="Trustera"
-              className="size-full object-contain logo-adaptive"
-            />
-          </Link>
-        </div>
-
+    <div className="w-full rounded-2xl border border-border bg-surface p-6 shadow-raised sm:p-8">
+      <div className="flex flex-col gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-title-lg text-ink sm:text-heading-1">Login</h1>
-          <p className="max-w-[36ch] text-body-lg text-ink-secondary">
+          <p className="max-w-[42ch] text-body-lg text-ink-secondary">
             Platform terpadu pengelolaan pengujian penetrasi, pelacakan kerentanan, dan validasi remedi keamanan.
           </p>
         </header>
@@ -144,7 +104,7 @@ export function LoginPage() {
           </div>
 
           <FieldGroup className="mb-8 gap-6">
-            <Field label="Username atau email" error={errors.login?.message}>
+            <Field label="Email" error={errors.login?.message}>
               {(field) => (
                 <Input
                   type="text"

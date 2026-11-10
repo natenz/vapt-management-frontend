@@ -1,5 +1,7 @@
-import { Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
 import authVisual from "@/shared/assets/holographic-server-scan-alert.webp";
+import trusteraLogo from "@/shared/assets/logo-trustera-red.png";
+import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 
 function BrandPanel() {
   return (
@@ -34,8 +36,58 @@ export function AuthLayout() {
       <h2 className="sr-only">VAPT Management</h2>
 
       <main className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-col justify-between overflow-x-hidden px-1 py-4 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-6 lg:px-8 lg:py-6 xl:px-12">
-        <div className="flex flex-1 items-center justify-center py-4">
+        {/* Desktop: Logo Trustera horizontal di luar card (pojok kiri atas) */}
+        <NavLink to="/" className="hidden w-fit rounded-sm focus-ring lg:block">
+          <img
+            src={trusteraLogo}
+            alt="Trustera"
+            width={1024}
+            height={257}
+            className="h-9 w-auto logo-adaptive"
+          />
+        </NavLink>
+
+        <div className="flex flex-1 items-center justify-center py-4 sm:py-6 lg:py-4">
           <div className="mx-auto flex w-full max-w-[440px] min-w-0 flex-col">
+            {/* Responsif (< lg): Banner visual di atas card, di luar card */}
+            <div className="relative mb-2 h-36 w-full overflow-hidden rounded-2xl bg-surface-inverse sm:h-44 lg:hidden">
+              <img
+                src={authVisual}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 size-full object-cover object-center"
+              />
+              <div className="gradient-photo-scrim absolute inset-0" aria-hidden="true" />
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-5 bottom-4 flex flex-col font-sans uppercase leading-[0.84] tracking-[-0.04em] text-ink-inverse sm:inset-x-6 sm:bottom-5"
+              >
+                <span className="text-3xl font-black tracking-[-0.05em] sm:text-4xl">
+                  VAPT
+                </span>
+                <span className="text-xl font-light tracking-[-0.02em] text-ink-inverse/90 sm:text-2xl">
+                  MANAGEMENT
+                </span>
+              </div>
+            </div>
+
+            {/* Responsif (< lg): Logo Trustera masuk ke tengah di antara banner atas dan card */}
+            <div className="relative z-10 -mt-10 mb-4 flex justify-center lg:hidden">
+              <NavLink
+                to="/"
+                aria-label="Kembali ke beranda"
+                className="flex size-16 items-center justify-center rounded-full border-4 border-bg bg-surface p-2.5 shadow-raised transition-transform duration-150 ease-out focus-ring hover:scale-105 sm:size-20 sm:p-3"
+              >
+                <img
+                  src={trusteraMark}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-full object-contain logo-adaptive"
+                />
+              </NavLink>
+            </div>
+
+            {/* Card Login */}
             <Outlet />
           </div>
         </div>
