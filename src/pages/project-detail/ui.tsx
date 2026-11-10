@@ -14,7 +14,6 @@ import { fmtDate, fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/ui/page-header";
-import { Gantt, type GanttItem } from "@/shared/ui/gantt";
 import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Stepper } from "@/shared/ui/stepper";
@@ -22,7 +21,7 @@ import { notify } from "@/shared/ui/toast";
 import { ManageAssets, DeleteAssetButton } from "@/features/manage-assets";
 import { AssignMandays } from "@/features/assign-mandays";
 import { FindingsPanel } from "@/widgets/project-findings-panel";
-import { mandaysState } from "@/pages/project-detail/gantt-state";
+import { ProjectGanttSection } from "@/widgets/project-gantt-section";
 import { TeamSidebar } from "@/pages/project-detail/team-sidebar";
 
 // Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
@@ -91,15 +90,6 @@ export function ProjectDetailPage() {
   }
 
   // BE: aset hanya bisa diubah saat Draft/Planning oleh PM pemilik (atau admin).
-  const ganttItems: GanttItem[] = p.mandays
-    .filter((m) => m.start_date && m.end_date)
-    .map((m) => ({
-      id: String(m.mandays_id),
-      label: `${m.asset?.asset_name ?? `Aset ${m.asset_id}`} · ${m.pentester?.profile?.full_name ?? m.pentester?.username ?? "-"}`,
-      startsAt: m.start_date as string,
-      endsAt: m.end_date as string,
-      state: mandaysState(m, current),
-    }));
   const canEditAssets = current === "Planning" && ownsAsPm && (role === "project_manager" || role === "super_admin");
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
   const canAssign = current === "Planning" && role === "project_manager" && ownsAsPm;
@@ -188,12 +178,7 @@ export function ProjectDetailPage() {
         </div>
       </section>
 
-      {ganttItems.length > 0 ? (
-        <section aria-labelledby="timeline" className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
-          <h2 id="timeline" className="text-title-md text-ink">Timeline pengujian</h2>
-          <Gantt items={ganttItems} initialMonth={ganttItems[0] ? new Date(ganttItems[0].startsAt) : undefined} />
-        </section>
-      ) : null}
+      <ProjectGanttSection project={p} />
 
       {canEditAssets ? <ManageAssets projectId={id} /> : null}
 
