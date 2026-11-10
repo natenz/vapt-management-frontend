@@ -19,7 +19,7 @@ export function teamRows(p: ProjectDetail): TeamRow[] {
   });
 }
 
-export function TeamSidebar({ project }: { project: ProjectDetail }) {
+export function ProjectTeamSidebar({ project }: { project: ProjectDetail }) {
   const rows = teamRows(project);
   return (
     <aside aria-labelledby="team" className="flex flex-col gap-3 rounded-md border border-border bg-surface p-5 lg:sticky lg:top-0">

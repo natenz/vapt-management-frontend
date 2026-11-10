@@ -22,7 +22,7 @@ import { ManageAssets, DeleteAssetButton } from "@/features/manage-assets";
 import { AssignMandays } from "@/features/assign-mandays";
 import { FindingsPanel } from "@/widgets/project-findings-panel";
 import { ProjectGanttSection } from "@/widgets/project-gantt-section";
-import { TeamSidebar } from "@/pages/project-detail/team-sidebar";
+import { TeamSidebar } from "@/widgets/project-team-sidebar";
 
 // Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
