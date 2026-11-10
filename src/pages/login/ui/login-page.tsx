@@ -52,8 +52,8 @@ export function LoginPage() {
       <div className="flex flex-col gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-title-lg text-ink sm:text-heading-1">Login</h1>
-          <p className="max-w-[36ch] text-body-lg text-ink-secondary">
-            Platform terpadu manajemen VAPT dan remedi keamanan.
+          <p className="max-w-[42ch] text-body-lg text-ink-secondary">
+            Platform Manajemen Layanan VAPT
           </p>
         </header>
 
@@ -172,7 +172,6 @@ export function LoginPage() {
             <ShieldCheck className="size-4.5" aria-hidden />
           </span>
           <div className="flex flex-col gap-0.5">
-            <p className="text-button text-ink">Akses akun perusahaan</p>
             <p className="text-body-sm text-ink-muted">
               Belum punya akun?{" "}
               <a

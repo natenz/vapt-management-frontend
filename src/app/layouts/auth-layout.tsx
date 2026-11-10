@@ -5,7 +5,7 @@ import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 
 function BrandPanel() {
   return (
-    <aside className="relative hidden min-h-0 overflow-hidden rounded-xs bg-surface-inverse lg:block">
+    <aside className="relative hidden min-h-0 overflow-hidden rounded-xs bg-surface-inverse min-[1301px]:block">
       <img
         src={authVisual}
         alt=""
@@ -32,12 +32,12 @@ function BrandPanel() {
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-bg p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(520px,0.98fr)] lg:gap-4 lg:p-4 xl:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)]">
+    <div className="min-h-screen bg-bg p-3 sm:p-4 min-[1301px]:grid min-[1301px]:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)] min-[1301px]:gap-4 min-[1301px]:p-4">
       <h2 className="sr-only">VAPT Management</h2>
 
-      <main className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-col justify-between overflow-x-hidden px-1 py-4 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-6 lg:px-8 lg:py-6 xl:px-12">
+      <main className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-col justify-between overflow-x-hidden px-1 py-4 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-6 min-[1301px]:px-8 min-[1301px]:py-6 2xl:px-12">
         {/* Desktop: Logo Trustera horizontal di luar card (pojok kiri atas) */}
-        <NavLink to="/" className="hidden w-fit rounded-sm focus-ring lg:block">
+        <NavLink to="/" className="hidden w-fit rounded-sm focus-ring min-[1301px]:block">
           <img
             src={trusteraLogo}
             alt="Trustera"
@@ -47,10 +47,10 @@ export function AuthLayout() {
           />
         </NavLink>
 
-        <div className="flex flex-1 items-center justify-center py-4 sm:py-6 lg:py-4">
-          <div className="mx-auto flex w-full max-w-[440px] min-w-0 flex-col">
-            {/* Responsif (< lg): Banner visual di atas card, di luar card */}
-            <div className="relative mb-2 h-36 w-full overflow-hidden rounded-2xl bg-surface-inverse sm:h-44 lg:hidden">
+        <div className="flex flex-1 items-center justify-center py-4 sm:py-6 min-[1301px]:py-4">
+          <div className="mx-auto flex w-full max-w-[440px] min-w-0 flex-col sm:max-w-[460px]">
+            {/* Responsif (<= 1300px): Banner visual di atas card, di luar card */}
+            <div className="relative mb-2 h-36 w-full overflow-hidden rounded-2xl bg-surface-inverse sm:h-44 md:h-48 min-[1301px]:hidden">
               <img
                 src={authVisual}
                 alt=""
@@ -60,19 +60,19 @@ export function AuthLayout() {
               <div className="gradient-photo-scrim absolute inset-0" aria-hidden="true" />
               <div
                 aria-hidden="true"
-                className="absolute inset-x-5 bottom-4 flex flex-col font-sans uppercase leading-[0.84] tracking-[-0.04em] text-ink-inverse sm:inset-x-6 sm:bottom-5"
+                className="absolute inset-x-5 bottom-4 flex flex-col font-sans uppercase leading-[0.84] tracking-[-0.04em] text-ink-inverse sm:inset-x-6 sm:bottom-5 md:inset-x-8 md:bottom-6"
               >
-                <span className="text-3xl font-black tracking-[-0.05em] sm:text-4xl">
+                <span className="text-3xl font-black tracking-[-0.05em] sm:text-4xl md:text-5xl">
                   VAPT
                 </span>
-                <span className="text-xl font-light tracking-[-0.02em] text-ink-inverse/90 sm:text-2xl">
+                <span className="text-xl font-light tracking-[-0.02em] text-ink-inverse/90 sm:text-2xl md:text-3xl">
                   MANAGEMENT
                 </span>
               </div>
             </div>
 
-            {/* Responsif (< lg): Logo Trustera masuk ke tengah di antara banner atas dan card */}
-            <div className="relative z-10 -mt-10 mb-4 flex justify-center lg:hidden">
+            {/* Responsif (<= 1300px): Logo Trustera masuk ke tengah di antara banner atas dan card */}
+            <div className="relative z-10 -mt-10 mb-4 flex justify-center min-[1301px]:hidden">
               <NavLink
                 to="/"
                 aria-label="Kembali ke beranda"
