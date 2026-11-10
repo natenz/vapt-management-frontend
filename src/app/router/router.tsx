@@ -7,7 +7,7 @@ import { DashboardPage } from "@/pages/dashboard/ui";
 import { FindingFormPage } from "@/pages/finding-form/ui";
 import { LoginPage } from "@/pages/login/ui";
 import { ProjectDetailPage } from "@/pages/project-detail";
-import { ProjectNewPage } from "@/pages/project-new/ui";
+import { ProjectNewPage } from "@/pages/project-new";
 import { ProjectsPage } from "@/pages/projects/ui";
 import { ReportPage, ReportsIndexPage } from "@/pages/reports/ui";
 import { RolesPage, UsersPage } from "@/pages/users/ui";
