@@ -297,3 +297,16 @@
   background-clip: text;
   color: transparent;
 }
+
+/*
+ * Outlined display typography (stroke only, tanpa fill).
+ */
+@utility text-stroke-inverse {
+  -webkit-text-stroke: 1.5px var(--color-ink-inverse);
+  color: transparent;
+}
+
+@utility text-stroke-inverse-thick {
+  -webkit-text-stroke: 2.25px var(--color-ink-inverse);
+  color: transparent;
+}
