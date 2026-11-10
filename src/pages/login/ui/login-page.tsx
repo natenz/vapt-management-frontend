@@ -52,8 +52,8 @@ export function LoginPage() {
       <div className="flex flex-col gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-title-lg text-ink sm:text-heading-1">Login</h1>
-          <p className="max-w-[36ch] text-body-lg text-ink-secondary">
-            Portal Vulnerability Assessment dan Penetration Testing (VAPT).
+          <p className="max-w-[42ch] text-body-lg text-ink-secondary">
+            Platform terpadu pengelolaan pengujian penetrasi, pelacakan kerentanan, dan validasi remedi keamanan.
           </p>
         </header>
 
