@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { useSession } from "@/entities/session";
 import { login } from "@/features/auth";
+import { cn } from "@/shared/lib/cn";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field, FieldGroup, Input } from "@/shared/ui/input";
@@ -15,73 +16,174 @@ const schema = z.object({
   login: z.string().trim().min(1, "Username atau email wajib diisi"),
   password: z.string().min(1, "Password wajib diisi"),
 });
-type Form = z.infer<typeof schema>;
+
+type LoginForm = z.infer<typeof schema>;
 
 export function LoginPage() {
-  const [show, setShow] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoginAlertClosing, setIsLoginAlertClosing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useSession((s) => s.setSession);
-  const { register, handleSubmit, formState: { errors } } = useForm<Form>({ resolver: zodResolver(schema) });
-  const mutation = useMutation({ mutationFn: login, onSuccess: setSession });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(schema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
+  });
+
+  const mutation = useMutation({
+    mutationFn: login,
+    onSuccess: setSession,
+  });
+
   const from = (location.state as { from?: string } | null)?.from;
   const destination = from?.startsWith("/") ? from : "/dashboard";
+  const hasLoginError = Boolean(mutation.error);
+  const isLoginAlertVisible = hasLoginError && !isLoginAlertClosing;
 
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-heading-1 text-ink">Login</h1>
-        <p className="text-body-lg text-ink-secondary">Portal VAPT Management.</p>
+        <h1 className="text-title-lg text-ink sm:text-heading-1">Login</h1>
+        <p className="max-w-[38ch] text-body-lg text-ink-secondary">
+          Portal Vulnerability Assessment dan Penetration Testing (VAPT).
+        </p>
       </header>
+
       <form
         noValidate
-        className="flex flex-col gap-6"
+        className="flex flex-col"
         onSubmit={handleSubmit(async (values) => {
+          setIsLoginAlertClosing(false);
           try {
             await mutation.mutateAsync(values);
             navigate(destination, { replace: true });
           } catch {
-            /* ditampilkan lewat mutation.error */
+            // Error tetap ditampilkan secara inline dari state mutation.
           }
         })}
       >
-        {mutation.error ? (
-          <Alert tone="error" title="Login gagal" compact>
-            {mutation.error.message}
-          </Alert>
-        ) : null}
-        <FieldGroup>
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows,opacity,margin-bottom] duration-200 ease-out",
+            isLoginAlertVisible
+              ? "mb-6 grid-rows-[1fr] opacity-100"
+              : "mb-0 grid-rows-[0fr] opacity-0",
+          )}
+          onTransitionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              event.propertyName === "grid-template-rows" &&
+              isLoginAlertClosing
+            ) {
+              mutation.reset();
+              setIsLoginAlertClosing(false);
+            }
+          }}
+        >
+          <div className="min-h-0 overflow-hidden">
+            {hasLoginError ? (
+              <Alert
+                tone="error"
+                title="Username atau password tidak valid"
+                compact
+                className="animate-form-feedback-in"
+                onDismiss={() => setIsLoginAlertClosing(true)}
+              >
+                {mutation.error?.message}
+              </Alert>
+            ) : null}
+          </div>
+        </div>
+
+        <FieldGroup className="mb-6">
           <Field label="Username atau email" error={errors.login?.message}>
-            {(f) => <Input autoComplete="username" disabled={mutation.isPending} {...f} {...register("login")} />}
+            {(field) => (
+              <Input
+                type="text"
+                autoComplete="username"
+                placeholder="Username atau email"
+                className="border-border bg-surface-subtle focus-ring-neutral hover:border-border-control focus-visible:border-border-control"
+                disabled={mutation.isPending}
+                {...field}
+                {...register("login")}
+              />
+            )}
           </Field>
+
           <Field label="Password" error={errors.password?.message}>
-            {(f) => (
+            {(field) => (
               <div className="relative">
                 <Input
-                  type={show ? "text" : "password"}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  className="pr-12"
+                  placeholder="Password"
+                  className="border-border bg-surface-subtle pr-12 focus-ring-neutral hover:border-border-control focus-visible:border-border-control"
                   disabled={mutation.isPending}
-                  {...f}
+                  {...field}
                   {...register("password")}
                 />
                 <button
                   type="button"
-                  onClick={() => setShow((v) => !v)}
-                  aria-label={show ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                  aria-pressed={show}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-ink-secondary focus-ring hover:text-ink"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  aria-pressed={showPassword}
+                  disabled={mutation.isPending}
+                  className="absolute top-1/2 right-3 inline-flex -translate-y-1/2 items-center justify-center text-ink focus-ring-neutral transition-colors duration-150 ease-out hover:text-ink-secondary disabled:cursor-not-allowed disabled:text-ink-disabled"
                 >
-                  {show ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+                  {showPassword ? (
+                    <EyeOff
+                      className="size-5 animate-control-icon-swap"
+                      strokeWidth={2.5}
+                      aria-hidden
+                    />
+                  ) : (
+                    <Eye
+                      className="size-5 animate-control-icon-swap"
+                      strokeWidth={2.5}
+                      aria-hidden
+                    />
+                  )}
                 </button>
               </div>
             )}
           </Field>
         </FieldGroup>
-        <Button type="submit" variant="solid" className="w-full" loading={mutation.isPending}>
+
+        <Button
+          type="submit"
+          variant="solid"
+          className="w-full transition-[color,background-color,border-color,box-shadow,transform] active:scale-[0.99]"
+          loading={mutation.isPending}
+        >
           Masuk
         </Button>
       </form>
+
+      <div className="flex items-start gap-3 border-t border-border pt-5">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-brand-tint text-brand">
+          <ShieldCheck className="size-4.5" aria-hidden />
+        </span>
+        <div className="flex flex-col gap-0.5">
+          <p className="text-button text-ink">Akses akun perusahaan</p>
+          <p className="text-body-sm text-ink-muted">
+            Belum punya akun?{" "}
+            <a
+              href="#"
+              className="rounded-xs font-medium text-brand focus-ring transition-colors duration-150 ease-out hover:text-brand-hover hover:underline"
+            >
+              Hubungi admin
+            </a>{" "}
+            untuk informasi lebih lanjut.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
