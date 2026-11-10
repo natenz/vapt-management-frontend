@@ -5,7 +5,7 @@
  * beberapa pekan `entities` akan mengimpor `widgets` dan strukturnya kembali
  * jadi folder biasa.
  *
- * Dua aturan:
+ * Tiga aturan:
  *
  *   1. ARAH — sebuah layer hanya boleh mengimpor dari layer DI BAWAHNYA.
  *        app > pages > widgets > features > entities > shared
@@ -14,7 +14,11 @@
  *      mengimpor slice tetangganya. `features/filter-findings` tidak boleh
  *      menyentuh `features/export-report`; kalau butuh, yang dipakai bersama
  *      turun ke layer di bawahnya.
- *      `shared` dikecualikan: isinya segmen (ui, lib, api), bukan slice.
+ *      `shared` dan `app` dikecualikan: isinya segmen (ui, lib, api), bukan slice.
+ *
+ *   3. PUBLIC API BOUNDARY — modul di luar sebuah slice hanya boleh mengimpor
+ *      lewat entry point publik slice tersebut (`@/<layer>/<slice>`), bukan
+ *      mengakses internal modul secara langsung (`@/<layer>/<slice>/ui/...`).
  *
  * Jalankan: npm run check:layers
  */
@@ -125,6 +129,45 @@ for (const file of walk(SRC)) {
         specifier,
         reason: `slice '${from.slice}' menyentuh slice tetangga '${to.slice}' di layer ${from.layer} — turunkan yang dipakai bersama ke layer di bawahnya`,
       });
+      continue;
+    }
+
+    // Aturan 3: public API boundary.
+    // Impor ke sliced layer (pages, widgets, features, entities) dari luar slice
+    // harus melalui entry point publik slice (@/<layer>/<slice>), bukan internal path.
+    if (!SEGMENT_LAYERS.has(to.layer) && to.slice) {
+      const isOutsideSlice = from.layer !== to.layer || from.slice !== to.slice;
+      if (isOutsideSlice) {
+        if (specifier.startsWith("@/")) {
+          const parts = specifier.split("/");
+          // Pola publik yang sah: @/<layer>/<slice> (panjang 3) atau @/<layer>/<slice>/index
+          if (parts.length > 3 && !(parts.length === 4 && parts[3] === "index")) {
+            violations.push({
+              rel,
+              specifier,
+              reason: `impor ke slice '${to.slice}' di layer ${to.layer} harus lewat Public API (@/${to.layer}/${to.slice}), dilarang mengimpor internal path`,
+            });
+            continue;
+          }
+        } else if (specifier.startsWith(".")) {
+          const targetAbs = resolve(dirname(file), specifier).replaceAll("\\", "/");
+          const sliceRootAbs = join(SRC, to.layer, to.slice).replaceAll("\\", "/");
+          const isRootOrIndex =
+            targetAbs === sliceRootAbs ||
+            targetAbs === `${sliceRootAbs}/index` ||
+            targetAbs === `${sliceRootAbs}/index.ts` ||
+            targetAbs === `${sliceRootAbs}/index.tsx`;
+
+          if (!isRootOrIndex) {
+            violations.push({
+              rel,
+              specifier,
+              reason: `impor ke slice '${to.slice}' di layer ${to.layer} dari luar slice harus lewat Public API (@/${to.layer}/${to.slice}), bukan impor relatif ke internal path`,
+            });
+            continue;
+          }
+        }
+      }
     }
   }
 }
@@ -141,4 +184,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log("  app > pages > widgets > features > entities > shared — terjaga.");
+console.log("  app > pages > widgets > features > entities > shared — arah, isolasi slice, dan public API boundary terjaga.");
