@@ -4,7 +4,7 @@ import trusteraLogo from "@/shared/assets/logo-trustera-red.png";
 
 function BrandPanel() {
   return (
-    <aside className="relative hidden min-h-0 overflow-hidden rounded-xl bg-surface-inverse lg:block">
+    <aside className="relative hidden min-h-0 overflow-hidden rounded-xs bg-surface-inverse lg:block">
       <img
         src={authVisual}
         alt=""
@@ -48,7 +48,7 @@ function BrandPanel() {
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-surface p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(520px,0.98fr)] lg:gap-4 lg:p-4 xl:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)]">
+    <div className="min-h-screen bg-bg p-3 sm:p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(520px,0.98fr)] lg:gap-4 lg:p-4 xl:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)]">
       <h2 className="sr-only">Assess your security. Validate your defenses.</h2>
 
       <main className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-col overflow-x-hidden px-1 py-2 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-4 lg:px-8 lg:py-3 xl:px-12">
@@ -62,8 +62,8 @@ export function AuthLayout() {
           />
         </NavLink>
 
-        <div className="flex flex-1 items-center py-10 sm:py-12 lg:py-8">
-          <div className="mx-auto flex w-full max-w-[420px] min-w-0 flex-col">
+        <div className="flex flex-1 items-center py-8 sm:py-10">
+          <div className="mx-auto flex w-full max-w-[460px] min-w-0 flex-col">
             <Outlet />
           </div>
         </div>
