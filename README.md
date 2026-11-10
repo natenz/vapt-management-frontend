@@ -22,18 +22,21 @@ Aturan arsitektur divalidasi secara otomatis melalui guardrail linter:
 
 ## Jalankan
     npm ci
-    cp .env.example .env     # VITE_API_BASE_URL -> URL BE termasuk /api/v1
+    cp .env.example .env     # VITE_API_BASE_URL -> URL BE termasuk /api/v1 (default: http://localhost:8080/api/v1)
     npm run dev
 
-Akun demo (setelah `go run ./cmd/seed -fresh` di BE): `techlead`, `pm.andi`, `pentester.budi`,
+Akun demo (setelah `make seed` atau `go run ./cmd/seed -fresh` di BE): `techlead`, `pm.andi`, `pentester.budi`,
 `writer.eka` dengan password `Password123!`; `superadmin` dengan `ChangeMe123!`.
 
+Pengujian remote/mobile via ngrok:
+    ngrok http 5173         # vite.config.ts sudah dikonfigurasi dengan allowedHosts: true & 0.0.0.0
+
 ## Verifikasi & Kualitas Kode
-    npm run verify                                                                      # Rangkaian lengkap: tokens, literals, layers, build, test
+    npm run verify                                                                      # Rangkaian lengkap: tokens, literals, layers, build, test (87 tests)
     npm run check:layers                                                                # Validasi FSD layer hierarchy & public API boundary
     npm run check:literals                                                              # Validasi 0 hex colors manual di src/
-    npm run tokens:check                                                                # Validasi kontras WCAG tema terang & gelap
-    CONTRACT_API=http://localhost:8088/api/v1 npx vitest run src/app/contract.test.ts   # BE harus hidup
+    npm run tokens:check                                                                # Validasi kontras WCAG tema terang & gelap (123 pasang)
+    CONTRACT_API=http://localhost:8080/api/v1 npx vitest run src/app/contract.test.ts   # BE harus hidup
 
 ## Belum ada (karena BE belum punya)
 - Kolom template Tracking Finding: impact, CWE, recommendation, references, findings code.
