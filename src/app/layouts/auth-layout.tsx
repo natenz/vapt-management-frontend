@@ -32,10 +32,10 @@ function BrandPanel() {
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-bg p-3 sm:p-4 min-[1301px]:grid min-[1301px]:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)] min-[1301px]:gap-4 min-[1301px]:p-4">
+    <div className="min-h-screen bg-surface p-0 sm:bg-bg sm:p-4 min-[1301px]:grid min-[1301px]:grid-cols-[minmax(540px,0.96fr)_minmax(0,1.04fr)] min-[1301px]:gap-4 min-[1301px]:p-4">
       <h2 className="sr-only">VAPT Management</h2>
 
-      <main className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-col justify-between overflow-x-hidden px-1 py-4 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-6 min-[1301px]:px-8 min-[1301px]:py-6 2xl:px-12">
+      <main className="flex min-h-screen min-w-0 flex-col justify-between overflow-x-hidden p-0 sm:min-h-[calc(100vh-2rem)] sm:px-6 sm:py-6 min-[1301px]:px-8 min-[1301px]:py-6 2xl:px-12">
         {/* Desktop: Logo Trustera horizontal di luar card (pojok kiri atas) */}
         <NavLink to="/" className="hidden w-fit rounded-sm focus-ring min-[1301px]:block">
           <img
@@ -47,10 +47,10 @@ export function AuthLayout() {
           />
         </NavLink>
 
-        <div className="flex flex-1 items-center justify-center py-4 sm:py-6 min-[1301px]:py-4">
-          <div className="mx-auto flex w-full max-w-[440px] min-w-0 flex-col sm:max-w-[460px]">
-            {/* Responsif (<= 1300px): Banner visual di atas card, di luar card */}
-            <div className="relative mb-2 h-36 w-full overflow-hidden rounded-2xl bg-surface-inverse sm:h-44 md:h-48 min-[1301px]:hidden">
+        <div className="flex flex-1 items-start justify-center sm:items-center sm:py-6 min-[1301px]:py-4">
+          <div className="mx-auto flex w-full max-w-full min-w-0 flex-col sm:max-w-[460px]">
+            {/* Responsif (<= 1300px): Banner visual di atas form/card */}
+            <div className="relative mb-2 h-40 w-full overflow-hidden bg-surface-inverse sm:h-44 sm:rounded-2xl md:h-48 min-[1301px]:hidden">
               <img
                 src={authVisual}
                 alt=""
@@ -71,12 +71,12 @@ export function AuthLayout() {
               </div>
             </div>
 
-            {/* Responsif (<= 1300px): Logo Trustera masuk ke tengah di antara banner atas dan card */}
+            {/* Responsif (<= 1300px): Logo Trustera masuk ke tengah di antara banner atas dan form/card */}
             <div className="relative z-10 -mt-10 mb-4 flex justify-center min-[1301px]:hidden">
               <NavLink
                 to="/"
                 aria-label="Kembali ke beranda"
-                className="flex size-16 items-center justify-center rounded-full border-4 border-bg bg-surface p-2.5 shadow-raised transition-transform duration-150 ease-out focus-ring hover:scale-105 sm:size-20 sm:p-3"
+                className="flex size-16 items-center justify-center rounded-full border-4 border-surface bg-surface p-2.5 shadow-raised transition-transform duration-150 ease-out focus-ring hover:scale-105 sm:border-bg sm:size-20 sm:p-3"
               >
                 <img
                   src={trusteraMark}
@@ -87,12 +87,12 @@ export function AuthLayout() {
               </NavLink>
             </div>
 
-            {/* Card Login */}
+            {/* Form Login (Native pada mobile, elevated card pada tablet/desktop) */}
             <Outlet />
           </div>
         </div>
 
-        <p className="pt-2 text-center text-caption text-ink-muted">
+        <p className="py-4 text-center text-caption text-ink-muted sm:pt-2 sm:pb-0">
           &copy; 2026 Telkom. Seluruh hak cipta dilindungi.
         </p>
       </main>

@@ -48,7 +48,7 @@ export function LoginPage() {
   const isLoginAlertVisible = hasLoginError && !isLoginAlertClosing;
 
   return (
-    <div className="w-full rounded-2xl border border-border bg-surface p-6 shadow-raised sm:p-8">
+    <div className="w-full px-5 py-2 sm:rounded-2xl sm:border sm:border-border sm:bg-surface sm:p-8 sm:shadow-raised">
       <div className="flex flex-col gap-6">
         <header className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-title-lg text-ink sm:text-heading-1">Login</h1>
