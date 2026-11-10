@@ -6,7 +6,7 @@ import { CatalogPage } from "@/pages/catalog/ui";
 import { DashboardPage } from "@/pages/dashboard/ui";
 import { FindingFormPage } from "@/pages/finding-form/ui";
 import { LoginPage } from "@/pages/login/ui";
-import { ProjectDetailPage } from "@/pages/project-detail/ui";
+import { ProjectDetailPage } from "@/pages/project-detail";
 import { ProjectNewPage } from "@/pages/project-new/ui";
 import { ProjectsPage } from "@/pages/projects/ui";
 import { ReportPage, ReportsIndexPage } from "@/pages/reports/ui";

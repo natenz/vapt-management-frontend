@@ -151,50 +151,50 @@ export function ProjectDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-8">
-      <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
-        <Progress value={(currentIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
-        <Stepper steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))} currentIndex={currentIndex} allDone={current === "Done"} />
-      </section>
+          <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
+            <Progress value={(currentIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
+            <Stepper steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))} currentIndex={currentIndex} allDone={current === "Done"} />
+          </section>
 
-      <section aria-label="Aset">
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
-          <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
-          {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
-            <ul className="flex flex-col divide-y divide-border">
-              {p.assets.map((a) => (
-                <li key={a.assets_id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                  <span className="flex flex-col">
-                    <span className="text-title-sm text-ink">{a.asset_name}</span>
-                    <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
-                  </span>
-                  <span className="flex items-center gap-2 text-body-sm text-ink-secondary tabular">
-                    {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
-                    {canEditAssets ? <DeleteAssetButton projectId={id} asset={a} /> : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
+          <section aria-label="Aset">
+            <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
+              <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
+              {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
+                <ul className="flex flex-col divide-y divide-border">
+                  {p.assets.map((a) => (
+                    <li key={a.assets_id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                      <span className="flex flex-col">
+                        <span className="text-title-sm text-ink">{a.asset_name}</span>
+                        <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
+                      </span>
+                      <span className="flex items-center gap-2 text-body-sm text-ink-secondary tabular">
+                        {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
+                        {canEditAssets ? <DeleteAssetButton projectId={id} asset={a} /> : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
 
-      <ProjectGanttSection project={p} />
+          <ProjectGanttSection project={p} />
 
-      {canEditAssets ? <ManageAssets projectId={id} /> : null}
+          {canEditAssets ? <ManageAssets projectId={id} /> : null}
 
-      {canAssign ? <AssignMandays project={p} /> : null}
+          {canAssign ? <AssignMandays project={p} /> : null}
 
-      {["Pentest", "Reporting", "Remediation", "Retest", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
+          {["Pentest", "Reporting", "Remediation", "Retest", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
 
-      <footer className="flex flex-wrap gap-3">
-        {(role === "pentester" || role === "super_admin") && ["Pentest", "Retest"].includes(current) ? (
-          <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
-        ) : null}
-        {["Reporting", "Remediation", "Retest", "Done"].includes(current) ? (
-          <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
-        ) : null}
-        <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
-      </footer>
+          <footer className="flex flex-wrap gap-3">
+            {(role === "pentester" || role === "super_admin") && ["Pentest", "Retest"].includes(current) ? (
+              <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
+            ) : null}
+            {["Reporting", "Remediation", "Retest", "Done"].includes(current) ? (
+              <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
+            ) : null}
+            <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
+          </footer>
         </div>
         <TeamSidebar project={p} />
       </div>
