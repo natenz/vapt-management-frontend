@@ -38,6 +38,9 @@ export type {
   Resource,
 };
 
+export type { ResourceLoad } from "./load";
+export { aggregateLoad } from "./load";
+
 export type StatusLog = z.infer<typeof statusLogSchema>;
 
 export type AssetInput = {

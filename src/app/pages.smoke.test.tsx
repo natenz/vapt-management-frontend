@@ -32,6 +32,7 @@ vi.mock("@/entities/project", async (importOriginal) => {
     changeProjectStatus: async () => mockProject,
     createProject: async () => mockProject,
     getWorkload: async () => ({}),
+    getResourceLoad: async () => ({}),
   };
 });
 
@@ -106,6 +107,7 @@ describe("Router Pages Smoke Tests", () => {
     { path: "/projects/1", label: "Project Detail" },
     { path: "/projects/1/findings/new", label: "New Finding" },
     { path: "/projects/1/report", label: "Project Report" },
+    { path: "/resources", label: "Resources" },
     { path: "/reports", label: "Reports Index" },
     { path: "/catalog", label: "Catalog" },
     { path: "/users", label: "Users" },

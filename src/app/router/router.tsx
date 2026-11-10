@@ -10,6 +10,7 @@ import { ProjectDetailPage } from "@/pages/project-detail";
 import { ProjectNewPage } from "@/pages/project-new";
 import { ProjectsPage } from "@/pages/projects";
 import { ReportPage, ReportsIndexPage } from "@/pages/reports";
+import { ResourcesPage } from "@/pages/resources";
 import { RolesPage, UsersPage } from "@/pages/users";
 
 export const routes: RouteObject[] = [
@@ -49,6 +50,14 @@ export const routes: RouteObject[] = [
       },
       { path: "/projects/:projectId/report", element: <ReportPage /> },
       { path: "/findings", element: <Navigate to="/projects" replace /> },
+      {
+        path: "/resources",
+        element: (
+          <RequireAuth roles={["tech_lead", "super_admin"]}>
+            <ResourcesPage />
+          </RequireAuth>
+        ),
+      },
       { path: "/reports", element: <ReportsIndexPage /> },
       { path: "/catalog", element: <CatalogPage /> },
       {
