@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Download, FileText } from "lucide-react";
 import { Link, useParams } from "react-router";
-import { groupByAsset } from "@/pages/reports/report-views";
+import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
 import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge } from "@/entities/project";
@@ -41,17 +41,17 @@ export function ReportsIndexPage() {
 function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; showAsset: boolean }) {
   return (
     <li className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-title-sm text-ink">{f.custom_title}</span>
-                  <SeverityBadge severity={toSeverityKey(f.severity)} />
-                </div>
-                <p className="text-body-sm text-ink-muted">
-                  {showAsset ? `${f.asset?.asset_name ?? `Aset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
-                </p>
-                {(f.evidences ?? []).length ? (
-                  <p className="text-caption text-ink-muted">Evidence: {(f.evidences ?? []).map((e) => e.file_name).join(", ")}</p>
-                ) : null}
-              </li>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-title-sm text-ink">{f.custom_title}</span>
+        <SeverityBadge severity={toSeverityKey(f.severity)} />
+      </div>
+      <p className="text-body-sm text-ink-muted">
+        {showAsset ? `${f.asset?.asset_name ?? `Aset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
+      </p>
+      {(f.evidences ?? []).length ? (
+        <p className="text-caption text-ink-muted">Evidence: {(f.evidences ?? []).map((e) => e.file_name).join(", ")}</p>
+      ) : null}
+    </li>
   );
 }
 

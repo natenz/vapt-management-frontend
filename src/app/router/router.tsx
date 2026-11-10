@@ -2,15 +2,15 @@ import type { RouteObject } from "react-router";
 import { createBrowserRouter, Navigate } from "react-router";
 import { AuthLayout, DashboardLayout } from "@/app/layouts";
 import { RequireAuth, RequireGuest } from "@/features/auth";
-import { CatalogPage } from "@/pages/catalog/ui";
-import { DashboardPage } from "@/pages/dashboard/ui";
-import { FindingFormPage } from "@/pages/finding-form/ui";
-import { LoginPage } from "@/pages/login/ui";
+import { CatalogPage } from "@/pages/catalog";
+import { DashboardPage } from "@/pages/dashboard";
+import { FindingFormPage } from "@/pages/finding-form";
+import { LoginPage } from "@/pages/login";
 import { ProjectDetailPage } from "@/pages/project-detail";
 import { ProjectNewPage } from "@/pages/project-new";
-import { ProjectsPage } from "@/pages/projects/ui";
-import { ReportPage, ReportsIndexPage } from "@/pages/reports/ui";
-import { RolesPage, UsersPage } from "@/pages/users/ui";
+import { ProjectsPage } from "@/pages/projects";
+import { ReportPage, ReportsIndexPage } from "@/pages/reports";
+import { RolesPage, UsersPage } from "@/pages/users";
 
 export const routes: RouteObject[] = [
   {

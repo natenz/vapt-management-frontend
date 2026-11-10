@@ -10,10 +10,23 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 const columns: ColumnDef<User>[] = [
-  { id: "name", header: "Nama", accessorFn: (u) => u.profile?.full_name ?? u.username, cell: ({ row }) => <span className="text-title-sm text-ink">{row.original.profile?.full_name ?? row.original.username}</span> },
+  {
+    id: "name",
+    header: "Nama",
+    accessorFn: (u) => u.profile?.full_name ?? u.username,
+    cell: ({ row }) => <span className="text-title-sm text-ink">{row.original.profile?.full_name ?? row.original.username}</span>,
+  },
   { accessorKey: "username", header: "Username" },
   { accessorKey: "email", header: "Email" },
-  { id: "role", header: "Role", accessorFn: (u) => u.role?.role_name ?? "-", cell: ({ row }) => { const n = row.original.role?.role_name; return isRole(n) ? ROLE_LABEL[n] : (n ?? "-"); } },
+  {
+    id: "role",
+    header: "Role",
+    accessorFn: (u) => u.role?.role_name ?? "-",
+    cell: ({ row }) => {
+      const n = row.original.role?.role_name;
+      return isRole(n) ? ROLE_LABEL[n] : (n ?? "-");
+    },
+  },
   { id: "dept", header: "Departemen", accessorFn: (u) => u.profile?.department ?? "-" },
 ];
 

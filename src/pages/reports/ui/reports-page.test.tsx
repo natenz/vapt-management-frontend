@@ -37,7 +37,7 @@ beforeAll(() => {
 
 describe("ReportPage", () => {
   it("dua tab: Laporan Proyek (semua temuan) dan Laporan per Aset (dikelompokkan, aset kosong tetap tampil)", async () => {
-    const { ReportPage } = await import("./ui");
+    const { ReportPage } = await import("./reports-page");
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <MemoryRouter initialEntries={["/projects/4/report"]}>
