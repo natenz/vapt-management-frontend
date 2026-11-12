@@ -12,7 +12,6 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { notify } from "@/shared/ui/toast";
 import { TeamPicker } from "@/features/assign-project-team";
-import { getErrorDetails } from "@/shared/api";
 
 const schema = z
   .object({
@@ -71,7 +70,6 @@ export function ProjectNewPage() {
       {mutation.error ? (
         <Alert tone="error" title="Gagal menyimpan template">
           {mutation.error.message}
-          {getErrorDetails(mutation.error).map((d) => (<div key={d}>{d}</div>))}
         </Alert>
       ) : null}
 

@@ -4,9 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Combobox, type ComboOption } from "@/shared/ui/combobox";
 import { StatusBadge } from "@/shared/ui/badge";
 import { Field } from "@/shared/ui/input";
-
-// Kebijakan batas beban per orang (md). Bukan data, jadi tetap konstanta.
-const MANDAYS_LIMIT = 20;
+import { MANDAYS_LIMIT } from "@/shared/config/workload";
 
 export type TeamPickerProps = {
   value: number[];

@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 import { useSession } from "@/entities/session";
 import { ThemeToggle } from "@/features/toggle-theme";
 import { navFor, ROLE_LABEL, isRole } from "@/shared/config/roles";
@@ -33,6 +34,18 @@ export function AppHeader() {
 
   return (
     <header className="z-nav flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg px-4 lg:px-6">
+      <NavLink
+        to="/dashboard"
+        className="flex shrink-0 items-center rounded-sm focus-ring lg:hidden"
+      >
+        <img
+          src={trusteraMark}
+          alt="Trustera"
+          width={209}
+          height={209}
+          className="size-7 object-contain logo-adaptive"
+        />
+      </NavLink>
       <Breadcrumb
         items={[{ label: "VAPT", href: "/dashboard" }, { label: current?.label ?? "Detail" }]}
         className="min-w-0 flex-1"

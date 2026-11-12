@@ -5,13 +5,17 @@ import {
   mandaysSchema,
   projectDetailSchema,
   projectSchema,
+  projectStageSchema,
   resourceSchema,
   statusLogSchema,
   statusSchema,
   type AssetInput,
   type CreateProjectInput,
   type MandaysInput,
+  type ResourceLoad,
+  type StageScheduleInput,
 } from "../model/types";
+import { aggregateLoad } from "../model/load";
 
 export const listStatuses = async () =>
   (await apiRequest("/statuses", { method: "GET" }, z.array(statusSchema))).data;
@@ -58,8 +62,26 @@ export const deleteMandays = async (id: number) =>
 export const createAsset = async (id: number, body: AssetInput) =>
   (await apiRequest(`/projects/${id}/assets`, { method: "POST", body }, assetSchema)).data;
 
+export const updateAsset = async (id: number, body: Partial<AssetInput>) =>
+  (await apiRequest(`/assets/${id}`, { method: "PUT", body }, assetSchema)).data;
+
 export const deleteAsset = async (assetId: number) =>
   (await apiRequest(`/assets/${assetId}`, { method: "DELETE" }, z.unknown())).data;
+
+export const updateProjectStages = async (id: number, stages: StageScheduleInput[]) =>
+  (await apiRequest(`/projects/${id}/stages`, { method: "PUT", body: { stages } }, z.array(projectStageSchema))).data;
+
+/**
+ * Beban + proyek aktif tiap orang (key = sys_user_id) dari proyek yang belum Done.
+ * ponytail: BE belum punya endpoint beban kerja, jadi 1 request list + 1 request detail per proyek.
+ * Cukup untuk puluhan proyek; kalau lambat, minta BE tambah GET /workload lalu ganti isi fungsi ini.
+ */
+export const getResourceLoad = async (): Promise<Record<number, ResourceLoad>> => {
+  const { data: projects } = await listProjects({ limit: 100 });
+  const active = projects.filter((p) => p.status?.status_name !== "Done");
+  const details = await Promise.all(active.map((p) => getProject(p.project_id)));
+  return aggregateLoad(details);
+};
 
 /**
  * Beban mandays per pentester (key = sys_user_id), dijumlah dari trx_mandays lintas proyek yang belum Done.

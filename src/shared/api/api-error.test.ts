@@ -44,4 +44,21 @@ describe("humanizeErrorMessage", () => {
     const res = humanizeErrorMessage("asset 'Portal Web' has no pentester assigned in the timeline");
     expect(res).toBe('Aset "Portal Web" belum ditugaskan ke pentester di timeline jadwal.');
   });
+
+  it("400 validasi: message sudah Indonesia dan details kosong (tidak ada 'failed on')", async () => {
+    const { ApiError, getErrorDetails } = await import("./api-error");
+    const { apiRequest, configureHttpAuth } = await import("./http-client");
+    (import.meta.env as Record<string, string>).VITE_API_BASE_URL = "http://x/api/v1";
+    configureHttpAuth({ getToken: () => null, onUnauthorized: () => {} });
+    const { z } = await import("zod");
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ success: false, message: "invalid request body", errors: { ip_address: "failed on 'ip'" } }), {
+        status: 400,
+      })) as typeof fetch;
+    const err = await apiRequest("/x", { method: "POST", body: {} }, z.unknown()).catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.message).toBe("IP address bukan IP yang valid (contoh: 192.168.1.1).");
+    expect(getErrorDetails(err)).toEqual([]);
+    expect(JSON.stringify(err.details ?? "")).not.toContain("failed on");
+  });
 });

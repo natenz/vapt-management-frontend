@@ -64,7 +64,7 @@ export async function apiRequest<T>(
     throw new ApiError(
       humanMessage,
       response.status,
-      rawErrors ? Object.entries(rawErrors).map(([k, v]) => `${k}: ${String(v)}`) : undefined,
+      // rincian mentah BE sudah diterjemahkan ke `message`; jangan diteruskan ke UI
     );
   }
 

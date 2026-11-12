@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   Lock,
+  Users,
   UsersRound,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ export const NAV: readonly NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, roles: ALL },
   { label: "Proyek", to: "/projects", icon: FolderKanban, roles: ALL },
   { label: "Project Template", to: "/projects/new", icon: LayoutTemplate, roles: ["super_admin", "tech_lead"] },
+  { label: "Resource", to: "/resources", icon: Users, roles: ["super_admin", "tech_lead"] },
   { label: "Koreksi & Laporan", to: "/reports", icon: ClipboardCheck, roles: ["technical_writer", "project_manager"] },
   { label: "Katalog Kerentanan", to: "/catalog", icon: FileText, roles: ALL },
   { label: "Kelola User", to: "/users", icon: UsersRound, roles: ["super_admin"] },

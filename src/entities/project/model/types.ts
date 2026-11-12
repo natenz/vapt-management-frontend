@@ -4,6 +4,7 @@ import {
   mandaysSchema,
   projectDetailSchema,
   projectSchema,
+  projectStageSchema,
   resourceSchema,
   statusLogSchema,
   statusSchema,
@@ -12,6 +13,7 @@ import {
   type Mandays,
   type Project,
   type ProjectDetail,
+  type ProjectStage,
   type ProjectStatus,
   type ProjectStatusName,
   type Resource,
@@ -22,6 +24,7 @@ export {
   mandaysSchema,
   projectDetailSchema,
   projectSchema,
+  projectStageSchema,
   resourceSchema,
   statusLogSchema,
   statusSchema,
@@ -33,10 +36,21 @@ export type {
   Mandays,
   Project,
   ProjectDetail,
+  ProjectStage,
   ProjectStatus,
   ProjectStatusName,
   Resource,
 };
+
+export type StageScheduleInput = {
+  stage_id: number;
+  owner?: string;
+  start_date: string;
+  end_date: string;
+};
+
+export type { ResourceLoad } from "./load";
+export { aggregateLoad } from "./load";
 
 export type StatusLog = z.infer<typeof statusLogSchema>;
 

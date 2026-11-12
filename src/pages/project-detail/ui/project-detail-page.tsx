@@ -9,7 +9,6 @@ import {
   PROJECT_STATUSES,
 } from "@/entities/project";
 import { useSession } from "@/entities/session";
-import { getErrorDetails } from "@/shared/api/api-error";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -18,8 +17,7 @@ import { Progress } from "@/shared/ui/progress";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Stepper } from "@/shared/ui/stepper";
 import { notify } from "@/shared/ui/toast";
-import { ManageAssets, DeleteAssetButton } from "@/features/manage-assets";
-import { AssignMandays } from "@/features/assign-mandays";
+import { AssetPlanner } from "@/features/asset-planner";
 import { FindingsPanel } from "@/widgets/project-findings-panel";
 import { ProjectGanttSection } from "@/widgets/project-gantt-section";
 import { TeamSidebar } from "@/widgets/project-team-sidebar";
@@ -129,9 +127,7 @@ export function ProjectDetailPage() {
 
       {advance.error ? (
         <Alert tone="error" title="Status belum bisa diubah">
-          {getErrorDetails(advance.error).length > 0
-            ? getErrorDetails(advance.error).join(", ")
-            : advance.error.message}
+          {advance.error.message}
         </Alert>
       ) : null}
 
@@ -167,9 +163,8 @@ export function ProjectDetailPage() {
                         <span className="text-title-sm text-ink">{a.asset_name}</span>
                         <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
                       </span>
-                      <span className="flex items-center gap-2 text-body-sm text-ink-secondary tabular">
+                      <span className="text-body-sm text-ink-secondary tabular">
                         {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
-                        {canEditAssets ? <DeleteAssetButton projectId={id} asset={a} /> : null}
                       </span>
                     </li>
                   ))}
@@ -178,11 +173,15 @@ export function ProjectDetailPage() {
             </div>
           </section>
 
-          <ProjectGanttSection project={p} />
+          <ProjectGanttSection
+            project={p}
+            canEdit={
+              current !== "Done" &&
+              (role === "super_admin" || role === "tech_lead" || (role === "project_manager" && ownsAsPm))
+            }
+          />
 
-          {canEditAssets ? <ManageAssets projectId={id} /> : null}
-
-          {canAssign ? <AssignMandays project={p} /> : null}
+          {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 
           {["Pentest", "Reporting", "Remediation", "Retest", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
 
