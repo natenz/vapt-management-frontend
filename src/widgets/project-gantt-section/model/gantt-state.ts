@@ -3,7 +3,7 @@ import type { ProjectDetail } from "@/entities/project";
 import type { GanttState } from "@/shared/ui/gantt";
 
 // Tahap pengujian (kerja yang dijadwalkan di trx_mandays) sudah lewat begitu proyek keluar dari Pentest.
-const PENTEST_FINISHED = ["Reporting", "Remediation", "Retest", "Done"];
+const PENTEST_FINISHED = ["Reporting", "Remediation", "Retest", "Final Report", "Done"];
 
 /**
  * Warna batang Gantt. BE tidak pernah mengubah trx_mandays.status (semua tetap "planned", termasuk di
@@ -49,6 +49,8 @@ function activeStageIndex(statusName: string): number {
       return 4;
     case "Retest":
       return 5;
+    case "Final Report":
+      return 6;
     case "Done":
       return STAGE_DEFS.length;
     default:

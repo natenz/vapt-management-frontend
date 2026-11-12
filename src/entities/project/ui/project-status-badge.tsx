@@ -9,6 +9,7 @@ const TONE: Record<string, Tone> = {
   Reporting: "info",
   Remediation: "warning",
   Retest: "warning",
+  "Final Report": "info",
   Done: "success",
 };
 

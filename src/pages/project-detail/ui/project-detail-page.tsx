@@ -28,9 +28,10 @@ const NEXT: Record<string, { to: string; label: string; roles: string[]; back?: 
   Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
   Planning: { to: "Pentest", label: "Mulai Pentest", roles: ["project_manager", "super_admin"] },
   Pentest: { to: "Reporting", label: "Selesai Pentest, mulai Reporting", roles: ["project_manager", "super_admin"] },
-  Reporting: { to: "Remediation", label: "Serahkan laporan untuk Remediasi", roles: ["technical_writer", "project_manager", "super_admin"] },
+  Reporting: { to: "Remediation", label: "Serahkan laporan awal untuk Remediasi", roles: ["technical_writer", "project_manager", "super_admin"] },
   Remediation: { to: "Retest", label: "Minta Retest", roles: ["project_manager", "super_admin"] },
-  Retest: { to: "Done", label: "Tandai Selesai", roles: ["project_manager", "super_admin"], back: { to: "Remediation", label: "Masih ada yang rentan, kembali ke Remediasi" } },
+  Retest: { to: "Final Report", label: "Selesai Retest, susun Final Report", roles: ["project_manager", "super_admin"], back: { to: "Remediation", label: "Masih ada yang rentan, kembali ke Remediasi" } },
+  "Final Report": { to: "Done", label: "Serahkan Final Report, tandai Selesai", roles: ["technical_writer", "project_manager", "super_admin"] },
 };
 
 export function ProjectDetailPage() {
@@ -183,13 +184,13 @@ export function ProjectDetailPage() {
 
           {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 
-          {["Pentest", "Reporting", "Remediation", "Retest", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
+          {["Pentest", "Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
 
           <footer className="flex flex-wrap gap-3">
             {(role === "pentester" || role === "super_admin") && ["Pentest", "Retest"].includes(current) ? (
               <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
             ) : null}
-            {["Reporting", "Remediation", "Retest", "Done"].includes(current) ? (
+            {["Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(current) ? (
               <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
             ) : null}
             <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>

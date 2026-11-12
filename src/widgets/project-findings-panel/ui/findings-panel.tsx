@@ -25,8 +25,8 @@ import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-// BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; hanya saat Pentest/Reporting/Remediation/Retest.
-const EDITABLE_STATUSES = ["Pentest", "Reporting", "Remediation", "Retest"];
+// BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; terkunci saat Remediation, terbuka lagi saat Retest/Final Report.
+const EDITABLE_STATUSES = ["Pentest", "Reporting", "Retest", "Final Report"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
   custom_title: z.string().trim().min(1, "Judul wajib diisi").max(255, "Judul maksimal 255 karakter"),

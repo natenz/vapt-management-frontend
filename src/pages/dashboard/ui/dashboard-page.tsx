@@ -19,7 +19,7 @@ const WAITING: Record<string, { statuses: string[]; hint: string }> = {
   tech_lead: { statuses: ["Draft"], hint: "Template draf yang belum diserahkan ke PM" },
   project_manager: { statuses: ["Planning"], hint: "Template menunggu aset dan assign Pentester" },
   pentester: { statuses: ["Pentest", "Retest"], hint: "Proyek yang perlu Anda uji" },
-  technical_writer: { statuses: ["Reporting"], hint: "Proyek siap dikoreksi dan dibuatkan laporan" },
+  technical_writer: { statuses: ["Reporting", "Final Report"], hint: "Proyek siap disusun laporannya (Initial / Final Report)" },
   super_admin: { statuses: [], hint: "" },
 };
 
@@ -54,13 +54,13 @@ export function DashboardPage() {
 
       <section className="grid gap-4 md:grid-cols-3" aria-label="Ringkasan">
         <SummaryTile label="Giliran Anda" value={projects.isLoading ? null : mine.length} unit="Proyek" icon={<Hourglass />} fill="brand" loading={projects.isLoading} note={{ text: waiting.hint || "Seluruh proyek yang bisa Anda lihat" }} />
-        <SummaryTile label="Sedang berjalan" value={projects.isLoading ? null : running.length} unit="Proyek" icon={<Workflow />} loading={projects.isLoading} note={{ text: "Tahap Planning sampai Retest" }} />
+        <SummaryTile label="Sedang berjalan" value={projects.isLoading ? null : running.length} unit="Proyek" icon={<Workflow />} loading={projects.isLoading} note={{ text: "Tahap Planning sampai Final Report" }} />
         <SummaryTile label="Selesai" value={projects.isLoading ? null : done.length} unit="Proyek" icon={<CheckCheck />} loading={projects.isLoading} note={{ text: "Status Done" }} />
       </section>
 
       <section aria-label="Sebaran tahap" className="rounded-md border border-border bg-surface p-6">
         <h2 className="mb-4 text-title-md text-ink">Sebaran per tahap</h2>
-        <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {PROJECT_STATUSES.map((s) => {
             const n = list.filter((p) => p.status?.status_name === s).length;
             const mineStage = waiting.statuses.includes(s);

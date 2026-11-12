@@ -21,6 +21,7 @@ export const PROJECT_STATUSES = [
   "Reporting",
   "Remediation",
   "Retest",
+  "Final Report",
   "Done",
 ] as const;
 export type ProjectStatusName = (typeof PROJECT_STATUSES)[number];

@@ -15,7 +15,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 /** Daftar proyek yang laporannya bisa dibuka (tahap Reporting dan sesudahnya). */
 export function ReportsIndexPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["projects", "all"], queryFn: () => listProjects({ limit: 100 }) });
-  const rows = (data?.data ?? []).filter((p) => ["Reporting", "Remediation", "Retest", "Done"].includes(p.status?.status_name ?? ""));
+  const rows = (data?.data ?? []).filter((p) => ["Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(p.status?.status_name ?? ""));
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Koreksi & Laporan" description="Proyek yang sudah masuk tahap Reporting atau sesudahnya." />
