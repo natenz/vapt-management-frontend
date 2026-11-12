@@ -22,6 +22,7 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s' "$DEPLOY_SSH_KEY" > ~/.ssh/vapt_deploy
           chmod 600 ~/.ssh/vapt_deploy
+          ssh-keygen -y -f ~/.ssh/vapt_deploy > /dev/null
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload frontend
