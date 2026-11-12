@@ -48,7 +48,7 @@ export const NAV: readonly NavItem[] = [
   { label: "Koreksi & Laporan", to: "/reports", icon: ClipboardCheck, roles: ["technical_writer", "project_manager"], section: "operasi" },
   { label: "Katalog Kerentanan", to: "/catalog", icon: FileText, roles: ALL, section: "operasi" },
   { label: "Kelola User", to: "/users", icon: UsersRound, roles: ["super_admin"], section: "akun" },
-  { label: "Akun Saya", to: "#", icon: UserCog, roles: ALL, section: "akun" },
+  { label: "Akun Saya", to: "/account", icon: UserCog, roles: ALL, section: "akun" },
   { label: "Hak Akses Role", to: "/roles", icon: Lock, roles: ["super_admin"], section: "akun" },
   { label: "Guideline", to: "#", icon: BookOpen, roles: ALL, section: "akun" },
 ];

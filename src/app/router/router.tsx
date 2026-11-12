@@ -2,6 +2,7 @@ import type { RouteObject } from "react-router";
 import { createBrowserRouter, Navigate } from "react-router";
 import { AuthLayout, DashboardLayout } from "@/app/layouts";
 import { RequireAuth, RequireGuest } from "@/features/auth";
+import { AccountPage } from "@/pages/account";
 import { CatalogPage } from "@/pages/catalog";
 import { DashboardPage } from "@/pages/dashboard";
 import { FindingFormPage } from "@/pages/finding-form";
@@ -76,6 +77,7 @@ export const routes: RouteObject[] = [
           </RequireAuth>
         ),
       },
+      { path: "/account", element: <AccountPage /> },
     ],
   },
   { path: "*", element: <Navigate to="/dashboard" replace /> },

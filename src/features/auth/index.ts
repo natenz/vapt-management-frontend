@@ -1,2 +1,2 @@
-export { login, me } from "./api";
+export { login, me, changePassword } from "./api";
 export { RequireAuth, RequireGuest } from "./ui/guard";

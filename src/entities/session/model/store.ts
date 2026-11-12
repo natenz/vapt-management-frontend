@@ -7,6 +7,7 @@ export type SessionState = {
   expiresAt: string | null;
   user: User | null;
   setSession: (r: LoginResult) => void;
+  setUser: (u: User) => void;
   clear: () => void;
 };
 
@@ -18,6 +19,7 @@ export const useSession = create<SessionState>()(
       expiresAt: null,
       user: null,
       setSession: (r) => set({ token: r.access_token, expiresAt: r.expires_at, user: r.user }),
+      setUser: (user) => set({ user }),
       clear: () => set({ token: null, expiresAt: null, user: null }),
     }),
     { name: "vapt-session", storage: createJSONStorage(() => sessionStorage) },

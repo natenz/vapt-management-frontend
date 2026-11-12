@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, UserCog } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
@@ -69,6 +69,11 @@ export function AppHeader() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-52">
           <DropdownMenuLabel>{name}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate("/account")}>
+            <UserCog className="size-4" aria-hidden />
+            Akun Saya
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
