@@ -1,15 +1,18 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Undo2, UserPlus } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Trash2, Undo2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  addResources,
   createAsset,
   createMandays,
   deleteAsset,
   deleteMandays,
+  removeResource,
   updateAsset,
   updateMandays,
   type ProjectDetail,
 } from "@/entities/project";
+import { listUsers } from "@/entities/user";
 import {
   allocate,
   ASSET_TYPES,
@@ -40,35 +43,56 @@ const fmt = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100) / 10
 export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; canAssign: boolean }) {
   const qc = useQueryClient();
   const server = useMemo(() => fromServer(project), [project]);
+  const serverTw = useMemo(
+    () =>
+      project.resources
+        .filter((r) => r.user?.sys_user?.role?.role_name === "technical_writer")
+        .map((r) => ({ resourceId: r.resource_id, userId: r.user_id, name: r.user?.full_name ?? `User ${r.user_id}` })),
+    [project.resources],
+  );
+  const serverTwIds = useMemo(() => serverTw.map((t) => t.userId), [serverTw]);
   const [drafts, setDrafts] = useState<DraftAsset[]>(server);
   // `base` = snapshot server yang jadi dasar draf. Diff dan simpan selalu terhadap base, bukan terhadap data yang baru masuk.
   const [base, setBase] = useState<DraftAsset[]>(server);
+  const [twDraftIds, setTwDraftIds] = useState<number[]>(serverTwIds);
+  const [baseTwIds, setBaseTwIds] = useState<number[]>(serverTwIds);
   const [stale, setStale] = useState(false);
   const justSaved = useRef(false);
 
+  const sameIds = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((x) => b.includes(x));
+
   useEffect(() => {
-    if (server === base) return;
-    const edited = buildOps(base, drafts).length > 0;
+    if (server === base && sameIds(serverTwIds, baseTwIds)) return;
+    const edited = buildOps(base, drafts).length > 0 || !sameIds(baseTwIds, twDraftIds);
     if (justSaved.current || !edited) {
       // simpan sendiri (penuh/sebagian) atau belum ada suntingan: ikut data server
       justSaved.current = false;
       setBase(server);
       setDrafts(server);
+      setBaseTwIds(serverTwIds);
+      setTwDraftIds(serverTwIds);
       setStale(false);
     } else {
       // server berubah SAAT ada suntingan: jangan timpa draf, jangan simpan di atas data yang tidak dilihat user
       setStale(true);
     }
-  }, [server]);
+  }, [server, serverTwIds]);
 
   useEffect(() => {
-    if (!buildOps(base, drafts).length) return;
+    if (!buildOps(base, drafts).length && sameIds(baseTwIds, twDraftIds)) return;
     const warn = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [base, drafts]);
+  }, [base, drafts, baseTwIds, twDraftIds]);
+
+  const writers = useQuery({
+    queryKey: ["users", "technical_writer"],
+    queryFn: () => listUsers({ role: "technical_writer", limit: 100 }),
+    enabled: canAssign,
+  });
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -80,8 +104,17 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
     const u = people.find((x) => x.sys_user_id === id);
     return u?.profile?.full_name ?? u?.username ?? "";
   };
+  const twCatalog = (writers.data ?? []).filter((u) => u.profile?.user_id != null);
+  const twNameOf = (userId: number) => {
+    const fromServer = serverTw.find((t) => t.userId === userId);
+    if (fromServer) return fromServer.name;
+    const fromCatalog = twCatalog.find((u) => u.profile?.user_id === userId);
+    return fromCatalog?.profile?.full_name ?? fromCatalog?.username ?? `User ${userId}`;
+  };
+  const availableTws = twCatalog.filter((u) => !twDraftIds.includes(u.profile!.user_id));
 
-  const dirty = useMemo(() => buildOps(base, drafts).length > 0, [base, drafts]);
+  const twDirty = !sameIds(baseTwIds, twDraftIds);
+  const dirty = useMemo(() => buildOps(base, drafts).length > 0 || twDirty, [base, drafts, twDirty]);
   const patch = (key: string, p: Partial<DraftAsset>) =>
     setDrafts((d) => d.map((a) => (a.key === key ? { ...a, ...p } : a)));
   const patchRow = (key: string, rk: string, p: Partial<DraftPentester>) =>
@@ -125,7 +158,15 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
         updateMandays: (id, b) => updateMandays(id, b),
         deleteMandays,
       });
-      return ops.length;
+      const toAdd = twDraftIds.filter((id) => !baseTwIds.includes(id));
+      const toRemove = serverTw.filter((t) => baseTwIds.includes(t.userId) && !twDraftIds.includes(t.userId));
+      if (toAdd.length > 0) {
+        await addResources(project.project_id, toAdd);
+      }
+      for (const t of toRemove) {
+        await removeResource(project.project_id, t.resourceId);
+      }
+      return ops.length + toAdd.length + toRemove.length;
     },
     onSuccess: (n) => {
       justSaved.current = true;
@@ -181,6 +222,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
             disabled={!dirty || save.isPending}
             onClick={() => {
               setDrafts(base);
+              setTwDraftIds(baseTwIds);
               setErrors({});
               setFailure(null);
             }}
@@ -205,10 +247,12 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
           <Button
             type="button"
             variant="outline"
-            className="ml-3"
+            leadingIcon={<Undo2 />}
             onClick={() => {
               setBase(server);
               setDrafts(server);
+              setBaseTwIds(serverTwIds);
+              setTwDraftIds(serverTwIds);
               setStale(false);
               setErrors({});
             }}
@@ -444,6 +488,62 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
           ))}
         </ul>
       ) : null}
+      {canAssign ? (
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-surface-subtle p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-overline text-ink-muted uppercase">Assign Technical Writer</span>
+            <span className="text-caption text-ink-muted">
+              {twDraftIds.length === 0
+                ? "Belum ada Technical Writer"
+                : `${twDraftIds.length} Technical Writer dipilih`}
+            </span>
+          </div>
+          {twDraftIds.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {twDraftIds.map((uid) => (
+                <span
+                  key={uid}
+                  className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface px-2.5 py-1 text-body-sm text-ink"
+                >
+                  <span>{twNameOf(uid)}</span>
+                  <button
+                    type="button"
+                    aria-label={`Hapus Technical Writer ${twNameOf(uid)}`}
+                    className="rounded-sm p-0.5 text-ink-muted hover:text-ink focus-ring"
+                    onClick={() => setTwDraftIds((ids) => ids.filter((x) => x !== uid))}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <select
+            aria-label="Tambah Technical Writer"
+            className={sel}
+            value=""
+            disabled={availableTws.length === 0}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              if (id && !twDraftIds.includes(id)) setTwDraftIds((ids) => [...ids, id]);
+            }}
+          >
+            <option value="">
+              {availableTws.length === 0
+                ? twCatalog.length === 0
+                  ? "Tidak ada data Technical Writer"
+                  : "Semua Technical Writer sudah ditambahkan"
+                : "+ Tambah Technical Writer"}
+            </option>
+            {availableTws.map((u) => (
+              <option key={u.sys_user_id} value={u.profile!.user_id}>
+                {u.profile?.full_name ?? u.username}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       {canAssign && shown.length > 0 && hasMissing ? (
         <p className="text-caption text-ink-muted">
           Setiap aset perlu minimal 1 pentester sebelum proyek bisa masuk tahap Pentest.

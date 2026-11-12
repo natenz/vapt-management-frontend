@@ -11,12 +11,24 @@ const api = vi.hoisted(() => ({
   createMandays: vi.fn(),
   updateMandays: vi.fn(),
   deleteMandays: vi.fn(),
+  addResources: vi.fn(),
+  removeResource: vi.fn(),
+}));
+const userApi = vi.hoisted(() => ({
+  listUsers: vi.fn(),
 }));
 vi.mock("@/entities/project", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/project")>();
   return {
     ...actual,
     ...api,
+  };
+});
+vi.mock("@/entities/user", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/user")>();
+  return {
+    ...actual,
+    ...userApi,
   };
 });
 
@@ -66,6 +78,18 @@ beforeEach(() => {
   Object.values(api).forEach((f) => f.mockReset());
   api.createAsset.mockResolvedValue({ assets_id: 99 });
   api.createMandays.mockResolvedValue({});
+  api.addResources.mockResolvedValue([]);
+  api.removeResource.mockResolvedValue({});
+  userApi.listUsers.mockResolvedValue([
+    {
+      sys_user_id: 8,
+      username: "writer.eka",
+      email: "",
+      role_id: 5,
+      role: { role_id: 5, role_name: "technical_writer" },
+      profile: { user_id: 8, full_name: "Eka Putri" },
+    },
+  ]);
 });
 
 describe("AssetPlanner", () => {
@@ -217,5 +241,20 @@ describe("AssetPlanner", () => {
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
     expect(add.mock.calls.filter((c) => c[0] === "beforeunload")).toHaveLength(1);
     add.mockRestore();
+  });
+
+  it("PM dapat menambah Technical Writer lewat Assign Technical Writer dan tersimpan saat Simpan ditekan", async () => {
+    const u = userEvent.setup();
+    await mount();
+
+    const twSelect = await screen.findByLabelText("Tambah Technical Writer");
+    await waitFor(() => expect(within(twSelect).getByRole("option", { name: "Eka Putri" })).toBeInTheDocument());
+    await u.selectOptions(twSelect, "8");
+
+    expect(screen.getByText("Eka Putri")).toBeInTheDocument();
+    expect(api.addResources).not.toHaveBeenCalled();
+
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
+    await waitFor(() => expect(api.addResources).toHaveBeenCalledWith(10, [8]));
   });
 });

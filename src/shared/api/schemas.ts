@@ -133,6 +133,11 @@ export const catalogSchema = z.object({
   severity: z.string(),
   cvss_score: z.number().optional().nullable(),
   remediation_recommendation: z.string().optional().nullable(),
+  status: z.enum(["approved", "pending", "rejected"]).optional().default("approved"),
+  created_by: z.number().optional().nullable(),
+  reviewed_by: z.number().optional().nullable(),
+  creator: userSchema.optional().nullable(),
+  reviewer: userSchema.optional().nullable(),
 });
 export type CatalogVulna = z.infer<typeof catalogSchema>;
 

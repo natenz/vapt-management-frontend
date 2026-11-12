@@ -40,7 +40,8 @@ export function FindingFormPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const project = useQuery({ queryKey: ["project", id], queryFn: () => getProject(id) });
-  const catalog = useQuery({ queryKey: ["catalog"], queryFn: () => listCatalog() });
+  const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
+  const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
   const { register, handleSubmit, watch, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
   const fromCatalog = Boolean(watch("catalog_vulna_id"));
   const sessionUser = useSession((s) => s.user);
@@ -91,7 +92,7 @@ export function FindingFormPage() {
             {(f) => (
               <select className={selectClass} defaultValue="" {...f} {...register("catalog_vulna_id")}>
                 <option value="">Tidak, isi sendiri</option>
-                {(catalog.data ?? []).map((c) => (<option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>))}
+                {(approvedCatalog).map((c) => (<option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>))}
               </select>
             )}
           </Field>

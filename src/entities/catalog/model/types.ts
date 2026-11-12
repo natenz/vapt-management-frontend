@@ -1,14 +1,9 @@
-import { z } from "zod";
+import { catalogSchema, type CatalogVulna } from "@/shared/api/schemas";
 
-export const catalogSchema = z.object({
-  vulna_id: z.number(),
-  title: z.string(),
-  description: z.string().optional().nullable(),
-  severity: z.string(),
-  cvss_score: z.number().optional().nullable(),
-  remediation_recommendation: z.string().optional().nullable(),
-});
-export type CatalogVulna = z.infer<typeof catalogSchema>;
+export { catalogSchema };
+export type { CatalogVulna };
+
+export type CatalogStatus = "approved" | "pending" | "rejected";
 
 export type CatalogInput = {
   title: string;
