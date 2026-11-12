@@ -1,0 +1,38 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s' "$DEPLOY_SSH_KEY" > ~/.ssh/vapt_deploy
+          chmod 600 ~/.ssh/vapt_deploy
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload frontend
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          tar --exclude=.git --exclude=.env -czf - . | ssh -i ~/.ssh/vapt_deploy "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf ~/vapt-resources-management/vapt-management-frontend && mkdir -p ~/vapt-resources-management/vapt-management-frontend && tar -xzf - -C ~/vapt-resources-management/vapt-management-frontend'
+
+      - name: Rebuild frontend only
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: ssh -i ~/.ssh/vapt_deploy "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/vapt-resources-management && docker compose up -d --build frontend'
