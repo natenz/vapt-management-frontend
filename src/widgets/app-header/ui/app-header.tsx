@@ -5,6 +5,7 @@ import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 import { useSession } from "@/entities/session";
 import { ThemeToggle } from "@/features/toggle-theme";
 import { navFor, ROLE_LABEL, isRole } from "@/shared/config/roles";
+import { cn } from "@/shared/lib/cn";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Breadcrumb } from "@/shared/ui/breadcrumb";
 import {
@@ -33,6 +34,7 @@ export function AppHeader() {
   const current = items.find(
     (i) => i.to !== "#" && (pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to))),
   );
+  const isAccountActive = pathname === "/account" || pathname.startsWith("/account/");
 
   return (
     <header className="z-nav flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg px-4 lg:px-6">
@@ -70,7 +72,10 @@ export function AppHeader() {
         <DropdownMenuContent align="end" className="min-w-52">
           <DropdownMenuLabel>{name}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => navigate("/account")}>
+          <DropdownMenuItem
+            onSelect={() => navigate("/account")}
+            className={cn(isAccountActive && "bg-surface-subtle font-medium text-brand")}
+          >
             <UserCog className="size-4" aria-hidden />
             Akun Saya
           </DropdownMenuItem>
