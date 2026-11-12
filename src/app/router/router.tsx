@@ -6,6 +6,7 @@ import { AccountPage } from "@/pages/account";
 import { CatalogPage } from "@/pages/catalog";
 import { DashboardPage } from "@/pages/dashboard";
 import { FindingFormPage } from "@/pages/finding-form";
+import { GuidelinePage } from "@/pages/guideline";
 import { LoginPage } from "@/pages/login";
 import { ProjectDetailPage } from "@/pages/project-detail";
 import { ProjectNewPage } from "@/pages/project-new";
@@ -78,6 +79,8 @@ export const routes: RouteObject[] = [
         ),
       },
       { path: "/account", element: <AccountPage /> },
+      { path: "/guideline", element: <GuidelinePage /> },
+      { path: "/guidelines", element: <Navigate to="/guideline" replace /> },
     ],
   },
   { path: "*", element: <Navigate to="/dashboard" replace /> },

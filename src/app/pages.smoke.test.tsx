@@ -113,6 +113,7 @@ describe("Router Pages Smoke Tests", () => {
     { path: "/users", label: "Users" },
     { path: "/roles", label: "Roles" },
     { path: "/account", label: "Account" },
+    { path: "/guideline", label: "Guideline" },
   ];
 
   it("merender halaman /login saat belum login", () => {
