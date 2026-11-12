@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Finding } from "@/entities/finding";
-import { statusActions } from "./findings-panel";
+import { allowedFindingStatuses, statusActions } from "./findings-panel";
 
 const f = (status: string) => ({ status }) as Finding;
 const to = (a: { to: string }[]) => a.map((x) => x.to);
@@ -21,5 +21,19 @@ describe("statusActions", () => {
   });
   it("di luar Remediation/Retest: tanpa aksi", () => {
     expect(statusActions(f("open"), "Pentest", "super_admin", true)).toEqual([]);
+  });
+});
+
+describe("allowedFindingStatuses", () => {
+  it("pentester saat Retest bisa ubah status ke open, closed, atau reopened", () => {
+    expect(allowedFindingStatuses(f("remediated"), "Retest", "pentester", false, true)).toEqual([
+      "open",
+      "remediated",
+      "closed",
+      "reopened",
+    ]);
+  });
+  it("tech writer hanya melihat status saat ini karena tidak punya izin ChangeStatus", () => {
+    expect(allowedFindingStatuses(f("open"), "Reporting", "technical_writer", false, false)).toEqual(["open"]);
   });
 });

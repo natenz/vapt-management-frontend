@@ -26,6 +26,9 @@ export const updateFinding = async (id: number, body: Partial<FindingInput>) =>
 export const changeFindingStatus = async (id: number, status: FindingStatus) =>
   (await apiRequest(`/vulnas/${id}/status`, { method: "PATCH", body: { status } }, findingSchema)).data;
 
+export const deleteFinding = async (id: number) =>
+  (await apiRequest(`/vulnas/${id}`, { method: "DELETE" }, z.unknown())).data;
+
 export const addEvidence = async (id: number, body: EvidenceInput) =>
   (await apiRequest(`/vulnas/${id}/evidences`, { method: "POST", body }, evidenceSchema)).data;
 

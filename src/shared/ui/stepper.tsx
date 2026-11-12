@@ -110,20 +110,20 @@ function Stepper({
       <ol
         data-slot="stepper"
         aria-label={`Langkah ${done} dari ${steps.length} selesai`}
-        className="flex min-w-max items-start gap-2"
+        className="flex w-full min-w-[38rem] items-start"
       >
         {steps.map((step, i) => {
           const state = stateOf(i, currentIndex, allDone);
           const last = i === steps.length - 1;
 
           return (
-            <li key={step.id} className="flex items-start gap-2">
-              <div className="flex w-24 flex-col items-center gap-2 text-center">
+            <li key={step.id} className={cn("flex items-start", last ? "shrink-0" : "min-w-0 flex-1")}>
+              <div className="flex w-[4.75rem] shrink-0 flex-col items-center gap-2 text-center">
                 <Marker state={state} index={i} />
-                <span className={cn("text-caption", LABEL[state])}>{step.label}</span>
+                <span className={cn("text-caption leading-tight", LABEL[state])}>{step.label}</span>
                 {step.hint ? <span className="text-caption text-ink-muted">{step.hint}</span> : null}
               </div>
-              {last ? null : <span className="mt-4 h-px w-8 shrink-0 bg-border" aria-hidden />}
+              {last ? null : <span className="mx-1 mt-4 h-px min-w-2 flex-1 bg-border" aria-hidden />}
             </li>
           );
         })}

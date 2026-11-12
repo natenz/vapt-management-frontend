@@ -1,12 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
   changeFindingStatus,
+  deleteFinding,
   listFindings,
   updateFinding,
+  FINDING_STATUSES,
   SeverityBadge,
   SEVERITIES,
   type Finding,
@@ -30,10 +33,36 @@ const editSchema = z.object({
   severity: z.enum(SEVERITIES),
   cvss_score: z.string().refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 10), "CVSS 0 sampai 10"),
   endpoint: z.string(),
+  status: z.enum(FINDING_STATUSES),
 });
 type EditValues = z.infer<typeof editSchema>;
 
 const STATUS_LABEL: Record<string, string> = { open: "Terbuka", remediated: "Sudah diperbaiki", closed: "Selesai (lolos retest)", reopened: "Masih rentan" };
+
+export function allowedFindingStatuses(
+  f: Finding,
+  projectStatus: string,
+  role: string,
+  canManage: boolean,
+  isOwner: boolean,
+): FindingStatus[] {
+  const allowed = new Set<FindingStatus>();
+  if (FINDING_STATUSES.includes(f.status as FindingStatus)) {
+    allowed.add(f.status as FindingStatus);
+  }
+  const verifier = ["pentester", "tech_lead", "super_admin"].includes(role);
+  if (["Pentest", "Reporting", "Remediation", "Retest"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner))) {
+    allowed.add("open");
+  }
+  if (canManage && ["Remediation", "Retest"].includes(projectStatus)) {
+    allowed.add("remediated");
+  }
+  if (verifier && projectStatus === "Retest") {
+    allowed.add("closed");
+    allowed.add("reopened");
+  }
+  return FINDING_STATUSES.filter((s) => allowed.has(s));
+}
 
 export type StatusAction = { to: FindingStatus; label: string };
 
@@ -70,24 +99,56 @@ function StatusActions({ f, actions }: { f: Finding; actions: StatusAction[] }) 
   );
 }
 
-function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
+function EditFinding({
+  f,
+  statusOptions,
+  onDone,
+}: {
+  f: Finding;
+  statusOptions: FindingStatus[];
+  onDone: () => void;
+}) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { custom_title: f.custom_title, severity: f.severity as EditValues["severity"], cvss_score: f.cvss_score != null ? String(f.cvss_score) : "", endpoint: f.endpoint ?? "" },
+    defaultValues: {
+      custom_title: f.custom_title,
+      severity: f.severity as EditValues["severity"],
+      cvss_score: f.cvss_score != null ? String(f.cvss_score) : "",
+      endpoint: f.endpoint ?? "",
+      status: (FINDING_STATUSES.includes(f.status as FindingStatus) ? f.status : "open") as FindingStatus,
+    },
   });
   const save = useMutation({
-    mutationFn: (v: EditValues) =>
-      updateFinding(f.vulna_id, { custom_title: v.custom_title, severity: v.severity, cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score), endpoint: v.endpoint }),
+    mutationFn: async (v: EditValues) => {
+      await updateFinding(f.vulna_id, {
+        custom_title: v.custom_title,
+        severity: v.severity,
+        cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score),
+        endpoint: v.endpoint,
+      });
+      if (v.status !== f.status) {
+        await changeFindingStatus(f.vulna_id, v.status);
+      }
+    },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["findings", f.project_id] }); notify.success("Temuan diperbarui"); onDone(); },
   });
   return (
     <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))} className="mt-3 flex w-full flex-col gap-3 rounded-sm border border-border p-4">
       {save.error ? <Alert tone="error" title="Gagal menyimpan perubahan" compact>{save.error.message}</Alert> : null}
       <Field label="Judul temuan" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
         <Field label="CVSS score" error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
+        <Field label="Status temuan">
+          {(x) => (
+            <select className={selectClass} disabled={statusOptions.length <= 1} {...x} {...register("status")}>
+              {statusOptions.map((st) => (
+                <option key={st} value={st}>{STATUS_LABEL[st] ?? st}</option>
+              ))}
+            </select>
+          )}
+        </Field>
       </div>
       <Field label="Endpoint">{(x) => <Input {...x} {...register("endpoint")} />}</Field>
       <div className="flex gap-2">
@@ -99,15 +160,29 @@ function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
 }
 
 export function FindingsPanel({ project }: { project: ProjectDetail }) {
+  const qc = useQueryClient();
   const user = useSession((u) => u.user);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const role = user?.role?.role_name ?? "";
   const statusOpen = EDITABLE_STATUSES.includes(project.status?.status_name ?? "");
   // BE canManage: admin/TL atau PM pemilik proyek.
   const canManage = ["super_admin", "tech_lead"].includes(role) || (role === "project_manager" && project.pm_id === user?.sys_user_id);
   const projectStatus = project.status?.status_name ?? "";
+  const isOwner = (f: Finding) => f.pentester_id === user?.sys_user_id;
   const canEdit = (f: Finding) =>
-    statusOpen && (["super_admin", "tech_lead", "technical_writer"].includes(role) || (role === "pentester" && f.pentester_id === user?.sys_user_id));
+    statusOpen && (["super_admin", "tech_lead", "technical_writer"].includes(role) || (role === "pentester" && isOwner(f)));
+  const canDelete = (f: Finding) =>
+    ["Pentest", "Retest"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner(f)));
+  const remove = useMutation({
+    mutationFn: (id: number) => deleteFinding(id),
+    onSuccess: () => {
+      setConfirmDeleteId(null);
+      void qc.invalidateQueries({ queryKey: ["findings", project.project_id] });
+      notify.success("Temuan dihapus");
+    },
+    onError: (e) => notify.info("Temuan belum bisa dihapus", { description: e.message }),
+  });
   const { data, isLoading, error } = useQuery({
     queryKey: ["findings", project.project_id],
     queryFn: () => listFindings(project.project_id),
@@ -137,13 +212,46 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   {f.asset?.asset_name ?? `Aset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
                 </span>
               </span>
-              <span className="flex items-center gap-2">
+              <span className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={toSeverityKey(f.severity)} />
                 <Badge variant="count">{STATUS_LABEL[f.status] ?? f.status}</Badge>
                 <StatusActions f={f} actions={statusActions(f, projectStatus, role, canManage)} />
                 {canEdit(f) && editingId !== f.vulna_id ? <Button type="button" onClick={() => setEditingId(f.vulna_id)}>Edit</Button> : null}
+                {canDelete(f) && (
+                  confirmDeleteId === f.vulna_id ? (
+                    <span className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="solid"
+                        loading={remove.isPending && remove.variables === f.vulna_id}
+                        disabled={remove.isPending}
+                        onClick={() => remove.mutate(f.vulna_id)}
+                      >
+                        Yakin hapus
+                      </Button>
+                      <Button type="button" variant="outline" disabled={remove.isPending} onClick={() => setConfirmDeleteId(null)}>
+                        Batal
+                      </Button>
+                    </span>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="quiet"
+                      aria-label={`Hapus temuan ${f.custom_title}`}
+                      onClick={() => setConfirmDeleteId(f.vulna_id)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  )
+                )}
               </span>
-              {editingId === f.vulna_id ? <EditFinding f={f} onDone={() => setEditingId(null)} /> : null}
+              {editingId === f.vulna_id ? (
+                <EditFinding
+                  f={f}
+                  statusOptions={allowedFindingStatuses(f, projectStatus, role, canManage, isOwner(f))}
+                  onDone={() => setEditingId(null)}
+                />
+              ) : null}
             </li>
           ))}
         </ul>
