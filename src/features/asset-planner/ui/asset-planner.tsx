@@ -27,7 +27,6 @@ import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { notify } from "@/shared/ui/toast";
 import { cn } from "@/shared/lib/cn";
 
@@ -134,7 +133,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       void qc.invalidateQueries({ queryKey: ["project", project.project_id] });
       void qc.invalidateQueries({ queryKey: ["projects"] });
       void qc.invalidateQueries({ queryKey: ["workload"] });
-      notify.success("Perencanaan tersimpan", { description: `${n} perubahan dikirim ke server.` });
+      notify.success("Perencanaan tersimpan", { description: `${n} perubahan disimpan.` });
     },
     onError: (e) => {
       if (e.message === "__validasi__") {
@@ -169,7 +168,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
               ? "Tambahkan pentester di bawah tiap aset; mandays mereka otomatis dibagi rata dari mandays aset. "
               : ""}
             Mandays pentester bisa diubah manual (total tidak boleh melebihi mandays aset); kosongkan untuk otomatis.
-            Perubahan baru dikirim ke server saat Anda menekan Simpan.
+            Perubahan baru disimpan saat Anda menekan Simpan.
           </p>
         </div>
         <span className="flex gap-2">
@@ -195,7 +194,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
             disabled={!dirty || stale}
             onClick={() => save.mutate()}
           >
-            Simpan ke server
+            Simpan
           </Button>
         </span>
       </div>
@@ -244,29 +243,41 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       {shown.length === 0 ? (
         <p className="text-body-sm text-ink-muted">Belum ada aset. Tekan "Tambah aset".</p>
       ) : (
-        <Table boxed aria-label="Aset yang diuji">
-          <TableHeader>
-            <TableRow className="h-10">
-              <TableHead>Nama aset</TableHead>
-              <TableHead>Tipe</TableHead>
-              <TableHead>Domain</TableHead>
-              <TableHead>IP address</TableHead>
-              <TableHead numeric>Mandays</TableHead>
-              <TableHead numeric>Pentester</TableHead>
-              <TableHead>
-                <span className="sr-only">Aksi</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          {shown.map((a) => {
+        <div className="flex flex-col gap-4" aria-label="Aset yang diuji">
+          {shown.map((a, idx) => {
             const md = num(a.mandays);
             const alloc = allocate(md > 0 ? md : 0, a.pentesters);
             const shares = alloc.shares;
             const isNew = a.id == null;
             return (
-              <TableBody key={a.key} className="border-t border-border first:border-t-0">
-                <TableRow className={cn("h-auto align-top", errors[a.key] && "bg-error-bg")}>
-                  <TableCell className="py-2">
+              <div
+                key={a.key}
+                className={cn(
+                  "overflow-hidden rounded-md border border-border bg-surface",
+                  errors[a.key] && "border-error bg-error-bg",
+                )}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+                  <span className="flex items-center gap-2">
+                    <span className="text-title-sm text-ink">{a.name.trim() || `Aset ${idx + 1}`}</span>
+                    {isNew ? <Badge variant="tag">draf</Badge> : null}
+                    <span className="text-caption text-ink-muted tabular">
+                      · {a.pentesters.length} pentester
+                    </span>
+                  </span>
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    aria-label={`Hapus aset ${a.name || "baru"}`}
+                    onClick={() => removeAsset(a)}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+
+                <div className="grid gap-3 p-4 sm:grid-cols-12">
+                  <label className="flex flex-col gap-1 sm:col-span-6">
+                    <span className="text-caption text-ink-muted">Nama aset</span>
                     <Input
                       aria-label="Nama aset"
                       value={a.name}
@@ -274,8 +285,9 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
                       onChange={(e) => patch(a.key, { name: e.target.value })}
                       className="h-9"
                     />
-                  </TableCell>
-                  <TableCell className="py-2">
+                  </label>
+                  <label className="flex flex-col gap-1 sm:col-span-3">
+                    <span className="text-caption text-ink-muted">Tipe</span>
                     <select
                       aria-label="Tipe aset"
                       className={sel}
@@ -288,26 +300,9 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
                         </option>
                       ))}
                     </select>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <Input
-                      aria-label="Domain"
-                      value={a.domain}
-                      placeholder="portal.contoh.co.id"
-                      onChange={(e) => patch(a.key, { domain: e.target.value })}
-                      className="h-9"
-                    />
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <Input
-                      aria-label="IP address"
-                      value={a.ip}
-                      placeholder="10.0.0.1"
-                      onChange={(e) => patch(a.key, { ip: e.target.value })}
-                      className="h-9"
-                    />
-                  </TableCell>
-                  <TableCell numeric className="py-2">
+                  </label>
+                  <label className="flex flex-col gap-1 sm:col-span-3">
+                    <span className="text-caption text-ink-muted">Mandays</span>
                     <Input
                       aria-label="Mandays aset"
                       type="number"
@@ -316,119 +311,120 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
                       value={a.mandays}
                       placeholder="20"
                       onChange={(e) => patch(a.key, { mandays: e.target.value })}
-                      className="h-9 w-24 text-right"
+                      className="h-9 text-right"
                     />
-                  </TableCell>
-                  <TableCell numeric className="py-3">
-                    {a.pentesters.length}
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className="flex items-center justify-end gap-2">
-                      {isNew ? <Badge variant="tag">draf</Badge> : null}
-                      <Button
-                        type="button"
-                        variant="quiet"
-                        aria-label={`Hapus aset ${a.name || "baru"}`}
-                        onClick={() => removeAsset(a)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </span>
-                  </TableCell>
-                </TableRow>
+                  </label>
+                  <label className="flex flex-col gap-1 sm:col-span-7">
+                    <span className="text-caption text-ink-muted">Domain</span>
+                    <Input
+                      aria-label="Domain"
+                      value={a.domain}
+                      placeholder="portal.contoh.co.id"
+                      onChange={(e) => patch(a.key, { domain: e.target.value })}
+                      className="h-9"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 sm:col-span-5">
+                    <span className="text-caption text-ink-muted">IP address</span>
+                    <Input
+                      aria-label="IP address"
+                      value={a.ip}
+                      placeholder="10.0.0.1"
+                      onChange={(e) => patch(a.key, { ip: e.target.value })}
+                      className="h-9"
+                    />
+                  </label>
+                </div>
+
                 {canAssign ? (
-                  <TableRow className="h-auto bg-surface-subtle hover:bg-surface-subtle">
-                    <TableCell colSpan={7} className="py-3">
-                      <div className="flex flex-col gap-2 pl-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-overline text-ink-muted uppercase">Assign pentester</span>
-                          <span className="flex items-center gap-3 text-caption text-ink-muted">
-                            {a.pentesters.length === 0 || !(md > 0) ? (
-                              "Belum ada pentester"
-                            ) : (
-                              <span className={cn(alloc.remaining < 0 && "font-medium text-error")}>
-                                {`Dialokasikan ${fmt(md - alloc.remaining)} dari ${fmt(md)} md`}
-                                {alloc.remaining > 0
-                                  ? ` · sisa ${fmt(alloc.remaining)} md`
-                                  : alloc.remaining < 0
-                                    ? ` · lebih ${fmt(-alloc.remaining)} md`
-                                    : ""}
-                              </span>
-                            )}
-                            <Button type="button" leadingIcon={<UserPlus />} onClick={() => addPentester(a)}>
-                              Tambah pentester
-                            </Button>
+                  <div className="flex flex-col gap-2 border-t border-border bg-surface-subtle p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-overline text-ink-muted uppercase">Assign pentester</span>
+                      <span className="flex flex-wrap items-center gap-3 text-caption text-ink-muted">
+                        {a.pentesters.length === 0 || !(md > 0) ? (
+                          "Belum ada pentester"
+                        ) : (
+                          <span className={cn(alloc.remaining < 0 && "font-medium text-error")}>
+                            {`Dialokasikan ${fmt(md - alloc.remaining)} dari ${fmt(md)} md`}
+                            {alloc.remaining > 0
+                              ? ` · sisa ${fmt(alloc.remaining)} md`
+                              : alloc.remaining < 0
+                                ? ` · lebih ${fmt(-alloc.remaining)} md`
+                                : ""}
                           </span>
-                        </div>
-                        {a.pentesters.map((r, i) => (
-                          <div
-                            key={r.key}
-                            className="grid items-center gap-2 md:grid-cols-[minmax(0,1.4fr)_1fr_1fr_6rem_auto]"
-                          >
-                            <select
-                              aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
-                              className={sel}
-                              value={r.pentesterId ?? ""}
-                              onChange={(e) =>
-                                patchRow(a.key, r.key, {
-                                  pentesterId: e.target.value ? Number(e.target.value) : null,
-                                })
-                              }
-                            >
-                              <option value="">Pilih pentester</option>
-                              {people.map((u) => (
-                                <option key={u.sys_user_id} value={u.sys_user_id}>
-                                  {nameOf(u.sys_user_id)}
-                                </option>
-                              ))}
-                            </select>
-                            <Input
-                              aria-label={`Mulai pentester ${i + 1}`}
-                              type="date"
-                              value={r.start}
-                              onChange={(e) => patchRow(a.key, r.key, { start: e.target.value })}
-                              className="h-9"
-                            />
-                            <Input
-                              aria-label={`Selesai pentester ${i + 1}`}
-                              type="date"
-                              value={r.end}
-                              onChange={(e) => patchRow(a.key, r.key, { end: e.target.value })}
-                              className="h-9"
-                            />
-                            <Input
-                              aria-label={`Mandays pentester ${i + 1}`}
-                              type="number"
-                              min={0.5}
-                              step="0.5"
-                              value={r.md}
-                              placeholder={md > 0 ? fmt(shares[i]!) : "otomatis"}
-                              title="Kosongkan untuk dibagi otomatis"
-                              onChange={(e) => patchRow(a.key, r.key, { md: e.target.value })}
-                              className="h-9 text-right"
-                            />
-                            <Button
-                              type="button"
-                              variant="quiet"
-                              aria-label={`Hapus pentester ${i + 1}`}
-                              onClick={() =>
-                                patch(a.key, {
-                                  pentesters: a.pentesters.filter((x) => x.key !== r.key),
-                                })
-                              }
-                            >
-                              <Trash2 />
-                            </Button>
-                          </div>
-                        ))}
+                        )}
+                        <Button type="button" leadingIcon={<UserPlus />} onClick={() => addPentester(a)}>
+                          Tambah pentester
+                        </Button>
+                      </span>
+                    </div>
+                    {a.pentesters.map((r, i) => (
+                      <div
+                        key={r.key}
+                        className="grid items-center gap-2 md:grid-cols-[minmax(0,1.5fr)_8.75rem_8.75rem_6rem_auto]"
+                      >
+                        <select
+                          aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
+                          className={sel}
+                          value={r.pentesterId ?? ""}
+                          onChange={(e) =>
+                            patchRow(a.key, r.key, {
+                              pentesterId: e.target.value ? Number(e.target.value) : null,
+                            })
+                          }
+                        >
+                          <option value="">Pilih pentester</option>
+                          {people.map((u) => (
+                            <option key={u.sys_user_id} value={u.sys_user_id}>
+                              {nameOf(u.sys_user_id)}
+                            </option>
+                          ))}
+                        </select>
+                        <Input
+                          aria-label={`Mulai pentester ${i + 1}`}
+                          type="date"
+                          value={r.start}
+                          onChange={(e) => patchRow(a.key, r.key, { start: e.target.value })}
+                          className="h-9"
+                        />
+                        <Input
+                          aria-label={`Selesai pentester ${i + 1}`}
+                          type="date"
+                          value={r.end}
+                          onChange={(e) => patchRow(a.key, r.key, { end: e.target.value })}
+                          className="h-9"
+                        />
+                        <Input
+                          aria-label={`Mandays pentester ${i + 1}`}
+                          type="number"
+                          min={0.5}
+                          step="0.5"
+                          value={r.md}
+                          placeholder={md > 0 ? fmt(shares[i]!) : "otomatis"}
+                          title="Kosongkan untuk dibagi otomatis"
+                          onChange={(e) => patchRow(a.key, r.key, { md: e.target.value })}
+                          className="h-9 text-right"
+                        />
+                        <Button
+                          type="button"
+                          variant="quiet"
+                          aria-label={`Hapus pentester ${i + 1}`}
+                          onClick={() =>
+                            patch(a.key, {
+                              pentesters: a.pentesters.filter((x) => x.key !== r.key),
+                            })
+                          }
+                        >
+                          <Trash2 />
+                        </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    ))}
+                  </div>
                 ) : null}
-              </TableBody>
+              </div>
             );
           })}
-        </Table>
+        </div>
       )}
 
       {removed.length > 0 ? (

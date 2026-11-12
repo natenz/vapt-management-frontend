@@ -91,7 +91,7 @@ describe("AssetPlanner", () => {
     await u.selectOptions(screen.getByLabelText(/Pentester 2 untuk/), "Dimas");
     expect(api.createAsset).not.toHaveBeenCalled();
 
-    await u.click(screen.getByRole("button", { name: "Simpan ke server" }));
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.createMandays).toHaveBeenCalledTimes(2));
     expect(api.createAsset).toHaveBeenCalledWith(
       10,
@@ -126,14 +126,14 @@ describe("AssetPlanner", () => {
     await u.type(screen.getByLabelText("Mandays pentester 1"), "5");
     await u.type(screen.getByLabelText("Mandays pentester 2"), "7");
     expect(screen.getByText(/Dialokasikan 12 dari 11 md · lebih 1 md/)).toBeInTheDocument();
-    await u.click(screen.getByRole("button", { name: "Simpan ke server" }));
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
     expect(await screen.findByText(/Total mandays pentester \(12 md\) melebihi mandays aset \(11 md\)/)).toBeInTheDocument();
     expect(api.createAsset).not.toHaveBeenCalled();
 
     await u.clear(screen.getByLabelText("Mandays pentester 2"));
     await u.type(screen.getByLabelText("Mandays pentester 2"), "6");
     expect(screen.getByText(/Dialokasikan 11 dari 11 md/)).toBeInTheDocument();
-    await u.click(screen.getByRole("button", { name: "Simpan ke server" }));
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.createMandays).toHaveBeenCalledTimes(2));
     expect(api.createMandays).toHaveBeenNthCalledWith(1, 10, expect.objectContaining({ pentester_id: 5, allocated_mandays: 5 }));
     expect(api.createMandays).toHaveBeenNthCalledWith(2, 10, expect.objectContaining({ pentester_id: 7, allocated_mandays: 6 }));
@@ -144,7 +144,7 @@ describe("AssetPlanner", () => {
     await mount();
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
     await u.type(screen.getByLabelText("IP address"), "2121");
-    await u.click(screen.getByRole("button", { name: "Simpan ke server" }));
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
     const alert = await screen.findByText("Periksa isian berikut");
     const box = alert.closest("[role=alert]") ?? alert.parentElement!;
     expect(within(box as HTMLElement).getByText(/Nama aset wajib diisi/)).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe("AssetPlanner", () => {
     await u.click(screen.getByRole("button", { name: "Hapus aset Lama" }));
     expect(api.deleteAsset).not.toHaveBeenCalled();
     expect(screen.getByText(/akan dihapus saat disimpan/)).toBeInTheDocument();
-    await u.click(screen.getByRole("button", { name: "Simpan ke server" }));
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.deleteAsset).toHaveBeenCalledWith(1));
   });
 
@@ -202,7 +202,7 @@ describe("AssetPlanner", () => {
     expect(await screen.findByText(/Data proyek di server berubah/)).toBeInTheDocument();
     expect(screen.getByDisplayValue("Draf Saya")).toBeInTheDocument();
     expect(screen.queryByDisplayValue("Diubah Orang Lain")).toBeNull();
-    expect(screen.getByRole("button", { name: "Simpan ke server" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Simpan" })).toBeDisabled();
 
     await u.click(screen.getByRole("button", { name: /Buang draf dan muat ulang/ }));
     expect(await screen.findByDisplayValue("Diubah Orang Lain")).toBeInTheDocument();
