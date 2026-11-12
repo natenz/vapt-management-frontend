@@ -1,5 +1,6 @@
-import { ShieldCheck } from "lucide-react";
 import { NavLink } from "react-router";
+import trusteraLogo from "@/shared/assets/logo-trustera-red.png";
+import trusteraMark from "@/shared/assets/logo-trustera-mark.png";
 import { useSession } from "@/entities/session";
 import { CollapseToggle, useSidebarStore } from "@/features/toggle-sidebar";
 import { navFor } from "@/shared/config/roles";
@@ -7,11 +8,21 @@ import { cn } from "@/shared/lib/cn";
 
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
-    <NavLink to="/dashboard" className="flex items-center gap-2 rounded-sm focus-ring">
-      <span className="flex size-8 items-center justify-center rounded-sm bg-surface-brand text-on-brand">
-        <ShieldCheck className="size-4.5" aria-hidden />
-      </span>
-      <span className={cn("text-title-sm text-ink", collapsed && "lg:sr-only")}>VAPT</span>
+    <NavLink to="/dashboard" className="flex items-center rounded-sm focus-ring">
+      <img
+        src={trusteraLogo}
+        alt="Trustera"
+        width={1024}
+        height={257}
+        className={cn("h-8 w-auto logo-adaptive", collapsed && "lg:hidden")}
+      />
+      <img
+        src={trusteraMark}
+        alt="Trustera"
+        width={209}
+        height={209}
+        className={cn("hidden size-8 object-contain logo-adaptive", collapsed && "lg:block")}
+      />
     </NavLink>
   );
 }
