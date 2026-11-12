@@ -41,6 +41,9 @@ export const listResources = async (id: number) =>
 export const addResources = async (id: number, user_ids: number[]) =>
   (await apiRequest(`/projects/${id}/resources`, { method: "POST", body: { user_ids } }, z.array(resourceSchema))).data;
 
+export const removeResource = async (id: number, resourceId: number) =>
+  (await apiRequest(`/projects/${id}/resources/${resourceId}`, { method: "DELETE" }, z.unknown())).data;
+
 export const listAssets = async (id: number) =>
   (await apiRequest(`/projects/${id}/assets`, { method: "GET" }, z.array(assetSchema))).data;
 
