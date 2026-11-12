@@ -35,6 +35,7 @@ type GanttState = "done" | "current" | "todo";
 type GanttItem = {
   id: string;
   label: string;
+  owner?: string;
   startsAt: string;
   endsAt: string;
   state: GanttState;
@@ -262,6 +263,7 @@ function Gantt({
     };
   };
   const today = startOfDay(new Date());
+  const showMetaColumns = items.some((item) => item.owner !== undefined);
 
   return (
     <div data-slot="gantt" className={cn("flex flex-col gap-3", className)}>
@@ -286,31 +288,75 @@ function Gantt({
         </div>
       </div>
 
-      <div className="grid grid-cols-[minmax(9rem,12rem)_minmax(0,1fr)] overflow-hidden rounded-sm border border-border">
+      <div
+        className={cn(
+          "grid overflow-hidden rounded-sm border border-border",
+          showMetaColumns
+            ? "grid-cols-[minmax(15.5rem,22rem)_minmax(0,1fr)]"
+            : "grid-cols-[minmax(9rem,12rem)_minmax(0,1fr)]",
+        )}
+      >
         <div data-slot="gantt-labels" className="z-base border-r border-border bg-surface">
-          <div className="flex h-24 items-end px-4 pb-4 text-caption text-ink-muted">Tahap</div>
-          {items.map((item) => (
-            <div
-              key={`label-${item.id}`}
-              className="flex h-14 min-w-0 items-center gap-3 border-t border-border px-3 sm:px-4"
-            >
-              {item.icon ? (
-                <span
-                  aria-hidden
-                  data-slot="gantt-stage-icon"
-                  className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-xs [&_svg]:size-3.5",
-                    item.iconClassName ?? "bg-surface-subtle text-ink-muted",
-                  )}
-                >
-                  {item.icon}
-                </span>
-              ) : null}
-              <span className="truncate text-body-sm text-ink" title={item.label}>
-                {item.label}
-              </span>
+          {showMetaColumns ? (
+            <div className="grid h-24 grid-cols-[2.25rem_minmax(0,1fr)_minmax(5rem,7rem)] items-end gap-2 px-3 pb-4 text-caption font-medium text-ink-muted sm:px-4">
+              <span>No</span>
+              <span>Item</span>
+              <span>Owner</span>
             </div>
-          ))}
+          ) : (
+            <div className="flex h-24 items-end px-4 pb-4 text-caption text-ink-muted">Tahap</div>
+          )}
+          {items.map((item, idx) =>
+            showMetaColumns ? (
+              <div
+                key={`label-${item.id}`}
+                className="grid h-14 min-w-0 grid-cols-[2.25rem_minmax(0,1fr)_minmax(5rem,7rem)] items-center gap-2 border-t border-border px-3 sm:px-4"
+              >
+                <span className="text-caption text-ink-muted tabular">{idx + 1}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  {item.icon ? (
+                    <span
+                      aria-hidden
+                      data-slot="gantt-stage-icon"
+                      className={cn(
+                        "flex size-7 shrink-0 items-center justify-center rounded-xs [&_svg]:size-3.5",
+                        item.iconClassName ?? "bg-surface-subtle text-ink-muted",
+                      )}
+                    >
+                      {item.icon}
+                    </span>
+                  ) : null}
+                  <span className="truncate text-body-sm text-ink" title={item.label}>
+                    {item.label}
+                  </span>
+                </span>
+                <span className="truncate text-caption text-ink-secondary" title={item.owner ?? "-"}>
+                  {item.owner ?? "-"}
+                </span>
+              </div>
+            ) : (
+              <div
+                key={`label-${item.id}`}
+                className="flex h-14 min-w-0 items-center gap-3 border-t border-border px-3 sm:px-4"
+              >
+                {item.icon ? (
+                  <span
+                    aria-hidden
+                    data-slot="gantt-stage-icon"
+                    className={cn(
+                      "flex size-7 shrink-0 items-center justify-center rounded-xs [&_svg]:size-3.5",
+                      item.iconClassName ?? "bg-surface-subtle text-ink-muted",
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                ) : null}
+                <span className="truncate text-body-sm text-ink" title={item.label}>
+                  {item.label}
+                </span>
+              </div>
+            ),
+          )}
         </div>
 
         <div
@@ -355,7 +401,7 @@ function Gantt({
                 style={{ gridColumn: index + 1, gridRow: `2 / -1` }}
                 className={cn(
                   "border-l border-border",
-                  isWeekend(day) && "bg-surface-subtle",
+                  isWeekend(day) && "bg-info-bg",
                   isSameDay(day, today) && "border-l-brand",
                 )}
               />
@@ -368,7 +414,7 @@ function Gantt({
                 className={cn(
                   DAY_HEADER_HEIGHT,
                   "z-base flex flex-col items-center justify-center gap-1 bg-surface px-1",
-                  isWeekend(day) && "bg-surface-subtle",
+                  isWeekend(day) && "bg-info-bg",
                 )}
               >
                 <span className="text-caption text-ink-muted">

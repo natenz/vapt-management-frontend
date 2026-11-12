@@ -173,7 +173,13 @@ export function ProjectDetailPage() {
             </div>
           </section>
 
-          <ProjectGanttSection project={p} />
+          <ProjectGanttSection
+            project={p}
+            canEdit={
+              current !== "Done" &&
+              (role === "super_admin" || role === "tech_lead" || (role === "project_manager" && ownsAsPm))
+            }
+          />
 
           {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 

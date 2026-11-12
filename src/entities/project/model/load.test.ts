@@ -15,10 +15,11 @@ const md = (pid: number, v: number) => ({
   allocated_mandays: v,
   project_id: 1,
 });
-const proj = (id: number, status: string, resources: number[], mandays: ReturnType<typeof md>[]) =>
+const proj = (id: number, status: string, resources: number[], mandays: ReturnType<typeof md>[], pmId?: number) =>
   ({
     project_id: id,
     project_name: `P${id}`,
+    pm_id: pmId,
     status: { status_process_id: 1, status_name: status },
     resources: resources.map(res),
     mandays,
@@ -32,6 +33,13 @@ describe("aggregateLoad", () => {
     ]);
     expect(r[5]).toEqual({ mandays: 16.5, projects: [{ id: 1, name: "P1" }, { id: 2, name: "P2" }] });
     expect(r[6]!.mandays).toBe(3);
+  });
+  it("PM proyek (pm_id) ikut tercatat di proyek aktif meski tidak masuk trx_resource", () => {
+    const r = aggregateLoad([
+      proj(1, "Pentest", [5], [md(5, 4)], 3),
+      proj(2, "Done", [5], [md(5, 4)], 3),
+    ]);
+    expect(r[3]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
   });
   it("writer: hanya proyek, mandays 0", () => {
     expect(aggregateLoad([proj(1, "Reporting", [8], [])])[8]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });

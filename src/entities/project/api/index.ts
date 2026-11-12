@@ -5,6 +5,7 @@ import {
   mandaysSchema,
   projectDetailSchema,
   projectSchema,
+  projectStageSchema,
   resourceSchema,
   statusLogSchema,
   statusSchema,
@@ -12,6 +13,7 @@ import {
   type CreateProjectInput,
   type MandaysInput,
   type ResourceLoad,
+  type StageScheduleInput,
 } from "../model/types";
 import { aggregateLoad } from "../model/load";
 
@@ -65,6 +67,9 @@ export const updateAsset = async (id: number, body: Partial<AssetInput>) =>
 
 export const deleteAsset = async (assetId: number) =>
   (await apiRequest(`/assets/${assetId}`, { method: "DELETE" }, z.unknown())).data;
+
+export const updateProjectStages = async (id: number, stages: StageScheduleInput[]) =>
+  (await apiRequest(`/projects/${id}/stages`, { method: "PUT", body: { stages } }, z.array(projectStageSchema))).data;
 
 /**
  * Beban + proyek aktif tiap orang (key = sys_user_id) dari proyek yang belum Done.

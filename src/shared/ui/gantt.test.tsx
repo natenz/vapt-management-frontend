@@ -239,4 +239,24 @@ describe("Gantt", () => {
 
     expect(onItemChange).toHaveBeenLastCalledWith("step-2", "2026-09-07", "2026-09-12");
   });
+
+  it("menampilkan kolom No, Item, dan Owner serta menandai kolom akhir pekan saat owner diisi", () => {
+    const { container } = render(
+      <Gantt
+        items={[
+          { id: "s1", label: "Scoping", owner: "Telkom", startsAt: "2026-09-04", endsAt: "2026-09-04", state: "done" },
+          { id: "s2", label: "Remediasi", owner: "Indopack", startsAt: "2026-09-07", endsAt: "2026-09-11", state: "current" },
+        ]}
+        initialMonth={MONTH}
+      />,
+    );
+
+    const labels = container.querySelector('[data-slot="gantt-labels"]')!;
+    expect(labels).toHaveTextContent("No");
+    expect(labels).toHaveTextContent("Item");
+    expect(labels).toHaveTextContent("Owner");
+    expect(labels).toHaveTextContent("Telkom");
+    expect(labels).toHaveTextContent("Indopack");
+    expect(container.querySelectorAll(".bg-info-bg").length).toBeGreaterThan(0);
+  });
 });

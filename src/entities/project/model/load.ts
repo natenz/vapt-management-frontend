@@ -4,7 +4,7 @@ export type ResourceLoad = { mandays: number; projects: { id: number; name: stri
 
 /**
  * Beban tiap orang dari detail proyek yang BELUM Done: total allocated_mandays (trx_mandays) per pentester,
- * dan proyek yang diikuti (trx_resource). Kunci = sys_user_id. Writer tidak punya mandays, hanya proyek.
+ * dan proyek yang diikuti (trx_resource maupun pm_id untuk PM). Kunci = sys_user_id.
  */
 export function aggregateLoad(details: ProjectDetail[]): Record<number, ResourceLoad> {
   const out: Record<number, ResourceLoad> = {};
@@ -15,6 +15,7 @@ export function aggregateLoad(details: ProjectDetail[]): Record<number, Resource
   };
   for (const p of details) {
     if (p.status?.status_name === "Done") continue;
+    if (p.pm_id) touch(p.pm_id, p);
     for (const r of p.resources) {
       const uid = r.user?.sys_user?.sys_user_id ?? r.user?.sys_user_id;
       if (uid != null) touch(uid, p);

@@ -107,10 +107,22 @@ export const mandaysSchema = z.object({
 });
 export type Mandays = z.infer<typeof mandaysSchema>;
 
+export const projectStageSchema = z.object({
+  stage_id: z.number(),
+  project_id: z.number(),
+  sort_order: z.number(),
+  stage_name: z.string(),
+  owner: z.string(),
+  start_date: z.string().optional().nullable(),
+  end_date: z.string().optional().nullable(),
+});
+export type ProjectStage = z.infer<typeof projectStageSchema>;
+
 export const projectDetailSchema = projectSchema.extend({
   assets: z.array(assetSchema).default([]),
   resources: z.array(resourceSchema).default([]),
   mandays: z.array(mandaysSchema).default([]),
+  stages: z.array(projectStageSchema).default([]),
 });
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 
