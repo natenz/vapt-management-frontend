@@ -36,4 +36,4 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: ssh -i ~/.ssh/vapt_deploy "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/vapt-resources-management && docker compose up -d --build frontend'
+        run: ssh -i ~/.ssh/vapt_deploy "$DEPLOY_USER@$DEPLOY_HOST" 'flock -w 300 ~/vapt-resources-management/.compose.lock docker compose -f ~/vapt-resources-management/docker-compose.yml up -d --build frontend'
