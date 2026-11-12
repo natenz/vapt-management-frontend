@@ -30,7 +30,9 @@ export function AppHeader() {
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
-  const current = items.find((i) => pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to)));
+  const current = items.find(
+    (i) => i.to !== "#" && (pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to))),
+  );
 
   return (
     <header className="z-nav flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg px-4 lg:px-6">

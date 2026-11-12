@@ -35,3 +35,13 @@ export type CreateUserInput = {
   phone_number?: string;
   department?: string;
 };
+
+export type UpdateUserInput = {
+  username?: string;
+  email?: string;
+  password?: string;
+  role_id?: number;
+  full_name?: string;
+  phone_number?: string;
+  department?: string;
+};

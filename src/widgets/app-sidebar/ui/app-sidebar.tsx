@@ -33,6 +33,11 @@ export function AppSidebar() {
   const roleName = user?.role?.role_name;
   const items = navFor(roleName);
 
+  const sections = [
+    { id: "operasi", label: "Operasi", items: items.filter((i) => i.section === "operasi") },
+    { id: "akun", label: "Akun", items: items.filter((i) => i.section === "akun") },
+  ].filter((s) => s.items.length > 0);
+
   return (
     <aside
       className={cn(
@@ -50,35 +55,47 @@ export function AppSidebar() {
         <Brand collapsed={collapsed} />
       </div>
       <nav aria-label="Navigasi utama" className="flex-1 overflow-y-auto px-3 py-4">
-        <p className={cn("mb-2 px-3 text-overline text-ink-muted uppercase", collapsed && "lg:sr-only")}>
-          Operasi
-        </p>
-        <ul className="flex flex-col gap-1">
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.to === "/dashboard" || item.to === "/projects"}
-                  title={collapsed ? item.label : undefined}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex h-10 items-center gap-3 rounded-sm px-3 text-nav-link focus-ring transition-colors duration-150 ease-out",
-                      collapsed && "justify-center px-0",
-                      isActive
-                        ? "bg-surface-subtle text-brand"
-                        : "text-ink-secondary hover:bg-surface-subtle hover:text-ink",
-                    )
-                  }
-                >
-                  <Icon className="size-4 shrink-0" aria-hidden />
-                  <span className={cn("truncate", collapsed && "lg:sr-only")}>{item.label}</span>
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
+        {sections.map((section, idx) => (
+          <div
+            key={section.id}
+            className={cn(idx > 0 && "mt-6", idx > 0 && collapsed && "mt-4 border-t border-border pt-4")}
+          >
+            <p className={cn("mb-2 px-3 text-overline text-ink-muted uppercase", collapsed && "lg:sr-only")}>
+              {section.label}
+            </p>
+            <ul className="flex flex-col gap-1">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.label}>
+                    <NavLink
+                      to={item.to}
+                      end={item.to === "/dashboard" || item.to === "/projects"}
+                      title={collapsed ? item.label : undefined}
+                      onClick={(e) => {
+                        if (item.to === "#") {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex h-10 items-center gap-3 rounded-sm px-3 text-nav-link focus-ring transition-colors duration-150 ease-out",
+                          collapsed && "justify-center px-0",
+                          isActive && item.to !== "#"
+                            ? "bg-surface-subtle text-brand"
+                            : "text-ink-secondary hover:bg-surface-subtle hover:text-ink",
+                        )
+                      }
+                    >
+                      <Icon className="size-4 shrink-0" aria-hidden />
+                      <span className={cn("truncate", collapsed && "lg:sr-only")}>{item.label}</span>
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
       <div className="shrink-0 border-t border-border p-2">
         <CollapseToggle />

@@ -53,7 +53,7 @@ function DialogContent({ className, children, size = "sm", ...props }: DialogCon
         className={cn(
           "fixed top-1/2 left-1/2 z-modal w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2",
           size === "sm" ? "max-w-[480px]" : "max-w-[640px]",
-          "rounded-xl border border-border bg-surface p-8 shadow-overlay",
+          "rounded-md border border-border bg-surface p-8 shadow-overlay",
           // Masuk: fade 200ms + skala 2%.
           "duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.98] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98]",
           className,
