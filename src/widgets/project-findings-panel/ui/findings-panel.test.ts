@@ -25,15 +25,22 @@ describe("statusActions", () => {
 });
 
 describe("allowedFindingStatuses", () => {
-  it("pentester saat Retest bisa ubah status ke open, closed, atau reopened", () => {
-    expect(allowedFindingStatuses(f("remediated"), "Retest", "pentester", false, true)).toEqual([
+  it("pentester dan PM pemilik bisa ubah ke semua status selama tahap aktif", () => {
+    expect(allowedFindingStatuses(f("open"), "Pentest", "pentester", false)).toEqual([
+      "open",
+      "remediated",
+      "closed",
+      "reopened",
+    ]);
+    expect(allowedFindingStatuses(f("open"), "Remediation", "project_manager", true)).toEqual([
       "open",
       "remediated",
       "closed",
       "reopened",
     ]);
   });
-  it("tech writer hanya melihat status saat ini karena tidak punya izin ChangeStatus", () => {
-    expect(allowedFindingStatuses(f("open"), "Reporting", "technical_writer", false, false)).toEqual(["open"]);
+  it("tech writer atau status Done hanya melihat status saat ini", () => {
+    expect(allowedFindingStatuses(f("open"), "Reporting", "technical_writer", false)).toEqual(["open"]);
+    expect(allowedFindingStatuses(f("closed"), "Done", "pentester", false)).toEqual(["closed"]);
   });
 });

@@ -44,33 +44,16 @@ export function allowedFindingStatuses(
   projectStatus: string,
   role: string,
   canManage: boolean,
-  isOwner: boolean,
 ): FindingStatus[] {
-  const allowed = new Set<FindingStatus>();
-  if (FINDING_STATUSES.includes(f.status as FindingStatus)) {
-    allowed.add(f.status as FindingStatus);
+  if (EDITABLE_STATUSES.includes(projectStatus) && (canManage || role === "pentester")) {
+    return [...FINDING_STATUSES];
   }
-  const verifier = ["pentester", "tech_lead", "super_admin"].includes(role);
-  if (["Pentest", "Reporting", "Remediation", "Retest"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner))) {
-    allowed.add("open");
-  }
-  if (canManage && ["Remediation", "Retest"].includes(projectStatus)) {
-    allowed.add("remediated");
-  }
-  if (verifier && projectStatus === "Retest") {
-    allowed.add("closed");
-    allowed.add("reopened");
-  }
-  return FINDING_STATUSES.filter((s) => allowed.has(s));
+  return FINDING_STATUSES.includes(f.status as FindingStatus) ? [f.status as FindingStatus] : ["open"];
 }
 
 export type StatusAction = { to: FindingStatus; label: string };
 
-/**
- * Aksi status yang boleh dilakukan user ini. Cermin vulna_service.ChangeStatus (BE tetap yang menegakkan):
- * - remediated: PM pemilik proyek / TL / admin, saat Remediation atau Retest
- * - closed / reopened: pentester, TL, admin, hanya saat Retest
- */
+/** Aksi cepat di baris temuan (selain dropdown status langsung untuk PM / Pentester). */
 export function statusActions(f: Finding, projectStatus: string, role: string, canManage: boolean): StatusAction[] {
   const out: StatusAction[] = [];
   const verifier = ["pentester", "tech_lead", "super_admin"].includes(role);
@@ -81,6 +64,37 @@ export function statusActions(f: Finding, projectStatus: string, role: string, c
     out.push({ to: "closed", label: "Lolos retest" }, { to: "reopened", label: "Masih rentan" });
   }
   return out;
+}
+
+function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) {
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: (to: FindingStatus) => changeFindingStatus(f.vulna_id, to),
+    onSuccess: (r) => {
+      void qc.invalidateQueries({ queryKey: ["findings", f.project_id] });
+      notify.success("Status temuan diperbarui", { description: STATUS_LABEL[r.status] ?? r.status });
+    },
+    onError: (e) => notify.info("Status belum bisa diubah", { description: e.message }),
+  });
+  if (options.length <= 1) {
+    return <Badge variant="count">{STATUS_LABEL[f.status] ?? f.status}</Badge>;
+  }
+  return (
+    <select
+      aria-label={`Status temuan ${f.custom_title}`}
+      className="h-9 rounded-sm border border-border-control bg-surface px-2.5 text-caption text-ink focus-ring"
+      value={f.status}
+      disabled={m.isPending}
+      onChange={(e) => {
+        const next = e.target.value as FindingStatus;
+        if (next !== f.status) m.mutate(next);
+      }}
+    >
+      {options.map((st) => (
+        <option key={st} value={st}>{STATUS_LABEL[st] ?? st}</option>
+      ))}
+    </select>
+  );
 }
 
 function StatusActions({ f, actions }: { f: Finding; actions: StatusAction[] }) {
@@ -214,7 +228,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               </span>
               <span className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={toSeverityKey(f.severity)} />
-                <Badge variant="count">{STATUS_LABEL[f.status] ?? f.status}</Badge>
+                <StatusSelect f={f} options={allowedFindingStatuses(f, projectStatus, role, canManage)} />
                 <StatusActions f={f} actions={statusActions(f, projectStatus, role, canManage)} />
                 {canEdit(f) && editingId !== f.vulna_id ? <Button type="button" onClick={() => setEditingId(f.vulna_id)}>Edit</Button> : null}
                 {canDelete(f) && (
@@ -248,7 +262,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               {editingId === f.vulna_id ? (
                 <EditFinding
                   f={f}
-                  statusOptions={allowedFindingStatuses(f, projectStatus, role, canManage, isOwner(f))}
+                  statusOptions={allowedFindingStatuses(f, projectStatus, role, canManage)}
                   onDone={() => setEditingId(null)}
                 />
               ) : null}
