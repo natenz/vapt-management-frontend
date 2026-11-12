@@ -20,7 +20,7 @@ describe("GuidelinePage", () => {
 
     // Deskripsi
     expect(
-      screen.getByText(/Modul panduan dan metodologi pengujian keamanan VAPT/i),
+      screen.getByText(/Modul panduan Manajemen VAPT sedang dalam tahap pengembangan/i),
     ).toBeInTheDocument();
 
     // Tombol navigasi
