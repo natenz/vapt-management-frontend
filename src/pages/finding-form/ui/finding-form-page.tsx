@@ -18,6 +18,12 @@ import { notify } from "@/shared/ui/toast";
 const schema = z
   .object({
     asset_id: z.string().min(1, "Pilih aset"),
+    finding_code: z
+      .string()
+      .trim()
+      .max(30, "Kode maksimal 30 karakter")
+      .refine((v) => v === "" || /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v), "Hanya huruf, angka, titik, garis bawah, dan strip")
+      .optional(),
     catalog_vulna_id: z.string().optional(),
     custom_title: z.string().trim().max(255).optional(),
     severity: z.string().optional(),
@@ -57,6 +63,7 @@ export function FindingFormPage() {
     mutationFn: (v: Values) =>
       createFinding(id, {
         asset_id: Number(v.asset_id),
+        finding_code: v.finding_code || undefined,
         catalog_vulna_id: v.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
         custom_title: v.custom_title || undefined,
         severity: v.severity || undefined,
@@ -95,6 +102,9 @@ export function FindingFormPage() {
                 {(approvedCatalog).map((c) => (<option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>))}
               </select>
             )}
+          </Field>
+          <Field label="Kode temuan" error={errors.finding_code?.message} helper="Kode unik temuan di proyek ini, terpisah dari judul. Kosongkan untuk kode otomatis (VLN-nomor proyek-urutan), atau isi sendiri, contoh XSS-01.">
+            {(f) => <Input placeholder="Otomatis" autoComplete="off" {...f} {...register("finding_code")} />}
           </Field>
           <Field label="Judul temuan" error={errors.custom_title?.message}>{(f) => <Input {...f} {...register("custom_title")} />}</Field>
           <div className="grid gap-4 sm:grid-cols-2">

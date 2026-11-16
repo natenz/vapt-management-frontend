@@ -16,6 +16,8 @@ export type { Evidence, Finding, FindingStatus, ProjectReport, BackendSeverity }
 
 export type FindingInput = {
   asset_id: number;
+  /** Kosong = kode otomatis dari BE (VLN-<proyek>-<urut>). */
+  finding_code?: string;
   catalog_vulna_id?: number;
   custom_title?: string;
   severity?: string;

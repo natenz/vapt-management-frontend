@@ -29,6 +29,11 @@ import { Skeleton } from "@/shared/ui/skeleton";
 const EDITABLE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
+  finding_code: z
+    .string()
+    .trim()
+    .max(30, "Kode maksimal 30 karakter")
+    .refine((v) => v === "" || /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v), "Hanya huruf, angka, titik, garis bawah, dan strip"),
   custom_title: z.string().trim().min(1, "Judul wajib diisi").max(255, "Judul maksimal 255 karakter"),
   severity: z.enum(SEVERITIES),
   cvss_score: z.string().refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 10), "CVSS 0 sampai 10"),
@@ -126,6 +131,7 @@ function EditFinding({
   const { register, handleSubmit, formState: { errors } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
+      finding_code: f.finding_code ?? "",
       custom_title: f.custom_title,
       severity: f.severity as EditValues["severity"],
       cvss_score: f.cvss_score != null ? String(f.cvss_score) : "",
@@ -136,6 +142,7 @@ function EditFinding({
   const save = useMutation({
     mutationFn: async (v: EditValues) => {
       await updateFinding(f.vulna_id, {
+        finding_code: v.finding_code || undefined,
         custom_title: v.custom_title,
         severity: v.severity,
         cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score),
@@ -150,7 +157,10 @@ function EditFinding({
   return (
     <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))} className="mt-3 flex w-full flex-col gap-3 rounded-sm border border-border p-4">
       {save.error ? <Alert tone="error" title="Gagal menyimpan perubahan" compact>{save.error.message}</Alert> : null}
-      <Field label="Judul temuan" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
+      <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
+        <Field label="Kode temuan" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
+        <Field label="Judul temuan" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
+      </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
         <Field label="CVSS score" error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
@@ -187,7 +197,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const canEdit = (f: Finding) =>
     statusOpen && (["super_admin", "tech_lead", "technical_writer"].includes(role) || (role === "pentester" && isOwner(f)));
   const canDelete = (f: Finding) =>
-    ["Pentest", "Retest"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner(f)));
+    ["Assessment", "Retesting"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner(f)));
   const remove = useMutation({
     mutationFn: (id: number) => deleteFinding(id),
     onSuccess: () => {
