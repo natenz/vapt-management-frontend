@@ -6,9 +6,8 @@ import {
   getProject,
   listStatuses,
   ProjectStatusBadge,
-  stageIndexForStatus,
+  PROJECT_STATUSES,
   statusBetween,
-  TIMELINE_STAGES,
 } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
@@ -28,6 +27,7 @@ import { TeamSidebar } from "@/widgets/project-team-sidebar";
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
 // Tahap berlabel `auto` juga maju sendiri saat tanggal selesainya lewat (BE AutoAdvance); tombolnya untuk memajukan lebih cepat.
 const PM = ["project_manager", "super_admin"];
+const shortDate = (v: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(new Date(v));
 const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: boolean; back?: { to: string; label: string } }> = {
   Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
   Planning: { to: "Scoping", label: "Kickoff proyek", roles: PM },
@@ -76,7 +76,7 @@ export function ProjectDetailPage() {
   if (role === "project_manager" && current === "Draft") {
     return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih Draft di Tech Lead.</Alert>;
   }
-  const stageIndex = stageIndexForStatus(current);
+  const statusIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
   const next = NEXT[current];
   const nextStatus = statuses.data?.find((s) => s.status_name === next?.to);
   const backStatus = statuses.data?.find((s) => s.status_name === next?.back?.to);
@@ -170,16 +170,16 @@ export function ProjectDetailPage() {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-title-md text-ink">Tahap proyek</h2>
               <span className="text-body-sm text-ink-muted">
-                {stageIndex < 0 ? `${current}: belum kickoff` : `Hari ini ${fmtDate(new Date().toISOString())}`}
+                {statusIndex < 2 ? `${current}: belum kickoff` : `Hari ini ${fmtDate(new Date().toISOString())}`}
               </span>
             </div>
-            <Progress value={(Math.max(0, stageIndex) / TIMELINE_STAGES.length) * 100} aria-label="Kemajuan proyek" />
+            <Progress value={(statusIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
             <Stepper
-              steps={TIMELINE_STAGES.map((s) => {
+              steps={PROJECT_STATUSES.map((s) => {
                 const st = p.stages?.find((x) => x.stage_name === s);
-                return { id: s, label: s, hint: st?.end_date ? `s/d ${fmtDate(st.end_date)}` : undefined };
+                return { id: s, label: s, hint: st?.end_date ? `s/d ${shortDate(st.end_date)}` : undefined };
               })}
-              currentIndex={stageIndex}
+              currentIndex={statusIndex}
               allDone={current === "Done"}
             />
             {late ? (

@@ -21,6 +21,10 @@ const schema = z
     end_date: z.string().min(1, "Tanggal selesai wajib diisi"),
     pm_id: z.string().min(1, "Pilih Project Manager"),
     resource_user_ids: z.array(z.number()).min(1, "Pilih minimal satu anggota tim"),
+    projected_mandays: z
+      .string()
+      .trim()
+      .refine((v) => v === "" || (Number(v) > 0 && Math.abs(Number(v) * 100 - Math.round(Number(v) * 100)) < 1e-6), "Isi angka lebih dari 0 (maksimal 2 angka di belakang koma), atau kosongkan"),
   })
   .refine((v) => !v.start_date || !v.end_date || v.end_date >= v.start_date, {
     path: ["end_date"],
@@ -38,7 +42,7 @@ export function ProjectNewPage() {
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { resource_user_ids: [] },
+    defaultValues: { resource_user_ids: [], projected_mandays: "" },
   });
 
   const mutation = useMutation({
@@ -49,7 +53,8 @@ export function ProjectNewPage() {
         start_date: v.start_date,
         end_date: v.end_date,
         pm_id: Number(v.pm_id),
-        assets: [], // aset ditambahkan PM
+        projected_mandays: v.projected_mandays ? Number(v.projected_mandays) : 0,
+        assets: [], // aset ditambahkan PM, totalnya dibatasi projected_mandays
         resource_user_ids: v.resource_user_ids,
       }),
     onSuccess: (p) => {
@@ -63,7 +68,7 @@ export function ProjectNewPage() {
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="flex flex-col gap-8">
       <PageHeader
         title="Buat Project Template"
-        description="Tentukan proyek, rentang tanggal, PM, dan anggota tim. Aset yang diuji dan penugasan Pentester per aset diisi Project Manager."
+        description="Tentukan proyek, rentang tanggal, mandays proyeksi, PM, dan anggota tim. Aset yang diuji dan penugasan Pentester per aset diisi Project Manager, dalam batas mandays proyeksi."
         action={<Button type="submit" variant="solid" loading={mutation.isPending}>Simpan sebagai Draft</Button>}
       />
 
@@ -82,6 +87,13 @@ export function ProjectNewPage() {
             <Field label="Tanggal mulai" error={errors.start_date?.message}>{(f) => <Input type="date" {...f} {...register("start_date")} />}</Field>
             <Field label="Tanggal selesai" error={errors.end_date?.message}>{(f) => <Input type="date" {...f} {...register("end_date")} />}</Field>
           </div>
+          <Field
+            label="Mandays proyeksi"
+            helper="Jatah total mandays untuk proyek ini. PM tidak bisa mengisi total mandays aset melebihi angka ini. Kosongkan bila belum ditentukan."
+            error={errors.projected_mandays?.message}
+          >
+            {(f) => <Input type="number" inputMode="decimal" min="0" step="0.5" placeholder="Contoh: 20" {...f} {...register("projected_mandays")} />}
+          </Field>
           <Field label="Project Manager" error={errors.pm_id?.message}>
             {(f) => (
               <Controller

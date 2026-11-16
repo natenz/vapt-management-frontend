@@ -16,12 +16,14 @@ import { listUsers } from "@/entities/user";
 import {
   allocate,
   ASSET_TYPES,
+  budgetError,
   buildOps,
   CommitError,
   fromServer,
   newKey,
   num,
   runOps,
+  totalAssetMandays,
   validate,
   type DraftAsset,
   type DraftPentester,
@@ -145,7 +147,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
 
   const save = useMutation({
     mutationFn: async () => {
-      const bad = validate(drafts, { start: project.start_date, end: project.end_date }, base);
+      const bad = validate(drafts, { start: project.start_date, end: project.end_date }, base, project.projected_mandays);
       setErrors(bad);
       if (Object.keys(bad).length > 0) throw new Error("__validasi__");
       const ops = buildOps(base, drafts);
@@ -193,6 +195,9 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
 
   const shown = drafts.filter((a) => !a.removed);
   const removed = drafts.filter((a) => a.removed);
+  const projected = project.projected_mandays;
+  const used = totalAssetMandays(drafts);
+  const overBudget = budgetError(drafts, projected) !== null;
   const allErrors = Object.values(errors).flat();
   const hasMissing = shown.some((a) => a.pentesters.length === 0);
 
@@ -240,6 +245,15 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
           </Button>
         </span>
       </div>
+
+      {projected > 0 ? (
+        <p className={cn("rounded-sm border px-3 py-2 text-body-sm tabular", overBudget ? "border-error text-error" : "border-border text-ink-secondary")} role={overBudget ? "alert" : undefined}>
+          Mandays proyeksi Tech Lead: <strong>{fmt(projected)} md</strong> · terpakai aset: <strong>{fmt(used)} md</strong> ·{" "}
+          {overBudget ? `lebih ${fmt(used - projected)} md, kurangi mandays aset` : `sisa ${fmt(projected - used)} md`}
+        </p>
+      ) : (
+        <p className="text-caption text-ink-muted">Tech Lead belum menetapkan mandays proyeksi, jadi total mandays aset belum dibatasi.</p>
+      )}
 
       {stale ? (
         <Alert tone="warning" title="Data proyek di server berubah saat Anda mengedit" compact>

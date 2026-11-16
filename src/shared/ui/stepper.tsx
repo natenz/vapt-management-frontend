@@ -110,7 +110,7 @@ function Stepper({
       <ol
         data-slot="stepper"
         aria-label={`Langkah ${done} dari ${steps.length} selesai`}
-        className="flex w-full min-w-[39rem] items-start"
+        className="flex w-full items-start"
       >
         {steps.map((step, i) => {
           const state = stateOf(i, currentIndex, allDone);
@@ -118,12 +118,12 @@ function Stepper({
 
           return (
             <li key={step.id} className={cn("flex items-start", last ? "shrink-0" : "min-w-0 flex-1")}>
-              <div className="flex w-[4.25rem] shrink-0 flex-col items-center gap-2 text-center">
+              <div className="flex w-[3.6rem] shrink-0 flex-col items-center gap-2 text-center">
                 <Marker state={state} index={i} />
                 <span className={cn("text-caption leading-tight", LABEL[state])}>{step.label}</span>
                 {step.hint ? <span className="text-caption text-ink-muted">{step.hint}</span> : null}
               </div>
-              {last ? null : <span className="mx-1 mt-4 h-px min-w-2 flex-1 bg-border" aria-hidden />}
+              {last ? null : <span className="mx-0.5 mt-4 h-px min-w-1 flex-1 bg-border" aria-hidden />}
             </li>
           );
         })}

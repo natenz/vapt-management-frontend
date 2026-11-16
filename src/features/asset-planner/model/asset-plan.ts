@@ -87,7 +87,17 @@ export const num = (s: string) => (s.trim() === "" ? NaN : Number(s));
 export type Range = { start?: string | null; end?: string | null };
 
 /** Pesan salah per aset (Indonesia). Kosong = valid. Aset yang akan dihapus tidak divalidasi. */
-export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[] = []): Record<string, string[]> {
+/** Total mandays semua aset (draf aktif). */
+export const totalAssetMandays = (drafts: DraftAsset[]) => drafts.filter((a) => !a.removed).reduce((s, a) => s + (num(a.mandays) || 0), 0);
+
+/** Pesan bila total aset melewati proyeksi Tech Lead; null bila aman atau proyeksi belum ditetapkan (0). */
+export function budgetError(drafts: DraftAsset[], projected: number): string | null {
+  const total = totalAssetMandays(drafts);
+  if (!(projected > 0) || total <= projected + 1e-9) return null;
+  return `Total mandays aset (${fmtNum(total)} md) melebihi mandays proyeksi Tech Lead (${fmtNum(projected)} md). Kurangi mandays aset atau minta Tech Lead menaikkan proyeksi.`;
+}
+
+export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[] = [], projected = 0): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   const lo = day(range.start);
   const hi = day(range.end);
@@ -132,6 +142,8 @@ export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[
     }
     if (e.length) out[a.key] = e.map((m) => `${label}: ${m}`);
   }
+  const over = budgetError(drafts, projected);
+  if (over) out.__budget__ = [over];
   return out;
 }
 

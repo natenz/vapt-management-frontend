@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   allocate,
+  budgetError,
   buildOps,
   CommitError,
   fromServer,
@@ -369,5 +370,21 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect(err.done).toBe(2);
     expect(err.total).toBe(3);
     expect(err.created.size).toBe(1);
+  });
+});
+
+describe("mandays proyeksi Tech Lead", () => {
+  const a = (md: string) => asset({ mandays: md, pentesters: [row(5)] });
+  it("proyeksi 0 = belum ditetapkan, tidak membatasi", () => {
+    expect(budgetError([a("999")], 0)).toBeNull();
+  });
+  it("total aset tepat di batas lolos, lebih sedikit saja ditolak", () => {
+    expect(budgetError([a("8"), a("12")], 20)).toBeNull();
+    expect(budgetError([a("8"), a("12.5")], 20)).toContain("melebihi mandays proyeksi Tech Lead (20 md)");
+  });
+  it("aset yang dihapus tidak dihitung; validate memasukkan pesannya", () => {
+    expect(budgetError([a("8"), { ...a("50"), removed: true }], 20)).toBeNull();
+    expect(validate([a("30")], range, [], 20).__budget__?.[0]).toContain("30 md");
+    expect(validate([a("10")], range, [], 20).__budget__).toBeUndefined();
   });
 });

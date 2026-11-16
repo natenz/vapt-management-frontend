@@ -74,6 +74,8 @@ export const projectSchema = z.object({
   project_name: z.string(),
   client_name: z.string(),
   total_mandays: z.number(),
+  /** Jatah mandays dari Tech Lead; total mandays aset tidak boleh melebihinya. 0 = belum ditetapkan. */
+  projected_mandays: z.number().optional().default(0),
   start_date: z.string().optional().nullable(),
   end_date: z.string().optional().nullable(),
   status_id: z.number().optional().nullable(),

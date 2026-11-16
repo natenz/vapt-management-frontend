@@ -68,6 +68,7 @@ export type CreateProjectInput = {
   start_date: string;
   end_date: string;
   pm_id: number;
+  projected_mandays: number;
   assets: AssetInput[];
   resource_user_ids: number[];
 };
