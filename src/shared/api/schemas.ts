@@ -14,14 +14,18 @@ export type RoleName = (typeof ROLES)[number];
 export const SEVERITIES = ["Critical", "High", "Medium", "Low", "Informational"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
+// Draft & Planning = sebelum kickoff; 8 berikutnya = tahap timeline VAPT (nama sama dengan trx_project_stages).
 export const PROJECT_STATUSES = [
   "Draft",
   "Planning",
-  "Pentest",
-  "Reporting",
-  "Remediation",
-  "Retest",
-  "Final Report",
+  "Scoping",
+  "Assessment",
+  "Analysis",
+  "Initial Report",
+  "Remediasi",
+  "Retesting",
+  "Final Report Drafting",
+  "Final Presentation",
   "Done",
 ] as const;
 export type ProjectStatusName = (typeof PROJECT_STATUSES)[number];

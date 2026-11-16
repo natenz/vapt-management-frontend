@@ -31,7 +31,7 @@ run("kontrak FE <-> BE", () => {
     await as("superadmin", "ChangeMe123!");
     expect((await listUsers()).length).toBeGreaterThanOrEqual(8);
     expect((await listRoles()).length).toBeGreaterThanOrEqual(5);
-    expect((await listStatuses()).map((s) => s.status_name)).toContain("Pentest");
+    expect((await listStatuses()).map((s) => s.status_name)).toContain("Assessment");
     expect((await listCatalog()).length).toBeGreaterThanOrEqual(8);
     const { data } = await listProjects({ limit: 100 });
     expect(data.length).toBeGreaterThanOrEqual(7);
@@ -41,7 +41,7 @@ run("kontrak FE <-> BE", () => {
       await listMandays(p.project_id);
       await listStatusLogs(p.project_id);
       await listFindings(p.project_id);
-      if (["Reporting", "Remediation", "Retest", "Done"].includes(d.status?.status_name ?? "")) {
+      if (["Initial Report", "Remediasi", "Retesting", "Done"].includes(d.status?.status_name ?? "")) {
         const r = await getReport(p.project_id);
         expect(r.summary.total_findings).toBe(r.findings.length);
       }

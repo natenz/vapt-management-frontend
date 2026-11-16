@@ -69,7 +69,7 @@ export function ProjectsPage() {
       />
       <DataTable
         columns={columns}
-        data={(data?.data ?? []).filter((p) => !(role === "project_manager" && p.status?.status_name === "Draft"))}
+        data={data?.data ?? []}
         noun="proyek"
         caption="Daftar proyek"
         globalFilter={search}

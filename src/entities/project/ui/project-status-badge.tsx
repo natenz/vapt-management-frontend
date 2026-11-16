@@ -5,11 +5,14 @@ type Tone = "info" | "success" | "warning" | "error" | "neutral";
 const TONE: Record<string, Tone> = {
   Draft: "neutral",
   Planning: "info",
-  Pentest: "warning",
-  Reporting: "info",
-  Remediation: "warning",
-  Retest: "warning",
-  "Final Report": "info",
+  Scoping: "info",
+  Assessment: "warning",
+  Analysis: "warning",
+  "Initial Report": "info",
+  Remediasi: "warning",
+  Retesting: "warning",
+  "Final Report Drafting": "info",
+  "Final Presentation": "info",
   Done: "success",
 };
 

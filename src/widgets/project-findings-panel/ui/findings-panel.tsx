@@ -25,8 +25,8 @@ import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-// BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; terkunci saat Remediation, terbuka lagi saat Retest/Final Report.
-const EDITABLE_STATUSES = ["Pentest", "Reporting", "Retest", "Final Report"];
+// BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; terkunci saat Remediasi, terbuka lagi saat Retesting.
+const EDITABLE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
   custom_title: z.string().trim().min(1, "Judul wajib diisi").max(255, "Judul maksimal 255 karakter"),
@@ -57,10 +57,10 @@ export type StatusAction = { to: FindingStatus; label: string };
 export function statusActions(f: Finding, projectStatus: string, role: string, canManage: boolean): StatusAction[] {
   const out: StatusAction[] = [];
   const verifier = ["pentester", "tech_lead", "super_admin"].includes(role);
-  if (canManage && ["Remediation", "Retest"].includes(projectStatus) && f.status !== "remediated" && f.status !== "closed") {
+  if (canManage && ["Remediasi", "Retesting"].includes(projectStatus) && f.status !== "remediated" && f.status !== "closed") {
     out.push({ to: "remediated", label: "Tandai sudah diperbaiki" });
   }
-  if (verifier && projectStatus === "Retest" && f.status === "remediated") {
+  if (verifier && projectStatus === "Retesting" && f.status === "remediated") {
     out.push({ to: "closed", label: "Lolos retest" }, { to: "reopened", label: "Masih rentan" });
   }
   return out;

@@ -28,7 +28,7 @@ const proj = (id: number, status: string, resources: number[], mandays: ReturnTy
 describe("aggregateLoad", () => {
   it("menjumlah mandays lintas proyek dan mencatat proyek yang diikuti", () => {
     const r = aggregateLoad([
-      proj(1, "Pentest", [5, 8], [md(5, 10), md(5, 2.5)]),
+      proj(1, "Assessment", [5, 8], [md(5, 10), md(5, 2.5)]),
       proj(2, "Planning", [5, 6], [md(5, 4), md(6, 3)]),
     ]);
     expect(r[5]).toEqual({ mandays: 16.5, projects: [{ id: 1, name: "P1" }, { id: 2, name: "P2" }] });
@@ -36,21 +36,21 @@ describe("aggregateLoad", () => {
   });
   it("PM proyek (pm_id) ikut tercatat di proyek aktif meski tidak masuk trx_resource", () => {
     const r = aggregateLoad([
-      proj(1, "Pentest", [5], [md(5, 4)], 3),
+      proj(1, "Assessment", [5], [md(5, 4)], 3),
       proj(2, "Done", [5], [md(5, 4)], 3),
     ]);
     expect(r[3]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
   });
   it("writer: hanya proyek, mandays 0", () => {
-    expect(aggregateLoad([proj(1, "Reporting", [8], [])])[8]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
+    expect(aggregateLoad([proj(1, "Initial Report", [8], [])])[8]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
   });
   it("proyek Done tidak dihitung", () => {
     expect(aggregateLoad([proj(1, "Done", [5], [md(5, 30)])])).toEqual({});
   });
   it("orang yang tidak ikut proyek aktif tidak ada di hasil (dianggap 0 oleh pemanggil)", () => {
-    expect(aggregateLoad([proj(1, "Pentest", [5], [md(5, 1)])])[7]).toBeUndefined();
+    expect(aggregateLoad([proj(1, "Assessment", [5], [md(5, 1)])])[7]).toBeUndefined();
   });
   it("tanpa float: 0,1 + 0,2 = 0,3", () => {
-    expect(aggregateLoad([proj(1, "Pentest", [5], [md(5, 0.1), md(5, 0.2)])])[5]!.mandays).toBe(0.3);
+    expect(aggregateLoad([proj(1, "Assessment", [5], [md(5, 0.1), md(5, 0.2)])])[5]!.mandays).toBe(0.3);
   });
 });

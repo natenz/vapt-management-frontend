@@ -1,9 +1,7 @@
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import type { ProjectDetail } from "@/entities/project";
+import { stageIndexForStatus, statusBetween, type ProjectDetail } from "@/entities/project";
 import type { GanttState } from "@/shared/ui/gantt";
 
-// Tahap pengujian (kerja yang dijadwalkan di trx_mandays) sudah lewat begitu proyek keluar dari Pentest.
-const PENTEST_FINISHED = ["Reporting", "Remediation", "Retest", "Final Report", "Done"];
 
 /**
  * Warna batang Gantt. BE tidak pernah mengubah trx_mandays.status (semua tetap "planned", termasuk di
@@ -11,9 +9,10 @@ const PENTEST_FINISHED = ["Reporting", "Remediation", "Retest", "Final Report", 
  * ponytail: tidak ada status per-penugasan selama Pentest selain dari mandays.status/tanggal mulai.
  */
 export function mandaysState(m: { status?: string | null; start_date?: string | null }, projectStatus: string, today = new Date()): GanttState {
-  if (m.status === "done" || PENTEST_FINISHED.includes(projectStatus)) return "done";
+  // Kerja pentester (trx_mandays) sudah lewat begitu proyek keluar dari Assessment.
+  if (m.status === "done" || statusBetween(projectStatus, "Analysis", "Done")) return "done";
   if (m.status === "in_progress") return "current";
-  if (projectStatus === "Pentest" && m.start_date && new Date(m.start_date) <= today) return "current";
+  if (projectStatus === "Assessment" && m.start_date && new Date(m.start_date) <= today) return "current";
   return "todo";
 }
 
@@ -39,24 +38,7 @@ const STAGE_DEFS: readonly { id: string; label: string; clientOwned?: boolean; s
   { id: "final-presentation", label: "Final Presentation", span: [1.0, 1.0] },
 ];
 
-function activeStageIndex(statusName: string): number {
-  switch (statusName) {
-    case "Pentest":
-      return 1;
-    case "Reporting":
-      return 3;
-    case "Remediation":
-      return 4;
-    case "Retest":
-      return 5;
-    case "Final Report":
-      return 6;
-    case "Done":
-      return STAGE_DEFS.length;
-    default:
-      return -1;
-  }
-}
+const activeStageIndex = stageIndexForStatus;
 
 function parseDay(v?: string | null): Date | null {
   if (!v) return null;

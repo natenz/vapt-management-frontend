@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router";
 import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
 import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
-import { listProjects, ProjectStatusBadge } from "@/entities/project";
+import { listProjects, ProjectStatusBadge, statusBetween } from "@/entities/project";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -12,16 +12,16 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-/** Daftar proyek yang laporannya bisa dibuka (tahap Reporting dan sesudahnya). */
+/** Daftar proyek yang laporannya bisa dibuka (tahap Initial Report dan sesudahnya). */
 export function ReportsIndexPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["projects", "all"], queryFn: () => listProjects({ limit: 100 }) });
-  const rows = (data?.data ?? []).filter((p) => ["Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(p.status?.status_name ?? ""));
+  const rows = (data?.data ?? []).filter((p) => statusBetween(p.status?.status_name, "Initial Report", "Done"));
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Koreksi & Laporan" description="Proyek yang sudah masuk tahap Reporting atau sesudahnya." />
+      <PageHeader title="Koreksi & Laporan" description="Proyek yang sudah masuk tahap Initial Report atau sesudahnya." />
       {error ? <Alert tone="error" title="Gagal memuat">{error.message}</Alert> : null}
       {isLoading ? <Skeleton className="h-40" /> : rows.length === 0 ? (
-        <EmptyState icon={<FileText />} title="Belum ada laporan" description="Proyek akan muncul di sini setelah masuk tahap Reporting." />
+        <EmptyState icon={<FileText />} title="Belum ada laporan" description="Proyek akan muncul di sini setelah masuk tahap Initial Report." />
       ) : (
         <ul className="flex flex-col gap-3">
           {rows.map((p) => (

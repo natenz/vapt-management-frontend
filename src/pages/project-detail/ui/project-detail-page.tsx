@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bug, FileText } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   changeProjectStatus,
   getProject,
   listStatuses,
   ProjectStatusBadge,
-  PROJECT_STATUSES,
+  stageIndexForStatus,
+  statusBetween,
+  TIMELINE_STAGES,
 } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
@@ -24,20 +26,26 @@ import { TeamSidebar } from "@/widgets/project-team-sidebar";
 
 // Siapa boleh memajukan status. Cermin aturan di BE (service/project_service.go) agar tombol
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
-const NEXT: Record<string, { to: string; label: string; roles: string[]; back?: { to: string; label: string } }> = {
+// Tahap berlabel `auto` juga maju sendiri saat tanggal selesainya lewat (BE AutoAdvance); tombolnya untuk memajukan lebih cepat.
+const PM = ["project_manager", "super_admin"];
+const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: boolean; back?: { to: string; label: string } }> = {
   Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
-  Planning: { to: "Pentest", label: "Mulai Pentest", roles: ["project_manager", "super_admin"] },
-  Pentest: { to: "Reporting", label: "Selesai Pentest, mulai Reporting", roles: ["project_manager", "super_admin"] },
-  Reporting: { to: "Remediation", label: "Serahkan laporan awal untuk Remediasi", roles: ["technical_writer", "project_manager", "super_admin"] },
-  Remediation: { to: "Retest", label: "Minta Retest", roles: ["project_manager", "super_admin"] },
-  Retest: { to: "Final Report", label: "Selesai Retest, susun Final Report", roles: ["project_manager", "super_admin"], back: { to: "Remediation", label: "Masih ada yang rentan, kembali ke Remediasi" } },
-  "Final Report": { to: "Done", label: "Serahkan Final Report, tandai Selesai", roles: ["technical_writer", "project_manager", "super_admin"] },
+  Planning: { to: "Scoping", label: "Kickoff proyek", roles: PM },
+  Scoping: { to: "Assessment", label: "Mulai Assessment", roles: PM, auto: true },
+  Assessment: { to: "Analysis", label: "Selesai Assessment, mulai Analysis", roles: PM, auto: true },
+  Analysis: { to: "Initial Report", label: "Mulai Initial Report", roles: PM, auto: true },
+  "Initial Report": { to: "Remediasi", label: "Serahkan laporan awal untuk Remediasi", roles: ["technical_writer", ...PM], auto: true },
+  Remediasi: { to: "Retesting", label: "Klien selesai, mulai Retesting", roles: PM },
+  Retesting: { to: "Final Report Drafting", label: "Selesai Retesting, susun Final Report", roles: PM, back: { to: "Remediasi", label: "Masih ada yang rentan, kembali ke Remediasi" } },
+  "Final Report Drafting": { to: "Final Presentation", label: "Final Report siap, mulai Final Presentation", roles: PM, auto: true },
+  "Final Presentation": { to: "Done", label: "Presentasi selesai, tutup proyek", roles: ["technical_writer", ...PM], auto: true },
 };
 
 export function ProjectDetailPage() {
   const { projectId } = useParams();
   const id = Number(projectId);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const sessionUser = useSession((s) => s.user);
   const role = sessionUser?.role?.role_name ?? "";
   const project = useQuery({ queryKey: ["project", id], queryFn: () => getProject(id), enabled: Number.isFinite(id) });
@@ -46,9 +54,14 @@ export function ProjectDetailPage() {
   const advance = useMutation({
     mutationFn: (statusId: number) => changeProjectStatus(id, statusId),
     onSuccess: (p) => {
-      void queryClient.invalidateQueries({ queryKey: ["project", id] });
       void queryClient.invalidateQueries({ queryKey: ["projects"] });
       notify.success("Status diperbarui", { description: `Sekarang: ${p.status?.status_name ?? "-"}` });
+      // Tech Writer tidak lagi melihat proyek Done (batas di BE), jadi kembali ke dashboard.
+      if (role === "technical_writer" && p.status?.status_name === "Done") {
+        void navigate("/dashboard");
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ["project", id] });
     },
   });
 
@@ -63,22 +76,25 @@ export function ProjectDetailPage() {
   if (role === "project_manager" && current === "Draft") {
     return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih Draft di Tech Lead.</Alert>;
   }
-  const currentIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
+  const stageIndex = stageIndexForStatus(current);
   const next = NEXT[current];
   const nextStatus = statuses.data?.find((s) => s.status_name === next?.to);
   const backStatus = statuses.data?.find((s) => s.status_name === next?.back?.to);
   // BE: PM hanya boleh mengelola proyek miliknya (pm_id); TL dan Superadmin untuk semua.
   const ownsAsPm = role !== "project_manager" || p.pm_id === sessionUser?.sys_user_id;
   const canAdvance = Boolean(next && nextStatus && next.roles.includes(role) && ownsAsPm);
+  // Tahap manual (Remediasi/Retesting) yang lewat tanggal selesai: tidak maju sendiri, jadi diberi peringatan.
+  const currentStage = p.stages?.find((s) => s.stage_name === current);
+  const late = next && !next.auto && currentStage?.end_date && currentStage.end_date.slice(0, 10) < new Date().toISOString().slice(0, 10) ? currentStage.end_date : null;
 
   let advanceBlockReason: string | null = null;
   if (current === "Draft" && next?.to === "Planning") {
     if (p.resources.length === 0) {
       advanceBlockReason = "Proyek harus memiliki minimal 1 resource tim.";
     }
-  } else if (current === "Planning" && next?.to === "Pentest") {
+  } else if (current === "Planning" && next?.to === "Scoping") {
     if (p.assets.length === 0) {
-      advanceBlockReason = "Tambahkan minimal 1 aset sebelum memulai pentest.";
+      advanceBlockReason = "Tambahkan minimal 1 aset sebelum kickoff.";
     } else {
       const allocatedAssetIds = new Set(p.mandays.map((m) => m.asset_id));
       const unallocated = p.assets.find((a) => !allocatedAssetIds.has(a.assets_id));
@@ -118,6 +134,8 @@ export function ProjectDetailPage() {
               ) : null}
               {advanceBlockReason ? (
                 <span className="text-caption text-ink-muted">{advanceBlockReason}</span>
+              ) : next?.auto ? (
+                <span className="text-caption text-ink-muted">Maju otomatis setelah tanggal tahap ini lewat.</span>
               ) : null}
             </div>
           ) : (
@@ -149,8 +167,26 @@ export function ProjectDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-8">
           <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
-            <Progress value={(currentIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
-            <Stepper steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))} currentIndex={currentIndex} allDone={current === "Done"} />
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-title-md text-ink">Tahap proyek</h2>
+              <span className="text-body-sm text-ink-muted">
+                {stageIndex < 0 ? `${current}: belum kickoff` : `Hari ini ${fmtDate(new Date().toISOString())}`}
+              </span>
+            </div>
+            <Progress value={(Math.max(0, stageIndex) / TIMELINE_STAGES.length) * 100} aria-label="Kemajuan proyek" />
+            <Stepper
+              steps={TIMELINE_STAGES.map((s) => {
+                const st = p.stages?.find((x) => x.stage_name === s);
+                return { id: s, label: s, hint: st?.end_date ? `s/d ${fmtDate(st.end_date)}` : undefined };
+              })}
+              currentIndex={stageIndex}
+              allDone={current === "Done"}
+            />
+            {late ? (
+              <Alert tone="warning" title={`Tahap ${current} melewati jadwal`}>
+                Seharusnya selesai {fmtDate(late)}. Tahap ini menunggu tindakan manual, jadi tidak maju otomatis.
+              </Alert>
+            ) : null}
           </section>
 
           <section aria-label="Aset">
@@ -184,13 +220,13 @@ export function ProjectDetailPage() {
 
           {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 
-          {["Pentest", "Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(current) ? <FindingsPanel project={p} /> : null}
+          {statusBetween(current, "Assessment", "Done") ? <FindingsPanel project={p} /> : null}
 
           <footer className="flex flex-wrap gap-3">
-            {(role === "pentester" || role === "super_admin") && ["Pentest", "Retest"].includes(current) ? (
+            {(role === "pentester" || role === "super_admin") && ["Assessment", "Retesting"].includes(current) ? (
               <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
             ) : null}
-            {["Reporting", "Remediation", "Retest", "Final Report", "Done"].includes(current) ? (
+            {statusBetween(current, "Initial Report", "Done") ? (
               <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
             ) : null}
             <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
