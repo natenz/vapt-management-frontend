@@ -42,7 +42,10 @@ function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; s
   return (
     <li className="flex flex-col gap-2 rounded-md border border-border bg-surface p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-title-sm text-ink">{f.custom_title}</span>
+        <span className="flex flex-wrap items-baseline gap-2">
+          {f.finding_code ? <code className="rounded-xs bg-surface-sunken px-1.5 py-0.5 text-caption text-ink-secondary tabular">{f.finding_code}</code> : null}
+          <span className="text-title-sm text-ink">{f.custom_title}</span>
+        </span>
         <SeverityBadge severity={toSeverityKey(f.severity)} />
       </div>
       <p className="text-body-sm text-ink-muted">

@@ -3,10 +3,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Bug, Circle, ClipboardCheck, FolderKanban, OctagonAlert, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { getResourceLoad, type ResourceLoad } from "@/entities/project";
+import { currentMonth, getResourceLoad, monthLabel, type ResourceLoad } from "@/entities/project";
 import { listUsers, type User } from "@/entities/user";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
-import { MANDAYS_LIMIT } from "@/shared/config/workload";
+import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 import { Alert } from "@/shared/ui/alert";
 import { StatusBadge } from "@/shared/ui/badge";
 import { DataTable } from "@/shared/ui/data-table";
@@ -64,20 +64,20 @@ const columns: ColumnDef<Row>[] = [
   },
   {
     id: "md",
-    header: "Mandays aktif",
+    header: "Mandays bulan ini",
     accessorFn: (r) => r.load.mandays,
     meta: { numeric: true },
     cell: ({ row }) => {
       const u = row.original.user;
       if (roleOf(u) !== "pentester") return <span className="text-ink-muted">-</span>;
       const md = row.original.load.mandays;
-      const full = md >= MANDAYS_LIMIT;
+      const full = isOverLimit(md);
       return (
         <StatusBadge
           tone={full ? "error" : "neutral"}
           icon={full ? <OctagonAlert aria-hidden /> : <Circle className="fill-current" aria-hidden />}
         >
-          {md} md{full ? " · penuh" : ""}
+          {md} md{full ? " · lewat batas" : ""}
         </StatusBadge>
       );
     },
@@ -87,8 +87,9 @@ const columns: ColumnDef<Row>[] = [
 /** Daftar resource (pentester, tech writer, PM) beserta beban mandays dan proyek aktifnya. Untuk Tech Lead dan Superadmin. */
 export function ResourcesPage() {
   const [search, setSearch] = useState("");
+  const [ym, setYm] = useState(currentMonth());
   const users = useQuery({ queryKey: ["users", "all"], queryFn: () => listUsers() });
-  const load = useQuery({ queryKey: ["workload", "detail"], queryFn: getResourceLoad });
+  const load = useQuery({ queryKey: ["workload", "detail", ym], queryFn: () => getResourceLoad(ym) });
 
   const rows = useMemo<Row[]>(
     () =>
@@ -98,14 +99,14 @@ export function ResourcesPage() {
     [users.data, load.data],
   );
   const count = (role: string) => rows.filter((r) => roleOf(r.user) === role).length;
-  const available = rows.filter((r) => roleOf(r.user) === "pentester" && r.load.mandays < MANDAYS_LIMIT).length;
+  const available = rows.filter((r) => roleOf(r.user) === "pentester" && !isOverLimit(r.load.mandays)).length;
   const loading = users.isLoading || load.isLoading;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Resource"
-        description={`Siapa saja yang tersedia untuk ditempatkan di proyek. Mandays dihitung dari proyek yang belum Done; penuh bila ${MANDAYS_LIMIT} md atau lebih.`}
+        description={`Siapa saja yang tersedia untuk ditempatkan di proyek. Mandays dihitung per bulan (${monthLabel(ym)}) dan mulai dari 0 tiap ganti bulan; merah bila lebih dari ${MANDAYS_LIMIT} md.`}
       />
       {users.error ? <Alert tone="error" title="Gagal memuat daftar orang">{users.error.message}</Alert> : null}
       {load.error ? <Alert tone="warning" title="Beban mandays belum bisa dihitung">{load.error.message}</Alert> : null}
@@ -143,6 +144,7 @@ export function ResourcesPage() {
           note={{ text: "Pentester, writer, dan PM" }}
         />
       </section>
+      <div className="flex flex-wrap items-end gap-3">
       <SearchInput
         aria-label="Cari resource"
         placeholder="Cari nama, username, role, atau departemen"
@@ -150,6 +152,11 @@ export function ResourcesPage() {
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
       />
+      <label className="flex flex-col gap-1 text-caption text-ink-muted">
+        Bulan
+        <input type="month" value={ym} onChange={(e) => e.target.value && setYm(e.target.value)} className="h-10 rounded-sm border border-border bg-surface px-3 text-body-sm text-ink focus-ring" />
+      </label>
+      </div>
       <DataTable
         columns={columns}
         data={rows}

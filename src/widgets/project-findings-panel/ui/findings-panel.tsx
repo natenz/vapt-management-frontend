@@ -221,7 +221,10 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
           {(data ?? []).map((f) => (
             <li key={f.vulna_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <span className="flex flex-col">
-                <span className="text-title-sm text-ink">{f.custom_title}</span>
+                <span className="flex flex-wrap items-baseline gap-2">
+                  {f.finding_code ? <code className="rounded-xs bg-surface-sunken px-1.5 py-0.5 text-caption text-ink-secondary tabular">{f.finding_code}</code> : null}
+                  <span className="text-title-sm text-ink">{f.custom_title}</span>
+                </span>
                 <span className="text-body-sm text-ink-muted">
                   {f.asset?.asset_name ?? `Aset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
                 </span>

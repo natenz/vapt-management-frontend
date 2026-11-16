@@ -52,7 +52,7 @@ describe("ResourcesPage", () => {
     expect(screen.queryByText("Tech Lead")).toBeNull();
 
     const budi = screen.getByText("Budi Santoso").closest("tr")!;
-    expect(within(budi).getByText(/21 md · penuh/)).toBeInTheDocument();
+    expect(within(budi).getByText(/21 md · lewat batas/)).toBeInTheDocument();
     expect(within(budi).getByRole("link", { name: "VAPT HRIS" })).toHaveAttribute("href", "/projects/5");
     const citra = screen.getByText("Citra Maharani").closest("tr")!;
     expect(within(citra).getByText("8 md")).toBeInTheDocument();

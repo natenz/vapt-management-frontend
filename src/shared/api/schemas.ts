@@ -159,6 +159,8 @@ export type Evidence = z.infer<typeof evidenceSchema>;
 
 export const findingSchema = z.object({
   vulna_id: z.number(),
+  /** Kode temuan otomatis dari BE (VLN-<proyek>-<urut>), terpisah dari judul. Kosong untuk data yang belum ber-kode. */
+  finding_code: z.string().optional().default(""),
   custom_title: z.string(),
   severity: z.string(),
   cvss_score: z.number().optional().nullable(),

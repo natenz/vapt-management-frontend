@@ -15,7 +15,7 @@ import {
   type ResourceLoad,
   type StageScheduleInput,
 } from "../model/types";
-import { aggregateLoad } from "../model/load";
+import { aggregateLoad, currentMonth } from "../model/load";
 
 export const listStatuses = async () =>
   (await apiRequest("/statuses", { method: "GET" }, z.array(statusSchema))).data;
@@ -75,27 +75,19 @@ export const updateProjectStages = async (id: number, stages: StageScheduleInput
   (await apiRequest(`/projects/${id}/stages`, { method: "PUT", body: { stages } }, z.array(projectStageSchema))).data;
 
 /**
- * Beban + proyek aktif tiap orang (key = sys_user_id) dari proyek yang belum Done.
- * ponytail: BE belum punya endpoint beban kerja, jadi 1 request list + 1 request detail per proyek.
- * Cukup untuk puluhan proyek; kalau lambat, minta BE tambah GET /workload lalu ganti isi fungsi ini.
+ * Beban + proyek aktif tiap orang (key = sys_user_id) pada bulan `ym` ("YYYY-MM", bawaan bulan ini); mandays
+ * reset tiap bulan karena hanya porsi penugasan di bulan itu yang dihitung.
+ * ponytail: BE belum punya endpoint beban kerja, jadi 1 request list + 1 request detail per proyek yang relevan
+ * (belum Done, atau jadwalnya menyentuh bulan itu). Cukup untuk puluhan proyek; kalau lambat, minta BE tambah GET /workload.
  */
-export const getResourceLoad = async (): Promise<Record<number, ResourceLoad>> => {
+export const getResourceLoad = async (ym: string = currentMonth()): Promise<Record<number, ResourceLoad>> => {
   const { data: projects } = await listProjects({ limit: 100 });
-  const active = projects.filter((p) => p.status?.status_name !== "Done");
-  const details = await Promise.all(active.map((p) => getProject(p.project_id)));
-  return aggregateLoad(details);
+  const day = (v?: string | null) => (v ?? "").slice(0, 7);
+  const relevant = projects.filter((p) => p.status?.status_name !== "Done" || (day(p.start_date) <= ym && ym <= day(p.end_date)));
+  const details = await Promise.all(relevant.map((p) => getProject(p.project_id)));
+  return aggregateLoad(details, ym);
 };
 
-/**
- * Beban mandays per pentester (key = sys_user_id), dijumlah dari trx_mandays lintas proyek yang belum Done.
- * ponytail: BE belum punya endpoint beban kerja, jadi ini 1 request list + 1 request mandays per proyek.
- * Cukup untuk puluhan proyek; kalau lambat, minta BE tambah GET /workload lalu ganti isi fungsi ini.
- */
-export const getWorkload = async (): Promise<Record<number, number>> => {
-  const { data: projects } = await listProjects({ limit: 100 });
-  const active = projects.filter((p) => p.status?.status_name !== "Done");
-  const lists = await Promise.all(active.map((p) => listMandays(p.project_id)));
-  const total: Record<number, number> = {};
-  for (const m of lists.flat()) total[m.pentester_id] = (total[m.pentester_id] ?? 0) + m.allocated_mandays;
-  return total;
-};
+/** Mandays per pentester (key = sys_user_id) pada bulan `ym`; dipakai picker tim. */
+export const getWorkload = async (ym: string = currentMonth()): Promise<Record<number, number>> =>
+  Object.fromEntries(Object.entries(await getResourceLoad(ym)).map(([id, l]) => [id, l.mandays]));

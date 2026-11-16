@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { Combobox, type ComboOption } from "@/shared/ui/combobox";
 import { StatusBadge } from "@/shared/ui/badge";
 import { Field } from "@/shared/ui/input";
-import { MANDAYS_LIMIT } from "@/shared/config/workload";
+import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 
 export type TeamPickerProps = {
   value: number[];
@@ -13,22 +13,24 @@ export type TeamPickerProps = {
   writers: User[];
   /** sys_user_id -> total mandays aktif (dari BE). Writer tidak punya mandays, jadi tidak ditampilkan. */
   workload: Record<number, number>;
+  /** Bulan beban dihitung, mis. "November 2026". */
+  monthLabel?: string;
 };
 
 const name = (u: User) => u.profile?.full_name ?? u.username;
 
 /** Pilih anggota tim lewat select + tombol tambah. Beban mandays tiap orang merah bila >= batas. */
-export function TeamPicker({ value, onChange, pentesters, writers, workload }: TeamPickerProps) {
+export function TeamPicker({ value, onChange, pentesters, writers, workload, monthLabel }: TeamPickerProps) {
   const mdOf = (u: User) => workload[u.sys_user_id] ?? 0;
   const isPentester = (u: User) => u.role?.role_name === "pentester";
-  const over = (u: User) => isPentester(u) && mdOf(u) >= MANDAYS_LIMIT;
+  const over = (u: User) => isPentester(u) && isOverLimit(mdOf(u));
   const all = [...pentesters, ...writers].filter((u) => u.profile?.user_id);
   const chosen = all.filter((u) => value.includes(u.profile!.user_id));
   const toOpt = (group: string) => (u: User): ComboOption => ({
     value: String(u.profile!.user_id),
     label: name(u),
     group,
-    hint: isPentester(u) ? `${mdOf(u)} md${over(u) ? " · penuh" : ""}` : undefined,
+    hint: isPentester(u) ? `${mdOf(u)} md${over(u) ? " · lewat batas" : ""}` : undefined,
     warn: over(u),
   });
   const options = [
@@ -38,7 +40,7 @@ export function TeamPicker({ value, onChange, pentesters, writers, workload }: T
 
   return (
     <div className="flex flex-col gap-4">
-      <Field label="Anggota tim" helper={`Ketik nama untuk mencari, lalu pilih. Angka = total mandays pentester di proyek yang belum selesai, merah bila ${MANDAYS_LIMIT} md atau lebih.`}>
+      <Field label="Anggota tim" helper={`Ketik nama untuk mencari, lalu pilih. Angka = mandays pentester${monthLabel ? ` di ${monthLabel}` : ""} (reset tiap bulan), merah bila lebih dari ${MANDAYS_LIMIT} md.`}>
         {(f) => (
           <Combobox
             {...f}
@@ -65,7 +67,7 @@ export function TeamPicker({ value, onChange, pentesters, writers, workload }: T
                 <span className="flex items-center gap-3">
                   {isPentester(u) ? (
                     <StatusBadge tone={full ? "error" : "neutral"} icon={full ? <OctagonAlert aria-hidden /> : <Circle className="fill-current" aria-hidden />}>
-                      {mdOf(u)} md{full ? " · beban tinggi" : ""}
+                      {mdOf(u)} md{full ? " · lewat batas" : ""}
                     </StatusBadge>
                   ) : null}
                   <Button

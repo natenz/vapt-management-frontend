@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import { createProject, getWorkload } from "@/entities/project";
+import { createProject, currentMonth, getWorkload, monthLabel } from "@/entities/project";
 import { listUsers } from "@/entities/user";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -37,13 +37,17 @@ export function ProjectNewPage() {
   const queryClient = useQueryClient();
   const pms = useQuery({ queryKey: ["users", "project_manager"], queryFn: () => listUsers({ role: "project_manager" }) });
   const pentesters = useQuery({ queryKey: ["users", "pentester"], queryFn: () => listUsers({ role: "pentester" }) });
-  const workload = useQuery({ queryKey: ["workload"], queryFn: getWorkload });
   const writers = useQuery({ queryKey: ["users", "technical_writer"], queryFn: () => listUsers({ role: "technical_writer" }) });
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { resource_user_ids: [], projected_mandays: "" },
   });
+
+  // Beban pentester dihitung di bulan mulai proyek (atau bulan ini sebelum tanggal diisi).
+  const startDate = useWatch({ control, name: "start_date" });
+  const ym = /^\d{4}-\d{2}/.test(startDate ?? "") ? startDate!.slice(0, 7) : currentMonth();
+  const workload = useQuery({ queryKey: ["workload", ym], queryFn: () => getWorkload(ym) });
 
   const mutation = useMutation({
     mutationFn: (v: z.output<typeof schema>) =>
@@ -125,7 +129,7 @@ export function ProjectNewPage() {
           control={control}
           name="resource_user_ids"
           render={({ field }) => (
-            <TeamPicker value={field.value ?? []} onChange={field.onChange} pentesters={pentesters.data ?? []} writers={writers.data ?? []} workload={workload.data ?? {}} />
+            <TeamPicker value={field.value ?? []} onChange={field.onChange} pentesters={pentesters.data ?? []} writers={writers.data ?? []} workload={workload.data ?? {}} monthLabel={monthLabel(ym)} />
           )}
         />
       </section>

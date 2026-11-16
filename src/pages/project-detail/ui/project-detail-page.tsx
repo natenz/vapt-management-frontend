@@ -194,17 +194,28 @@ export function ProjectDetailPage() {
               <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
               {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
                 <ul className="flex flex-col divide-y divide-border">
-                  {p.assets.map((a) => (
-                    <li key={a.assets_id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                      <span className="flex flex-col">
-                        <span className="text-title-sm text-ink">{a.asset_name}</span>
-                        <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
-                      </span>
-                      <span className="text-body-sm text-ink-secondary tabular">
-                        {a.mandays} md · {a.pentester?.profile?.full_name ?? a.pentester?.username ?? "belum ada pentester"}
-                      </span>
-                    </li>
-                  ))}
+                  {p.assets.map((a) => {
+                    // Mandays per pentester = baris trx_mandays aset ini, bukan total aset.
+                    const rows = p.mandays.filter((m) => m.asset_id === a.assets_id);
+                    const left = Math.round((a.mandays - rows.reduce((n, m) => n + m.allocated_mandays, 0)) * 100) / 100;
+                    return (
+                      <li key={a.assets_id} className="flex flex-wrap items-start justify-between gap-2 py-3">
+                        <span className="flex flex-col">
+                          <span className="text-title-sm text-ink">{a.asset_name}</span>
+                          <span className="text-body-sm text-ink-muted">{a.asset_type} · {a.domain || a.ip_address || "-"}</span>
+                        </span>
+                        <span className="flex flex-col items-end text-body-sm text-ink-secondary tabular">
+                          <span>{a.mandays} md</span>
+                          {rows.length === 0 ? <span className="text-ink-muted">belum ada pentester</span> : rows.map((m) => (
+                            <span key={m.mandays_id} className="text-caption text-ink-muted">
+                              {m.pentester?.profile?.full_name ?? m.pentester?.username ?? `User ${m.pentester_id}`} · {m.allocated_mandays} md
+                            </span>
+                          ))}
+                          {rows.length > 0 && left > 0 ? <span className="text-caption text-warning">belum dialokasikan {left} md</span> : null}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
