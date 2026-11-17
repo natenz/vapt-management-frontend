@@ -18,7 +18,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 
 export function AppHeader() {
-  const { user, clear } = useSession();
+  const { user, signOut } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pathname } = useLocation();
@@ -82,7 +82,7 @@ export function AppHeader() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
-              clear();
+              signOut();
               queryClient.clear();
               navigate("/login", { replace: true });
             }}

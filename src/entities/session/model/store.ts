@@ -9,6 +9,9 @@ export type SessionState = {
   setSession: (r: LoginResult) => void;
   setUser: (u: User) => void;
   clear: () => void;
+  /** Keluar atas kemauan pengguna. Login berikutnya selalu ke dashboard, bukan ke halaman terakhir. */
+  signOut: () => void;
+  signedOut: boolean;
 };
 
 // sessionStorage: sesi hilang saat tab ditutup. BE belum memakai cookie HttpOnly / refresh token.
@@ -18,9 +21,11 @@ export const useSession = create<SessionState>()(
       token: null,
       expiresAt: null,
       user: null,
-      setSession: (r) => set({ token: r.access_token, expiresAt: r.expires_at, user: r.user }),
+      setSession: (r) => set({ token: r.access_token, expiresAt: r.expires_at, user: r.user, signedOut: false }),
       setUser: (user) => set({ user }),
       clear: () => set({ token: null, expiresAt: null, user: null }),
+      signedOut: false,
+      signOut: () => set({ token: null, expiresAt: null, user: null, signedOut: true }),
     }),
     { name: "vapt-session", storage: createJSONStorage(() => sessionStorage) },
   ),

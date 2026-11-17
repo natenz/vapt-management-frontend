@@ -49,7 +49,6 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
   const stageItems: GanttItem[] = drafts.map((s) => ({
     id: s.id,
     label: s.label,
-    owner: s.owner,
     startsAt: s.startsAt,
     endsAt: s.endsAt,
     state: s.state,
@@ -78,7 +77,6 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
     return (
       <div className="flex flex-col gap-1 text-body-sm">
         <span className="font-medium text-ink">{item.label}</span>
-        <span className="text-caption text-ink-secondary">Owner: {item.owner ?? "-"}</span>
         <span className="text-caption text-ink-muted">{fmtRange(item.startsAt, item.endsAt)}</span>
         <span className="text-caption text-ink-muted">
           {detail?.source === "server"

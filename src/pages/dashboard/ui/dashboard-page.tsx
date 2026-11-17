@@ -1,13 +1,14 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, startOfDay } from "date-fns";
-import { ArrowRight, FolderKanban, LayoutTemplate } from "lucide-react";
+import { ArrowRight, BookCheck, FolderKanban, LayoutTemplate } from "lucide-react";
 import { Link } from "react-router";
-import { listFindings } from "@/entities/finding";
+import { listCatalog, type CatalogVulna } from "@/entities/catalog";
+import { listFindings, SeverityBadge } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { cn } from "@/shared/lib/cn";
-import { fmtDate } from "@/shared/lib/format";
+import { fmtDate, toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -69,6 +70,92 @@ function deadline(end?: string | null, today = new Date()) {
   return { text: `${days} hari lagi`, tone: days <= 3 ? "text-warning" : "" };
 }
 
+const LATEST_COUNT = 5;
+
+/** Proyek yang paling baru dibuat (project_id terbesar), status apa pun termasuk Draft dan Done. */
+function LatestProjects({ rows, loading }: { rows: Project[]; loading: boolean }) {
+  return (
+    <section className="flex flex-col gap-3" aria-label="Proyek terakhir">
+      <h2 className="text-title-md text-ink">Proyek terakhir</h2>
+      {loading ? (
+        <Skeleton className="h-40" />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={<FolderKanban />} title="Belum ada proyek" description="Proyek yang baru dibuat akan muncul di sini." />
+      ) : (
+        <Table boxed>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Proyek</TableHead>
+              <TableHead>Tahap</TableHead>
+              <TableHead>Rentang tanggal</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((p) => (
+              <TableRow key={p.project_id}>
+                <TableCell>
+                  <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:underline">
+                    <span className="text-title-sm text-ink">{p.project_name}</span>
+                    <span className="text-caption text-ink-muted">{p.client_name} · PM {p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}</span>
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <ProjectStatusBadge name={p.status?.status_name ?? ""} />
+                </TableCell>
+                <TableCell className="text-body-sm text-ink tabular">{fmtDate(p.start_date)} s/d {fmtDate(p.end_date)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  );
+}
+
+/** Antrean ACC katalog. Pengajuan berstatus pending hanya datang dari pentester (BE catalogStatusForActor). */
+function CatalogQueue({ rows, loading, error }: { rows: CatalogVulna[]; loading: boolean; error?: Error | null }) {
+  return (
+    <section className="flex flex-col gap-3" aria-label="ACC katalog dari pentest">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-title-md text-ink">
+          ACC katalog dari pentest <span className="text-body-sm text-ink-muted">({rows.length})</span>
+        </h2>
+        <Button asChild variant="link" trailingIcon={<ArrowRight />}>
+          <Link to="/catalog">{rows.length > 0 ? "Tinjau dan setujui" : "Buka katalog"}</Link>
+        </Button>
+      </div>
+      {error ? (
+        <Alert tone="error" title="Pengajuan belum bisa dimuat" compact>{error.message}</Alert>
+      ) : loading ? (
+        <Skeleton className="h-40" />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={<BookCheck />} title="Tidak ada pengajuan" description="Pengajuan kerentanan baru dari pentester akan muncul di sini untuk Anda setujui." />
+      ) : (
+        <Table boxed>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Kerentanan</TableHead>
+              <TableHead>Severity</TableHead>
+              <TableHead>Diajukan oleh</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((c) => (
+              <TableRow key={c.vulna_id}>
+                <TableCell className="text-title-sm text-ink">{c.title}</TableCell>
+                <TableCell>
+                  <SeverityBadge severity={toSeverityKey(c.severity)} />
+                </TableCell>
+                <TableCell className="text-body-sm text-ink-secondary">{c.creator?.profile?.full_name ?? c.creator?.username ?? "-"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  );
+}
+
 function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record<string, string>; openCount: Map<number, number> }) {
   return (
     <Table boxed>
@@ -126,7 +213,8 @@ export function DashboardPage() {
 
   // Temuan terbuka per proyek; cache ["findings", id] dipakai bersama panel temuan di detail proyek.
   // ponytail: satu request per proyek (maks 20); ganti ke ringkasan dari BE bila proyek aktif makin banyak.
-  const withFindings = active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
+  const isTlView = role === "tech_lead" || role === "super_admin";
+  const withFindings = isTlView ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
   const findings = useQueries({
     queries: withFindings.map((p) => ({ queryKey: ["findings", p.project_id], queryFn: () => listFindings(p.project_id) })),
   });
@@ -139,11 +227,17 @@ export function DashboardPage() {
   });
   const name = user?.profile?.full_name ?? user?.username ?? "";
 
+  // Tech Lead / Super Admin: dashboard = 5 proyek terakhir + antrean ACC katalog, bukan tabel "giliran".
+  const isTl = role === "tech_lead" || role === "super_admin";
+  const pending = useQuery({ queryKey: ["catalog", "pending"], queryFn: () => listCatalog({ status: "pending" }), enabled: isTl });
+  const latest = [...(projects.data?.data ?? [])].sort((a, b) => b.project_id - a.project_id).slice(0, LATEST_COUNT);
+  const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Dashboard"
-        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}. Hanya proyek yang menjadi bagian Anda yang ditampilkan.`}
+        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.${isTl ? "" : " Hanya proyek yang menjadi bagian Anda yang ditampilkan."}`}
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<LayoutTemplate />}>
@@ -155,7 +249,15 @@ export function DashboardPage() {
 
       {projects.error ? <Alert tone="error" title="Gagal memuat proyek">{projects.error.message}</Alert> : null}
 
-      {projects.isLoading ? (
+      {isTl ? (
+        <>
+          <CatalogQueue rows={pendingRows} loading={pending.isLoading} error={pending.error} />
+          <LatestProjects rows={latest} loading={projects.isLoading} />
+          <Button asChild variant="link" trailingIcon={<ArrowRight />} className="self-start">
+            <Link to="/projects">Semua proyek</Link>
+          </Button>
+        </>
+      ) : projects.isLoading ? (
         <Skeleton className="h-40" />
       ) : (
         <>

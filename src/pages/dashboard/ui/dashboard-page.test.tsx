@@ -24,6 +24,14 @@ vi.mock("@/entities/project", async (importOriginal) => ({
   }),
 }));
 
+vi.mock("@/entities/catalog", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/catalog")>()),
+  listCatalog: async () => [
+    { vulna_id: 7, title: "Stored XSS", severity: "High", status: "pending" },
+    { vulna_id: 9, title: "IDOR profil", severity: "Medium", status: "pending" },
+  ],
+}));
+
 vi.mock("@/entities/finding", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/finding")>()),
   listFindings: async () => [],
@@ -48,6 +56,25 @@ describe("DashboardPage", () => {
     const watch = screen.getByRole("region", { name: "Sedang berjalan" });
     expect(within(watch).getByText("Proyek Remediasi")).toBeInTheDocument();
     expect(within(watch).getByText("Proyek Laporan")).toBeInTheDocument();
+  });
+
+  it("tech lead: antrean ACC katalog dari pentest dan 5 proyek terakhir, tanpa tabel giliran", async () => {
+    await mount("tech_lead");
+    const acc = await screen.findByRole("region", { name: "ACC katalog dari pentest" });
+    expect(within(acc).getByText("Stored XSS")).toBeInTheDocument();
+    expect(within(acc).getByText("IDOR profil")).toBeInTheDocument();
+    expect(within(acc).getByRole("link", { name: /Tinjau dan setujui/ })).toHaveAttribute("href", "/catalog");
+    const latest = screen.getByRole("region", { name: "Proyek terakhir" });
+    const rows = within(latest).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(3); // mock punya 3 proyek; id terbesar di atas
+    expect(rows[0]).toHaveTextContent("Proyek Remediasi");
+    expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
+  });
+
+  it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {
+    await mount("pentester");
+    await screen.findByRole("region", { name: "Giliran Anda" });
+    expect(screen.queryByRole("region", { name: "ACC katalog dari pentest" })).not.toBeInTheDocument();
   });
 
   it("tech writer: Initial Report jadi giliran, Assessment hanya dipantau", async () => {

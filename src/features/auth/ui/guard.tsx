@@ -5,10 +5,11 @@ import { isRole, type RoleName } from "@/shared/config/roles";
 import { Alert } from "@/shared/ui/alert";
 
 export function RequireAuth({ children, roles }: { children: ReactNode; roles?: readonly RoleName[] }) {
-  const { token, expiresAt, user } = useSession();
+  const { token, expiresAt, user, signedOut } = useSession();
   const location = useLocation();
   if (!token || !user || isExpired(expiresAt)) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    // Sesi habis: ingat halaman ini. Keluar sengaja: jangan, supaya login berikutnya ke dashboard.
+    return <Navigate to="/login" replace state={signedOut ? null : { from: location.pathname }} />;
   }
   const role = user.role?.role_name;
   if (roles && !(isRole(role) && roles.includes(role))) {
