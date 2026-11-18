@@ -22,6 +22,17 @@ vi.mock("@/entities/project", async (importOriginal) => ({
     data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Laporan", "Initial Report")],
     meta: { page: 1, limit: 100, total: 3 },
   }),
+  getResourceLoad: async () => ({
+    5: { mandays: 22, projects: [] },
+  }),
+}));
+
+vi.mock("@/entities/user", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/user")>()),
+  listUsers: async () => [
+    { sys_user_id: 5, username: "pentester.budi", role: { role_name: "pentester" }, profile: { full_name: "Budi Santoso" } },
+    { sys_user_id: 3, username: "pm.andi", role: { role_name: "project_manager" }, profile: { full_name: "Andi PM" } },
+  ],
 }));
 
 vi.mock("@/entities/catalog", async (importOriginal) => ({
@@ -82,6 +93,16 @@ describe("DashboardPage", () => {
     const turn = await screen.findByRole("region", { name: "Giliran Anda" });
     expect(within(turn).getByText("Proyek Laporan")).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "Sedang berjalan" })).getByText("Proyek Uji")).toBeInTheDocument();
+  });
+
+  it("super admin: menampilkan ringkasan eksekutif, proyek prioritas, dan pantauan kapasitas", async () => {
+    await mount("super_admin");
+    expect(await screen.findByRole("region", { name: "Ringkasan Eksekutif Sistem" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Proyek Prioritas & Tenggat" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Pantauan Kapasitas Tim" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Pintasan Administrasi" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Tambah Pengguna/ })).toHaveAttribute("href", "/users");
+    expect(screen.getAllByRole("link", { name: /Buat Proyek/ })[0]).toHaveAttribute("href", "/projects/new");
   });
 });
 

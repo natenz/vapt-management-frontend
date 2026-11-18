@@ -11,12 +11,14 @@ import {
   Plus,
   ShieldAlert,
   User as UserIcon,
+  UserPlus,
 } from "lucide-react";
 import { Link } from "react-router";
 import { listCatalog, type CatalogVulna } from "@/entities/catalog";
 import { listFindings, SeverityChip } from "@/entities/finding";
-import { listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
+import { currentMonth, getResourceLoad, listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
+import { listUsers } from "@/entities/user";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { cn } from "@/shared/lib/cn";
 import { fmtDate, toSeverityKey } from "@/shared/lib/format";
@@ -26,6 +28,7 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { SuperAdminDashboard } from "./superadmin-dashboard";
 
 // Batas proyek per role ditegakkan BE (service/access.go roleStatuses). Di sini hanya dipilah:
 // "giliran" = status yang menunggu tindakan role ini; sisanya proyek berjalan yang cukup dipantau.
@@ -277,9 +280,22 @@ export function DashboardPage() {
   const turn = active.filter((p) => view.turn.includes(p.status?.status_name ?? ""));
   const watch = active.filter((p) => !view.turn.includes(p.status?.status_name ?? ""));
 
-  // Temuan terbuka per proyek; cache ["findings", id] dipakai bersama panel temuan di detail proyek.
-  // ponytail: satu request per proyek (maks 20); ganti ke ringkasan dari BE bila proyek aktif makin banyak.
-  const isTlView = role === "tech_lead" || role === "super_admin";
+  const isSuperAdmin = role === "super_admin";
+  const isTechLead = role === "tech_lead";
+  const isTlView = isTechLead || isSuperAdmin;
+
+  // Data tambahan khusus Super Admin (Executive & Resource Capacity Overview)
+  const users = useQuery({
+    queryKey: ["users", "all"],
+    queryFn: () => listUsers(),
+    enabled: isSuperAdmin,
+  });
+  const load = useQuery({
+    queryKey: ["workload", "detail", currentMonth()],
+    queryFn: () => getResourceLoad(currentMonth()),
+    enabled: isSuperAdmin,
+  });
+
   const withFindings = isTlView ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
   const findings = useQueries({
     queries: withFindings.map((p) => ({ queryKey: ["findings", p.project_id], queryFn: () => listFindings(p.project_id) })),
@@ -293,9 +309,12 @@ export function DashboardPage() {
   });
   const name = user?.profile?.full_name ?? user?.username ?? "";
 
-  // Tech Lead / Super Admin: dashboard = 5 proyek terakhir + antrean ACC katalog, bukan tabel "giliran".
-  const isTl = role === "tech_lead" || role === "super_admin";
-  const pending = useQuery({ queryKey: ["catalog", "pending"], queryFn: () => listCatalog({ status: "pending" }), enabled: isTl });
+  // Tech Lead / Super Admin: data antrean katalog
+  const pending = useQuery({
+    queryKey: ["catalog", "pending"],
+    queryFn: () => listCatalog({ status: "pending" }),
+    enabled: isTechLead || isSuperAdmin,
+  });
   const latest = [...(projects.data?.data ?? [])].sort((a, b) => b.project_id - a.project_id).slice(0, LATEST_COUNT);
   const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
 
@@ -303,9 +322,18 @@ export function DashboardPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Dashboard"
-        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.${isTl ? "" : " Hanya proyek yang menjadi bagian Anda yang ditampilkan."}`}
+        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.${isTlView ? "" : " Hanya proyek yang menjadi bagian Anda yang ditampilkan."}`}
         action={
-          role === "tech_lead" || role === "super_admin" ? (
+          isSuperAdmin ? (
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" leadingIcon={<UserPlus />}>
+                <Link to="/users">Tambah Pengguna</Link>
+              </Button>
+              <Button asChild variant="solid" leadingIcon={<Plus />}>
+                <Link to="/projects/new">Buat Proyek</Link>
+              </Button>
+            </div>
+          ) : isTechLead ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
               <Link to="/projects/new">Buat Project Template</Link>
             </Button>
@@ -315,7 +343,15 @@ export function DashboardPage() {
 
       {projects.error ? <Alert tone="error" title="Gagal memuat proyek">{projects.error.message}</Alert> : null}
 
-      {isTl ? (
+      {isSuperAdmin ? (
+        <SuperAdminDashboard
+          projects={projects.data?.data ?? []}
+          users={users.data ?? []}
+          catalogQueue={pendingRows}
+          loadMap={load.data ?? {}}
+          isLoading={projects.isLoading || users.isLoading || load.isLoading}
+        />
+      ) : isTechLead ? (
         <>
           <CatalogQueue rows={pendingRows} loading={pending.isLoading} error={pending.error} />
           <LatestProjects rows={latest} loading={projects.isLoading} />
