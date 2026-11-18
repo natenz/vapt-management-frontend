@@ -6,6 +6,24 @@
  */
 
 /*
+ * Varian `dark:` mengikuti mekanisme tema yang sama dengan tokens.css:
+ * aktif pada [data-theme="dark"], atau mengikuti preferensi sistem selama
+ * pengguna tidak memaksa tema terang. Menggantikan varian bawaan Tailwind
+ * yang hanya membaca prefers-color-scheme.
+ */
+@custom-variant dark {
+  [data-theme="dark"] & {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) & {
+      @slot;
+    }
+  }
+}
+
+/*
  * Spec 8: "Keyboard focus draws shadow-focus: a 2px white gap and a 2px
  * focus ring. Never remove it; never rely on color alone (the ring is a
  * solid shape)."

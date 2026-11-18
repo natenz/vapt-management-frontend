@@ -12,6 +12,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
 type PaginationProps = {
   page: number;
@@ -22,6 +23,9 @@ type PaginationProps = {
   /** Kata benda yang dihitung, mis. "temuan". */
   noun: string;
   onPageChange: (page: number) => void;
+  /** Pilihan jumlah baris per halaman; selector hanya tampil bila diisi. */
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (pageSize: number) => void;
   className?: string;
 };
 
@@ -49,21 +53,55 @@ function Pagination({
   pageSize,
   noun,
   onPageChange,
+  pageSizeOptions,
+  onPageSizeChange,
   className,
 }: PaginationProps) {
   const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const last = Math.min(page * pageSize, total);
+  const showPageSize = Boolean(pageSizeOptions?.length && onPageSizeChange);
 
   return (
     <div
       className={cn("flex flex-wrap items-center justify-between gap-4 pt-4", className)}
     >
-      <p className="text-caption text-ink-muted">
-        <span className="tabular">
-          {first}-{last}
-        </span>{" "}
-        dari <span className="tabular">{total}</span> {noun}
-      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {showPageSize ? (
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="text-caption text-ink-muted">
+              Tampilkan
+            </span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => onPageSizeChange?.(Number(value))}
+            >
+              <SelectTrigger
+                aria-label="Jumlah baris per halaman"
+                className="h-8 w-auto gap-1.5 px-2.5 text-caption tabular"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start" className="min-w-20">
+                {pageSizeOptions?.map((option) => (
+                  <SelectItem key={option} value={String(option)} className="h-8 text-caption">
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span aria-hidden className="text-caption text-ink-muted">
+              per halaman
+            </span>
+          </div>
+        ) : null}
+
+        <p className="text-caption text-ink-muted">
+          <span className="tabular">
+            {first}-{last}
+          </span>{" "}
+          dari <span className="tabular">{total}</span> {noun}
+        </p>
+      </div>
 
       <nav aria-label="Navigasi halaman">
         <ul className="flex items-center gap-1">

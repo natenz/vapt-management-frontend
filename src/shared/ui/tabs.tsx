@@ -68,7 +68,7 @@ function TabsList({
         ref={scrollerRef}
         onScroll={measure}
         // Scrollbar disembunyikan: gulir lewat swipe (touch) atau chevron.
-        className="flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex-1 [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         <TabsPrimitive.List
           data-slot="tabs-list"
@@ -143,7 +143,7 @@ function TabChip({ className, icon, subLabel, count, children, ...props }: TabCh
       className={cn(
         "group flex min-h-12 shrink-0 items-center gap-3 rounded-md border border-border bg-surface px-4 py-3",
         "transition-[background-color,border-color,box-shadow] duration-150 ease-out",
-        "hover:border-border-strong focus-ring",
+        "focus-ring hover:border-border-strong",
         // Satu-satunya elemen bertint di dalam strip.
         "data-[state=active]:border-brand-soft data-[state=active]:bg-brand-soft",
         "[&_svg]:size-4 [&_svg]:shrink-0",
@@ -169,6 +169,47 @@ function TabChip({ className, icon, subLabel, count, children, ...props }: TabCh
   );
 }
 
+/* ------------------------------------------------------------------ *
+ * Segmented (pengalih tampilan ringkas)
+ * Kontainer abu-abu lembut; tab aktif terangkat dengan permukaan putih
+ * dan bayangan tipis, tab lain berteks netral.
+ * ------------------------------------------------------------------ */
+
+function SegmentedTabsList({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
+  return (
+    <TabsPrimitive.List
+      data-slot="segmented-tabs-list"
+      className={cn(
+        "inline-flex h-9 items-center gap-0.5 rounded-md bg-surface-subtle p-1",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function SegmentedTabsTrigger({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>) {
+  return (
+    <TabsPrimitive.Trigger
+      data-slot="segmented-tabs-trigger"
+      className={cn(
+        "inline-flex h-full items-center justify-center rounded-sm px-3.5 text-xs font-normal whitespace-nowrap",
+        "text-ink-muted transition-[color,background-color,box-shadow] duration-150 ease-out",
+        "focus-ring hover:text-ink",
+        "data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-float",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function TabsContent({
   className,
   ...props
@@ -182,5 +223,5 @@ function TabsContent({
   );
 }
 
-export { Tabs, TabsList, TabChip, TabsContent };
+export { Tabs, TabsList, TabChip, TabsContent, SegmentedTabsList, SegmentedTabsTrigger };
 export type { TabChipProps };

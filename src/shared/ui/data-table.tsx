@@ -57,6 +57,10 @@ type DataTableProps<TData> = {
   globalFilter?: string;
   initialSorting?: SortingState;
   pageSize?: number;
+  /** Pilihan jumlah baris per halaman (mis. [10, 20, 50, 100]); menampilkan selector. */
+  pageSizeOptions?: number[];
+  /** Dipanggil saat pengguna mengganti jumlah baris per halaman. */
+  onPageSizeChange?: (pageSize: number) => void;
   isLoading?: boolean;
   /** Ditampilkan saat tidak ada baris dan tidak sedang memuat. */
   emptyState?: React.ReactNode;
@@ -76,7 +80,9 @@ function DataTable<TData>({
   caption,
   globalFilter = "",
   initialSorting = [],
-  pageSize = 20,
+  pageSize: pageSizeProp = 20,
+  pageSizeOptions,
+  onPageSizeChange,
   isLoading = false,
   emptyState,
   onRowClick,
@@ -87,12 +93,23 @@ function DataTable<TData>({
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
   const [pageIndex, setPageIndex] = React.useState(0);
+  const [pageSize, setPageSize] = React.useState(pageSizeProp);
 
-  // Filter yang berubah harus mengembalikan pembaca ke halaman pertama —
-  // kalau tidak, hasil yang menyusut terlihat seperti "tidak ada data".
+  // Ukuran halaman dari pemanggil (mis. dari URL) tetap menjadi sumber kebenaran
+  React.useEffect(() => {
+    setPageSize(pageSizeProp);
+  }, [pageSizeProp]);
+
+  // Filter atau ukuran halaman yang berubah harus mengembalikan pembaca ke halaman
+  // pertama — kalau tidak, hasil yang menyusut terlihat seperti "tidak ada data".
   React.useEffect(() => {
     setPageIndex(0);
-  }, [globalFilter, data]);
+  }, [globalFilter, data, pageSize]);
+
+  const handlePageSizeChange = (next: number) => {
+    setPageSize(next);
+    onPageSizeChange?.(next);
+  };
 
   const table = useReactTable({
     data,
@@ -204,6 +221,8 @@ function DataTable<TData>({
           pageSize={pageSize}
           noun={noun}
           onPageChange={(page) => setPageIndex(page - 1)}
+          pageSizeOptions={pageSizeOptions}
+          onPageSizeChange={pageSizeOptions ? handlePageSizeChange : undefined}
         />
       )}
     </div>
