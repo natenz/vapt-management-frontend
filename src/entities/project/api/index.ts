@@ -12,6 +12,7 @@ import {
   type AssetInput,
   type CreateProjectInput,
   type MandaysInput,
+  type ProjectDetail,
   type ResourceLoad,
   type StageScheduleInput,
 } from "../model/types";
@@ -130,6 +131,21 @@ export const updateProjectStages = async (id: number, stages: StageScheduleInput
   ).data;
 
 /**
+ * Mengambil detail seluruh proyek yang relevan (belum Done, atau jadwal menyentuh bulan `ym`).
+ * Dipakai oleh getResourceLoad dan visualisasi linimasa beban kerja tim (ResourceTimeline).
+ */
+export const listActiveProjectDetails = async (
+  ym: string = currentMonth(),
+): Promise<ProjectDetail[]> => {
+  const { data: projects } = await listProjects({ limit: 100 });
+  const day = (v?: string | null) => (v ?? "").slice(0, 7);
+  const relevant = projects.filter(
+    (p) => p.status?.status_name !== "Done" || (day(p.start_date) <= ym && ym <= day(p.end_date)),
+  );
+  return Promise.all(relevant.map((p) => getProject(p.project_id)));
+};
+
+/**
  * Beban + proyek aktif tiap orang (key = sys_user_id) pada bulan `ym` ("YYYY-MM", bawaan bulan ini); mandays
  * reset tiap bulan karena hanya porsi penugasan di bulan itu yang dihitung.
  * ponytail: BE belum punya endpoint beban kerja, jadi 1 request list + 1 request detail per proyek yang relevan
@@ -138,12 +154,7 @@ export const updateProjectStages = async (id: number, stages: StageScheduleInput
 export const getResourceLoad = async (
   ym: string = currentMonth(),
 ): Promise<Record<number, ResourceLoad>> => {
-  const { data: projects } = await listProjects({ limit: 100 });
-  const day = (v?: string | null) => (v ?? "").slice(0, 7);
-  const relevant = projects.filter(
-    (p) => p.status?.status_name !== "Done" || (day(p.start_date) <= ym && ym <= day(p.end_date)),
-  );
-  const details = await Promise.all(relevant.map((p) => getProject(p.project_id)));
+  const details = await listActiveProjectDetails(ym);
   return aggregateLoad(details, ym);
 };
 

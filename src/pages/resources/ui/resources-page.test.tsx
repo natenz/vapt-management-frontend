@@ -111,4 +111,23 @@ describe("ResourcesPage", () => {
     expect(screen.queryByText("Budi Santoso")).toBeNull();
     expect(screen.getByText("Menampilkan 1 dari 5 orang")).toBeInTheDocument();
   });
+
+  it("dapat beralih ke tampilan Linimasa Beban Kerja", async () => {
+    const userEvent = (await import("@testing-library/user-event")).default;
+    const user = userEvent.setup();
+    const { ResourcesPage } = await import("./resources-page");
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={["/resources"]}>
+          <ResourcesPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("Daftar Tim")).toBeInTheDocument();
+    const timelineTab = screen.getByRole("tab", { name: "Linimasa Beban Kerja" });
+    await user.click(timelineTab);
+
+    expect(timelineTab).toHaveAttribute("aria-selected", "true");
+  });
 });

@@ -11,10 +11,15 @@ import {
   User as UserIcon,
   Users,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { currentMonth, getResourceLoad, monthLabel } from "@/entities/project";
+import { currentMonth, getResourceLoad, listActiveProjectDetails, monthLabel } from "@/entities/project";
 import { listUsers, RoleBadge, toUserProfileInfo, UserProfilePopover, type User } from "@/entities/user";
+import {
+  ScheduleRangeControls,
+  getDefaultScheduleRangeValue,
+  type ScheduleRangeValue,
+} from "@/features/schedule-range";
 import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 import { cn } from "@/shared/lib/cn";
 import { Alert } from "@/shared/ui/alert";
@@ -24,6 +29,13 @@ import { DataTable } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
 import { SummaryTile } from "@/shared/ui/summary-tile";
+import {
+  SegmentedTabsList,
+  SegmentedTabsTrigger,
+  Tabs,
+  TabsContent,
+} from "@/shared/ui/tabs";
+import { ResourceTimeline } from "@/widgets/resource-timeline";
 import {
   PAGE_SIZE_OPTIONS,
   applyResourceFilters,
@@ -161,10 +173,32 @@ export function ResourcesPage() {
   const setPageSize = (next: number) =>
     setSearchParams((prev) => writePageSize(next, prev), { replace: true });
 
+  const view = searchParams.get("tampilan") === "timeline" ? "timeline" : "table";
+  const setView = (next: "table" | "timeline") =>
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "timeline") p.set("tampilan", "timeline");
+        else p.delete("tampilan");
+        return p;
+      },
+      { replace: true },
+    );
+
+  const [schedule, setSchedule] = useState<ScheduleRangeValue>(() =>
+    getDefaultScheduleRangeValue(),
+  );
+
   const users = useQuery({ queryKey: ["users", "all"], queryFn: () => listUsers() });
   const load = useQuery({
     queryKey: ["workload", "detail", filters.month],
     queryFn: () => getResourceLoad(filters.month),
+  });
+
+  const activeProjects = useQuery({
+    queryKey: ["projects", "active-details", filters.month],
+    queryFn: () => listActiveProjectDetails(filters.month),
+    enabled: view === "timeline",
   });
 
   const allRows = useMemo<ResourceRow[]>(
@@ -230,52 +264,91 @@ export function ResourcesPage() {
         />
       </section>
 
-      <div className="flex flex-col gap-4">
-        <ResourcesFilterBar
-          filters={filters}
-          defaultMonth={thisMonth}
-          onChange={setFilters}
-          roleOptions={roleOptions}
-          resultCount={filteredRows.length}
-          totalCount={allRows.length}
-        />
+      <Tabs
+        value={view}
+        onValueChange={(v) => setView(v === "timeline" ? "timeline" : "table")}
+        className="flex flex-col gap-4"
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <SegmentedTabsList aria-label="Pilihan tampilan resource" className="self-start">
+            <SegmentedTabsTrigger value="table">Daftar Tim</SegmentedTabsTrigger>
+            <SegmentedTabsTrigger value="timeline">Linimasa Beban Kerja</SegmentedTabsTrigger>
+          </SegmentedTabsList>
 
-        <DataTable
-          columns={columns}
-          data={filteredRows}
-          noun="orang"
-          caption="Daftar resource"
-          isLoading={loading}
-          pageSize={pageSize}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          onPageSizeChange={setPageSize}
-          getRowId={(r) => String(r.user.sys_user_id)}
-          initialSorting={[{ id: "md", desc: true }]}
-          emptyState={
-            isFiltered ? (
-              <EmptyState
-                icon={<Users />}
-                title="Tidak ada resource yang cocok"
-                description="Coba ubah kata kunci atau kurangi filter yang aktif."
-                action={
-                  <Button
-                    variant="quiet"
-                    onClick={() => setFilters({ search: "", roles: [], month: thisMonth })}
-                  >
-                    Reset filter
-                  </Button>
-                }
-              />
-            ) : (
-              <EmptyState
-                icon={<Users />}
-                title="Belum ada resource"
-                description="Data resource tim akan tampil di sini."
-              />
-            )
-          }
-        />
-      </div>
+          {view === "timeline" ? (
+            <ScheduleRangeControls
+              value={schedule}
+              onChange={setSchedule}
+              className="lg:justify-end"
+            />
+          ) : null}
+        </div>
+
+        <TabsContent value="table" className="mt-0 flex flex-col gap-4">
+          <ResourcesFilterBar
+            filters={filters}
+            defaultMonth={thisMonth}
+            onChange={setFilters}
+            roleOptions={roleOptions}
+            resultCount={filteredRows.length}
+            totalCount={allRows.length}
+          />
+
+          <DataTable
+            columns={columns}
+            data={filteredRows}
+            noun="orang"
+            caption="Daftar resource"
+            isLoading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={setPageSize}
+            getRowId={(r) => String(r.user.sys_user_id)}
+            initialSorting={[{ id: "md", desc: true }]}
+            emptyState={
+              isFiltered ? (
+                <EmptyState
+                  icon={<Users />}
+                  title="Tidak ada resource yang cocok"
+                  description="Coba ubah kata kunci atau kurangi filter yang aktif."
+                  action={
+                    <Button
+                      variant="quiet"
+                      onClick={() => setFilters({ search: "", roles: [], month: thisMonth })}
+                    >
+                      Reset filter
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={<Users />}
+                  title="Belum ada resource"
+                  description="Data resource tim akan tampil di sini."
+                />
+              )
+            }
+          />
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-0">
+          <ResourceTimeline
+            users={(users.data ?? []).filter((u) =>
+              (TEAM_ROLES as readonly string[]).includes(roleOf(u)),
+            )}
+            projects={activeProjects.data ?? []}
+            schedule={schedule}
+            onScheduleChange={setSchedule}
+            loadMap={load.data}
+            isLoading={users.isLoading || activeProjects.isLoading}
+            error={users.error || activeProjects.error}
+            onRetry={() => {
+              users.refetch();
+              activeProjects.refetch();
+            }}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
