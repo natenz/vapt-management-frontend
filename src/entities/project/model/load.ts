@@ -1,6 +1,13 @@
 import type { ProjectDetail } from "./types";
 
-export type ResourceLoad = { mandays: number; projects: { id: number; name: string }[] };
+export type ResourceProject = {
+  id: number;
+  name: string;
+  status?: string;
+  mandays?: number;
+};
+
+export type ResourceLoad = { mandays: number; projects: ResourceProject[] };
 
 /** Bulan kalender "YYYY-MM". */
 export const currentMonth = (now = new Date()) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -37,9 +44,19 @@ export function mandaysInMonth(m: { start_date?: string | null; end_date?: strin
 export function aggregateLoad(details: ProjectDetail[], ym: string = currentMonth()): Record<number, ResourceLoad> {
   const out: Record<number, ResourceLoad> = {};
   const at = (uid: number) => (out[uid] ??= { mandays: 0, projects: [] });
-  const join = (uid: number, p: ProjectDetail) => {
+  const join = (uid: number, p: ProjectDetail, md = 0) => {
     const l = at(uid);
-    if (!l.projects.some((x) => x.id === p.project_id)) l.projects.push({ id: p.project_id, name: p.project_name });
+    const existing = l.projects.find((x) => x.id === p.project_id);
+    if (!existing) {
+      l.projects.push({
+        id: p.project_id,
+        name: p.project_name,
+        ...(p.status?.status_name ? { status: p.status.status_name } : {}),
+        ...(md > 0 ? { mandays: Math.round(md * 100) / 100 } : {}),
+      });
+    } else if (md > 0) {
+      existing.mandays = Math.round(((existing.mandays ?? 0) + md) * 100) / 100;
+    }
   };
   for (const p of details) {
     const done = p.status?.status_name === "Done";
@@ -54,7 +71,7 @@ export function aggregateLoad(details: ProjectDetail[], ym: string = currentMont
       const md = mandaysInMonth(m, ym);
       if (done && md === 0) continue; // proyek Done yang tidak menyentuh bulan ini tidak perlu muncul
       at(m.pentester_id).mandays += md;
-      if (!done) join(m.pentester_id, p);
+      if (!done) join(m.pentester_id, p, md);
     }
   }
   for (const l of Object.values(out)) l.mandays = Math.round(l.mandays * 100) / 100;

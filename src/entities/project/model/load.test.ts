@@ -39,15 +39,24 @@ describe("aggregateLoad", () => {
       ],
       NOV,
     );
-    expect(r[5]).toEqual({ mandays: 16.5, projects: [{ id: 1, name: "P1" }, { id: 2, name: "P2" }] });
+    expect(r[5]).toEqual({
+      mandays: 16.5,
+      projects: [
+        { id: 1, name: "P1", status: "Assessment", mandays: 12.5 },
+        { id: 2, name: "P2", status: "Planning", mandays: 4 },
+      ],
+    });
     expect(r[6]!.mandays).toBe(3);
   });
   it("PM proyek (pm_id) ikut tercatat di proyek aktif meski tidak masuk trx_resource", () => {
     const r = aggregateLoad([proj(1, "Assessment", [5], [md(5, 4)], 3), proj(2, "Done", [5], [md(5, 4)], 3)], NOV);
-    expect(r[3]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
+    expect(r[3]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1", status: "Assessment" }] });
   });
   it("writer: hanya proyek, mandays 0", () => {
-    expect(aggregateLoad([proj(1, "Initial Report", [8], [])], NOV)[8]).toEqual({ mandays: 0, projects: [{ id: 1, name: "P1" }] });
+    expect(aggregateLoad([proj(1, "Initial Report", [8], [])], NOV)[8]).toEqual({
+      mandays: 0,
+      projects: [{ id: 1, name: "P1", status: "Initial Report" }],
+    });
   });
   it("proyek Done tetap memakai kapasitas bulannya tapi tidak lagi jadi 'proyek aktif'", () => {
     expect(aggregateLoad([proj(1, "Done", [5], [md(5, 12)])], NOV)).toEqual({ 5: { mandays: 12, projects: [] } });

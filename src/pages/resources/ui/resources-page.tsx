@@ -12,9 +12,9 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { currentMonth, getResourceLoad, monthLabel } from "@/entities/project";
-import { listUsers, RoleBadge, type User } from "@/entities/user";
+import { listUsers, RoleBadge, toUserProfileInfo, UserProfilePopover, type User } from "@/entities/user";
 import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 import { cn } from "@/shared/lib/cn";
 import { Alert } from "@/shared/ui/alert";
@@ -37,6 +37,7 @@ import {
   type ResourceRow,
 } from "../model/resource-filters";
 import { ResourcesFilterBar } from "./resources-filter-bar";
+import { ResourceProjectsCell } from "./resource-projects-cell";
 
 // Hanya yang bekerja di proyek. Super admin dan tech lead adalah pengelola, bukan resource tim.
 const TEAM_ROLES = ["pentester", "technical_writer", "project_manager"] as const;
@@ -55,23 +56,22 @@ const columns: ColumnDef<ResourceRow>[] = [
     accessorFn: (r) => nameOf(r.user),
     cell: ({ row }) => {
       const u = row.original.user;
-      const fullName = nameOf(u);
-      const initials = fullName
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((p) => p[0]?.toUpperCase())
-        .join("");
+      const profileInfo = toUserProfileInfo(u);
 
       return (
-        <div className="flex items-center gap-2.5">
-          <Avatar size="sm" className="size-7 text-[11px] shrink-0">
-            <AvatarFallback className="bg-surface-subtle font-medium text-ink-secondary">
-              {initials || <UserIcon className="size-3.5 text-ink-muted" aria-hidden="true" />}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-title-sm font-normal text-ink">{fullName}</span>
-        </div>
+        <UserProfilePopover user={profileInfo}>
+          <button
+            type="button"
+            className="flex items-center gap-2.5 rounded-xs text-left transition-opacity hover:opacity-80 focus-ring cursor-pointer"
+          >
+            <Avatar size="sm" className="size-7 text-[11px] shrink-0">
+              <AvatarFallback className="bg-surface-subtle font-medium text-ink-secondary">
+                {profileInfo.initials || <UserIcon className="size-3.5 text-ink-muted" aria-hidden="true" />}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-title-sm font-normal text-ink">{profileInfo.name}</span>
+          </button>
+        </UserProfilePopover>
       );
     },
   },
@@ -105,28 +105,12 @@ const columns: ColumnDef<ResourceRow>[] = [
       </span>
     ),
     accessorFn: (r) => r.load.projects.length,
-    cell: ({ row }) => {
-      const ps = row.original.load.projects;
-      return ps.length === 0 ? (
-        <span className="text-ink-muted">-</span>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {ps.map((p) => (
-            <Link
-              key={p.id}
-              to={`/projects/${p.id}`}
-              className={cn(
-                "inline-flex items-center rounded-xs border-0 px-2 py-0.5 text-xs font-normal",
-                "bg-project-chip-bg text-project-chip-fg",
-                "transition-opacity duration-150 hover:opacity-80 focus-ring",
-              )}
-            >
-              {p.name}
-            </Link>
-          ))}
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <ResourceProjectsCell
+        user={row.original.user}
+        projects={row.original.load.projects}
+      />
+    ),
   },
   {
     id: "md",
