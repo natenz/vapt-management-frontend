@@ -20,7 +20,9 @@ import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 import { cn } from "@/shared/lib/cn";
 import { fmtDate } from "@/shared/lib/format";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { BentoCard, BentoGrid } from "@/shared/ui/bento-grid";
 import { Button } from "@/shared/ui/button";
+import { CapacityGauge, StackedBarChart } from "@/shared/ui/charts";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { SummaryTile } from "@/shared/ui/summary-tile";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
@@ -96,6 +98,16 @@ export function SuperAdminDashboard({
     }
     return counts;
   }, [activeProjects]);
+
+  const stageStackedItems = useMemo(
+    () => [
+      { label: "Planning", count: stageDistribution.Planning ?? 0, colorClass: "bg-sky-500" },
+      { label: "Assessment", count: stageDistribution.Assessment ?? 0, colorClass: "bg-amber-500" },
+      { label: "Remediasi", count: stageDistribution.Remediasi ?? 0, colorClass: "bg-rose-500" },
+      { label: "Retesting", count: stageDistribution.Retesting ?? 0, colorClass: "bg-purple-600" },
+    ],
+    [stageDistribution],
+  );
 
   // Statistik Tim & Kapasitas
   const teamUsers = useMemo(
@@ -198,40 +210,31 @@ export function SuperAdminDashboard({
         />
       </section>
 
-      {/* SECTION 2: GRID DUA KOLOM (Kesehatan Proyek & Kapasitas Tim) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* SECTION 2: BENTO GRID DUA KOLOM (Kesehatan Proyek & Kapasitas Tim) */}
+      <BentoGrid aria-label="Bento Grid Eksekutif">
         {/* Kolom Kiri (7 Col): Proyek Prioritas & Status Breakdown */}
-        <section
-          className="flex flex-col gap-4 rounded-md border border-border bg-surface p-5 lg:col-span-7"
+        <BentoCard
+          colSpan={7}
+          role="region"
           aria-label="Proyek Prioritas & Tenggat"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <h2 className="text-title-md text-ink">Proyek Prioritas</h2>
-              <p className="text-body-sm text-ink-muted">
-                Proyek dengan tenggat terdekat yang perlu dipantau.
-              </p>
-            </div>
-            <Button asChild variant="link" trailingIcon={<ArrowRight />} className="text-xs">
+          title="Proyek Prioritas"
+          description="Proyek dengan tenggat terdekat yang perlu dipantau."
+          icon={<FolderKanban />}
+          action={
+            <Button asChild variant="link" trailingIcon={<ArrowRight />} className="text-xs p-0 h-auto">
               <Link to="/projects">Buka semua proyek</Link>
             </Button>
-          </div>
-
-          {/* Quick Stage Chips */}
-          <div className="flex flex-wrap items-center gap-2 py-1">
-            <span className="text-xs text-ink-muted">Distribusi tahap:</span>
-            <span className="inline-flex items-center gap-1.5 rounded-xs bg-sky-50 dark:bg-sky-400/15 px-2 py-0.5 text-xs text-sky-700 dark:text-sky-300">
-              Planning: <strong className="font-medium">{stageDistribution.Planning}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xs bg-amber-50 dark:bg-amber-400/15 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300">
-              Assessment: <strong className="font-medium">{stageDistribution.Assessment}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xs bg-rose-50 dark:bg-rose-400/15 px-2 py-0.5 text-xs text-rose-700 dark:text-rose-300">
-              Remediasi: <strong className="font-medium">{stageDistribution.Remediasi}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xs bg-purple-50 dark:bg-purple-400/15 px-2 py-0.5 text-xs text-purple-700 dark:text-purple-300">
-              Retesting: <strong className="font-medium">{stageDistribution.Retesting}</strong>
-            </span>
+          }
+        >
+          {/* Quick Stage Stacked Bar Chart */}
+          <div className="rounded-md border border-border/70 bg-surface-subtle/40 p-3 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-ink">Distribusi Tahapan Aktif</span>
+              <span className="text-[11px] text-ink-muted">
+                {activeProjects.length} proyek aktif
+              </span>
+            </div>
+            <StackedBarChart items={stageStackedItems} height={8} />
           </div>
 
           {isLoading ? (
@@ -303,30 +306,37 @@ export function SuperAdminDashboard({
               </Table>
             </div>
           )}
-        </section>
+        </BentoCard>
 
         {/* Kolom Kanan (5 Col): Pantauan Kapasitas Tim (Workload Watchdog) */}
-        <section
-          className="flex flex-col gap-4 rounded-md border border-border bg-surface p-5 lg:col-span-5"
+        <BentoCard
+          colSpan={5}
+          role="region"
           aria-label="Pantauan Kapasitas Tim"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <h2 className="text-title-md text-ink">Kapasitas & Alokasi Tim</h2>
-              <p className="text-body-sm text-ink-muted">
-                Batas beban maksimal: {MANDAYS_LIMIT} MD / bulan
-              </p>
-            </div>
-            <Button asChild variant="link" trailingIcon={<ArrowRight />} className="text-xs">
+          title="Kapasitas & Alokasi Tim"
+          description={`Batas beban maksimal: ${MANDAYS_LIMIT} MD / bulan`}
+          icon={<Clock />}
+          action={
+            <Button asChild variant="link" trailingIcon={<ArrowRight />} className="text-xs p-0 h-auto">
               <Link to="/resources?tampilan=timeline">Linimasa Tim</Link>
             </Button>
+          }
+        >
+          {/* Capacity Gauge */}
+          <div className="mb-3">
+            <CapacityGauge
+              current={Math.round(totalMandays)}
+              limit={Math.max(pentesterCount * MANDAYS_LIMIT, 20)}
+              label="Total Alokasi Pentester"
+              subtext={`${overloadedUsers.length > 0 ? `${overloadedUsers.length} pentester melebihi batas alokasi` : "Alokasi kapasitas tim normal"}`}
+            />
           </div>
 
           {/* Overload Alert atau Status Sehat */}
           {overloadedUsers.length > 0 ? (
-            <div className="flex items-start gap-2.5 rounded-xs border border-rose-200 bg-rose-50/70 p-3 dark:border-rose-400/30 dark:bg-rose-400/10">
+            <div className="flex items-start gap-2.5 rounded-xs border border-rose-200 bg-rose-50/70 p-2.5 text-xs text-rose-800 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-200 mb-2">
               <OctagonAlert className="size-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-              <div className="flex flex-col text-xs text-rose-800 dark:text-rose-200">
+              <div className="flex flex-col">
                 <span className="font-medium">
                   {overloadedUsers.length} Pentester Melebihi Batas Beban
                 </span>
@@ -336,14 +346,14 @@ export function SuperAdminDashboard({
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-xs border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-200">
+            <div className="flex items-center gap-2 rounded-xs border border-emerald-200 bg-emerald-50/70 p-2.5 text-xs text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-200 mb-2">
               <span className="font-medium">Kapasitas tim saat ini aman</span>
-              <span>· Tidak ada personil yang melebihi {MANDAYS_LIMIT} MD.</span>
+              <span>· Tidak ada personil melebihi {MANDAYS_LIMIT} MD.</span>
             </div>
           )}
 
           {/* Top 5 Pentester Workload List */}
-          <div className="flex flex-col divide-y divide-border/60">
+          <div className="flex flex-col divide-y divide-border/60 max-h-[220px] overflow-y-auto mb-3">
             {teamUsers
               .filter((u) => u.role?.role_name === "pentester")
               .map((u) => {
@@ -353,7 +363,7 @@ export function SuperAdminDashboard({
                 return (
                   <div
                     key={u.sys_user_id}
-                    className="flex items-center justify-between py-2.5 px-1 hover:bg-surface-subtle/60 rounded-xs transition-colors"
+                    className="flex items-center justify-between py-2 px-1 hover:bg-surface-subtle/60 rounded-xs transition-colors"
                   >
                     <UserProfilePopover user={uInfo}>
                       <button
@@ -366,7 +376,7 @@ export function SuperAdminDashboard({
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-medium text-ink truncate max-w-[140px] sm:max-w-[180px]">
+                          <span className="text-xs font-medium text-ink truncate max-w-[130px]">
                             {uInfo.name}
                           </span>
                           <span className="text-[10px] text-ink-muted">Pentester</span>
@@ -390,11 +400,11 @@ export function SuperAdminDashboard({
               })}
           </div>
 
-          <Button asChild variant="outline" className="w-full text-xs mt-auto">
+          <Button asChild variant="outline" className="w-full text-xs h-8 mt-auto">
             <Link to="/resources">Buka Alokasi Mandays Tim</Link>
           </Button>
-        </section>
-      </div>
+        </BentoCard>
+      </BentoGrid>
 
       {/* SECTION 3: PINTASAN TATA KELOLA ADMINISTRATOR */}
       <section className="flex flex-col gap-3" aria-label="Pintasan Administrasi">
@@ -402,7 +412,7 @@ export function SuperAdminDashboard({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/users"
-            className="group flex flex-col justify-between gap-3 rounded-md border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
+            className="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
           >
             <div className="flex items-center justify-between">
               <div className="flex size-8 items-center justify-center rounded-xs bg-blue-50 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300">
@@ -422,7 +432,7 @@ export function SuperAdminDashboard({
 
           <Link
             to="/projects/new"
-            className="group flex flex-col justify-between gap-3 rounded-md border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
+            className="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
           >
             <div className="flex items-center justify-between">
               <div className="flex size-8 items-center justify-center rounded-xs bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
@@ -442,7 +452,7 @@ export function SuperAdminDashboard({
 
           <Link
             to="/catalog"
-            className="group flex flex-col justify-between gap-3 rounded-md border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
+            className="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
           >
             <div className="flex items-center justify-between">
               <div className="flex size-8 items-center justify-center rounded-xs bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
@@ -462,7 +472,7 @@ export function SuperAdminDashboard({
 
           <Link
             to="/reports"
-            className="group flex flex-col justify-between gap-3 rounded-md border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
+            className="group flex flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-brand/40 hover:shadow-xs focus-ring"
           >
             <div className="flex items-center justify-between">
               <div className="flex size-8 items-center justify-center rounded-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">

@@ -2,14 +2,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import * as catalogApi from "@/entities/catalog/api";
+import * as catalogModule from "@/entities/catalog";
 import type { CatalogVulna } from "@/entities/catalog";
 import type { Project, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { TechLeadDashboard } from "./techlead-dashboard";
 
-vi.mock("@/entities/catalog/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/entities/catalog/api")>()),
+vi.mock("@/entities/catalog", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/catalog")>()),
   reviewCatalog: vi.fn(),
 }));
 
@@ -169,10 +169,10 @@ describe("TechLeadDashboard", () => {
     const projectSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
     expect(within(projectSec).getByText("Web Portal SSO Telkom")).toBeInTheDocument();
     expect(within(projectSec).getByText(/Divisi IT · PM Andi Wijaya/)).toBeInTheDocument();
-    expect(within(projectSec).getByText("Assessment")).toBeInTheDocument();
+    expect(within(projectSec).getAllByText("Assessment").length).toBeGreaterThanOrEqual(1);
 
     expect(within(projectSec).getByText("Aplikasi Mobile MyTelkom")).toBeInTheDocument();
-    expect(within(projectSec).getByText("Remediasi")).toBeInTheDocument();
+    expect(within(projectSec).getAllByText("Remediasi").length).toBeGreaterThanOrEqual(1);
 
     // Proyek dengan status Done tidak ditampilkan di proyek aktif
     expect(within(projectSec).queryByText("Audit API Gateway Legacy")).not.toBeInTheDocument();
@@ -207,7 +207,7 @@ describe("TechLeadDashboard", () => {
   });
 
   it("menampilkan usulan katalog kerentanan dan menyetujui saat tombol Setujui ditekan", async () => {
-    vi.mocked(catalogApi.reviewCatalog).mockResolvedValueOnce({
+    vi.mocked(catalogModule.reviewCatalog).mockResolvedValueOnce({
       vulna_id: 501,
       title: "SQL Injection pada Endpoint Auth",
       severity: "Critical",
@@ -226,7 +226,7 @@ describe("TechLeadDashboard", () => {
     fireEvent.click(approveButton);
 
     await waitFor(() => {
-      expect(catalogApi.reviewCatalog).toHaveBeenCalledWith(501, "approved");
+      expect(catalogModule.reviewCatalog).toHaveBeenCalledWith(501, "approved");
     });
   });
 
