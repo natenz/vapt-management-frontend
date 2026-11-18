@@ -3,7 +3,7 @@
  * Semua nilai berasal dari var(--color-*) sehingga otomatis mengikuti
  * tema terang/gelap tanpa perlu berganti ke WillowDark.
  */
-.vapt-timeline .wx-willow-theme {
+.vapt-gantt .wx-willow-theme {
   --wx-font-family: var(--font-sans);
   --wx-font-size: 12px;
   --wx-font-size-md: 12px;
@@ -53,25 +53,42 @@
 }
 
 /* Penanda periode hari ini (highlightTime MIT, pengganti vertical marker PRO) */
-.vapt-timeline .vapt-timeline-today {
+.vapt-gantt .vapt-gantt-today {
   background-color: color-mix(in oklab, var(--color-brand) 7%, transparent);
 }
-.vapt-timeline .wx-scale .vapt-timeline-today {
+.vapt-gantt .wx-scale .vapt-gantt-today {
   color: var(--color-brand);
 }
 
+/* Akhir pekan pada skala harian (sama dengan Gantt lama: info-bg) */
+.vapt-gantt .vapt-gantt-weekend {
+  background-color: var(--color-info-bg);
+}
+
 /* Batang hanya-baca: kursor penunjuk, tanpa pegangan drag/progress/link */
-.vapt-timeline .wx-bar {
+.vapt-gantt .wx-bar {
   cursor: pointer;
   overflow: visible;
 }
-.vapt-timeline .wx-bar .wx-link,
-.vapt-timeline .wx-bar .wx-progress-marker {
+/* Mode edit: badan batang digeser, ujung (pegangan di taskTemplate) diubah durasinya */
+.vapt-gantt[data-editable] .wx-bar {
+  cursor: grab;
+}
+.vapt-gantt[data-editable] .wx-bar:active {
+  cursor: grabbing;
+}
+/* Batang terpilih (target keyboard) diberi cincin fokus */
+.vapt-gantt .wx-bar.wx-selected {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+.vapt-gantt .wx-bar .wx-link,
+.vapt-gantt .wx-bar .wx-progress-marker {
   display: none;
 }
 
 /* Ikon buka/ciutkan grup: chevron CSS (font ikon SVAR tidak dimuat, fonts={false}) */
-.vapt-timeline .wx-toggle-icon {
+.vapt-gantt .wx-toggle-icon {
   display: inline-flex;
   width: 16px;
   align-items: center;
@@ -79,7 +96,7 @@
   color: var(--color-ink-muted);
   cursor: pointer;
 }
-.vapt-timeline .wx-toggle-icon::before {
+.vapt-gantt .wx-toggle-icon::before {
   content: "";
   width: 6px;
   height: 6px;
@@ -88,9 +105,9 @@
   transform: rotate(-45deg);
   transition: transform 150ms ease-out;
 }
-.vapt-timeline .wx-toggle-icon.wxi-menu-down::before {
+.vapt-gantt .wx-toggle-icon.wxi-menu-down::before {
   transform: translateY(-2px) rotate(45deg);
 }
-.vapt-timeline .wx-toggle-icon:hover {
+.vapt-gantt .wx-toggle-icon:hover {
   color: var(--color-ink);
 }

@@ -8,7 +8,7 @@
   "decisions": [
     "surface-inverse TIDAK dibalik jadi terang. Ia mempertahankan identitasnya sebagai ground gelap yang terangkat, hanya dinaikkan satu langkah (#2a2a2e) supaya tetap terbaca di atas kartu gelap. Konsekuensinya StatTile tetap tile gelap di kedua tema dan ink-inverse tetap putih - nol cabang kode di komponen.",
     "Tangga elevation dark: bg #0e0e10 < surface #17171a < surface-subtle #202024 < surface-inverse #2a2a2e < surface-inverse-raised #3f3f44. Monoton, jadi 'lebih terang = lebih terangkat' berlaku konsisten.",
-    "brand di tema gelap memakai red-400, bukan red-600. red-600 hanya mencapai ~3.9:1 di atas ground gelap dan gagal AA sebagai teks. red-600 tetap dipakai untuk ISIAN solid (surface-brand), yang tetap lolos karena tekstnya putih.",
+    "brand di tema gelap memakai red-400, bukan red-600. red-600 hanya mencapai ~3.9:1 di atas ground gelap dan gagal AA sebagai teks. surface-brand di tema gelap memakai crimson #991b1b (red-800) yang teduh dan bebas silau di atas ground gelap, dengan kontras teks on-brand putih 8.32:1 (WCAG AAA).",
     "sev-critical naik dari red-800 ke red-700. red-800 di atas halaman gelap hanya ~1.8:1 sebagai bentuk, jadi badge solidnya hilang. red-700 tetap berbeda jelas dari brand (red-400) sehingga aturan 'merah = aksi' tidak tertabrak."
   ],
 
@@ -38,6 +38,9 @@
       { "name": "brand-tint", "value": "#2a1416", "usage": "Isian hover tombol outline. Padanan gelap dari red-50." },
       { "name": "brand-soft", "value": "#3d1a1d", "usage": "Ground state terpilih pada chip dan baris. Padanan gelap dari red-100." },
       { "name": "focus", "value": "{red-400}", "usage": "Ring fokus. Harus terbaca di atas ground gelap." },
+      { "name": "surface-brand", "value": "#991b1b", "usage": "Isian tombol solid tema gelap. Menggunakan crimson red-800 yang teduh dan ramah mata di atas latar gelap, dengan kontras teks putih 8.32:1 (WCAG AAA)." },
+      { "name": "surface-brand-hover", "value": "#b91c1c", "usage": "Isian tombol solid saat hover tema gelap." },
+      { "name": "surface-brand-pressed", "value": "#7f1d1d", "usage": "Isian tombol solid saat pressed tema gelap." },
 
       { "name": "success", "value": "#4ec97f", "usage": "Teks dan ikon success." },
       { "name": "success-bg", "value": "#0e2a1a", "usage": "Ground alert success." },
@@ -100,7 +103,9 @@
       { "name": "stage-pending", "value": "#e8b43a", "usage": "Amber dinaikkan untuk ground gelap." },
       { "name": "stage-pending-bg", "value": "#2b2208", "usage": "Ground status Pending di tema gelap." },
       { "name": "stage-done", "value": "#f26b70", "usage": "Merah dinaikkan untuk ground gelap." },
-      { "name": "stage-done-bg", "value": "#2a1416", "usage": "Ground status DONE di tema gelap." }
+      { "name": "stage-done-bg", "value": "#2a1416", "usage": "Ground status DONE di tema gelap." },
+      { "name": "project-chip-bg", "value": "#382020", "usage": "Background dark mode compact chip nama proyek aktif pada tabel resource." },
+      { "name": "project-chip-fg", "value": "#eca3a3", "usage": "Teks dark mode compact chip nama proyek aktif pada tabel resource." }
     ]
   },
 

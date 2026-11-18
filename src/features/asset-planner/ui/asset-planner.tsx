@@ -65,7 +65,8 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
     a.length === b.length && a.every((x) => b.includes(x));
 
   useEffect(() => {
-    if (server === base && sameIds(serverTwIds, baseTwIds)) return;
+    const serverChanged = buildOps(base, server).length > 0 || !sameIds(serverTwIds, baseTwIds);
+    if (!serverChanged) return;
     const edited = buildOps(base, drafts).length > 0 || !sameIds(baseTwIds, twDraftIds);
     if (justSaved.current || !edited) {
       // simpan sendiri (penuh/sebagian) atau belum ada suntingan: ikut data server

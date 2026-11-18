@@ -288,6 +288,16 @@
         "name": "inverse-success",
         "value": "#7ee2a3",
         "usage": "Teks/ikon success di atas surface-inverse."
+      },
+      {
+        "name": "project-chip-bg",
+        "value": "#fcebec",
+        "usage": "Background soft red compact chip nama proyek aktif pada tabel resource."
+      },
+      {
+        "name": "project-chip-fg",
+        "value": "#991b1b",
+        "usage": "Teks deep red compact chip nama proyek aktif pada tabel resource."
       }
     ]
   }

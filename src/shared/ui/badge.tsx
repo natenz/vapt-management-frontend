@@ -100,6 +100,54 @@ function StatusBadge({ className, tone, icon, children, ...props }: StatusBadgeP
 }
 
 /* ------------------------------------------------------------------ *
+ * Status chip — varian sel tabel
+ * ------------------------------------------------------------------ */
+
+const statusChipVariants = cva(
+  "inline-flex size-6 shrink-0 items-center justify-center rounded-sm border-0 [&_svg]:size-3.5 [&_svg]:shrink-0",
+  {
+    variants: {
+      tone: {
+        info: "bg-info-bg text-info",
+        success: "bg-success-bg text-success",
+        warning: "bg-warning-bg text-warning",
+        error: "bg-error-bg text-error",
+        neutral: "bg-surface-subtle text-ink-secondary",
+      },
+    },
+    defaultVariants: { tone: "info" },
+  },
+);
+
+type StatusChipProps = Omit<React.ComponentPropsWithoutRef<"span">, "children"> &
+  VariantProps<typeof statusChipVariants> & {
+    /** Wajib: ikon di dalam chip (warna tidak boleh berdiri sendiri). */
+    icon: React.ReactNode;
+    /** Wajib: kata status, dirender di luar chip. */
+    children: React.ReactNode;
+  };
+
+/**
+ * Chip ikon borderless `size-6` + kata di luar chip. Pola yang sama dengan
+ * RoleBadge, ProjectStatusBadge, dan SeverityChip agar kolom status di semua
+ * tabel selaras.
+ */
+function StatusChip({ className, tone, icon, children, ...props }: StatusChipProps) {
+  return (
+    <span
+      data-slot="status-chip-badge"
+      className={cn("inline-flex items-center gap-2 whitespace-nowrap", className)}
+      {...props}
+    >
+      <span data-slot="status-chip" className={statusChipVariants({ tone })} aria-hidden="true">
+        {icon}
+      </span>
+      <span className="text-body-sm font-normal text-ink">{children}</span>
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Pill — kapsul dua lapis di atas headline hero
  * ------------------------------------------------------------------ */
 
@@ -131,5 +179,5 @@ function Pill({ className, accent, children, ...props }: PillProps) {
   );
 }
 
-export { Badge, StatusBadge, Pill, badgeVariants, statusBadgeVariants };
-export type { BadgeProps, StatusBadgeProps, PillProps };
+export { Badge, StatusBadge, StatusChip, Pill, badgeVariants, statusBadgeVariants, statusChipVariants };
+export type { BadgeProps, StatusBadgeProps, StatusChipProps, PillProps };

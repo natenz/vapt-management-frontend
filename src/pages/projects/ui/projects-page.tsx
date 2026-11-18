@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FolderKanban, Building2, CalendarRange, Clock, ShieldAlert, Users } from "lucide-react";
+import { FolderKanban, Building2, CalendarRange, Clock, Plus, ShieldAlert, Users } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -86,7 +86,10 @@ export function ProjectsPage() {
       {
         accessorKey: "project_name",
         header: () => (
-          <span className="inline-flex items-center gap-1.5 font-normal normal-case">Proyek</span>
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Proyek</span>
+          </span>
         ),
         cell: ({ row }) => (
           <Link
@@ -165,7 +168,7 @@ export function ProjectsPage() {
         description="Daftar proyek sesuai hak akses Anda."
         action={
           role === "tech_lead" || role === "super_admin" ? (
-            <Button asChild variant="solid">
+            <Button asChild variant="solid" leadingIcon={<Plus />}>
               <Link to="/projects/new">Buat Project Template</Link>
             </Button>
           ) : undefined

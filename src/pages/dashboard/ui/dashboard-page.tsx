@@ -1,9 +1,20 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, startOfDay } from "date-fns";
-import { ArrowRight, BookCheck, FolderKanban, LayoutTemplate } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookCheck,
+  Bug,
+  CalendarRange,
+  Clock,
+  FolderKanban,
+  Plus,
+  ShieldAlert,
+  User as UserIcon,
+} from "lucide-react";
 import { Link } from "react-router";
 import { listCatalog, type CatalogVulna } from "@/entities/catalog";
-import { listFindings, SeverityBadge } from "@/entities/finding";
+import { listFindings, SeverityChip } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
@@ -85,17 +96,32 @@ function LatestProjects({ rows, loading }: { rows: Project[]; loading: boolean }
         <Table boxed>
           <TableHeader>
             <TableRow>
-              <TableHead>Proyek</TableHead>
-              <TableHead>Tahap</TableHead>
-              <TableHead>Rentang tanggal</TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Proyek</span>
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Tahap</span>
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <CalendarRange className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Rentang tanggal</span>
+                </span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((p) => (
               <TableRow key={p.project_id}>
                 <TableCell>
-                  <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:underline">
-                    <span className="text-title-sm text-ink">{p.project_name}</span>
+                  <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:text-brand">
+                    <span className="text-title-sm font-normal text-ink">{p.project_name}</span>
                     <span className="text-caption text-ink-muted">{p.client_name} · PM {p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}</span>
                   </Link>
                 </TableCell>
@@ -134,17 +160,32 @@ function CatalogQueue({ rows, loading, error }: { rows: CatalogVulna[]; loading:
         <Table boxed>
           <TableHeader>
             <TableRow>
-              <TableHead>Kerentanan</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead>Diajukan oleh</TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Kerentanan</span>
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <AlertTriangle className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Severity</span>
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+                  <UserIcon className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+                  <span>Diajukan oleh</span>
+                </span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((c) => (
               <TableRow key={c.vulna_id}>
-                <TableCell className="text-title-sm text-ink">{c.title}</TableCell>
+                <TableCell className="text-title-sm font-normal text-ink">{c.title}</TableCell>
                 <TableCell>
-                  <SeverityBadge severity={toSeverityKey(c.severity)} />
+                  <SeverityChip severity={toSeverityKey(c.severity)} />
                 </TableCell>
                 <TableCell className="text-body-sm text-ink-secondary">{c.creator?.profile?.full_name ?? c.creator?.username ?? "-"}</TableCell>
               </TableRow>
@@ -161,11 +202,36 @@ function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record
     <Table boxed>
       <TableHeader>
         <TableRow>
-          <TableHead>Proyek</TableHead>
-          <TableHead>Tahap</TableHead>
-          <TableHead>Langkah berikutnya</TableHead>
-          <TableHead>Tenggat</TableHead>
-          <TableHead numeric>Temuan terbuka</TableHead>
+          <TableHead>
+            <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+              <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+              <span>Proyek</span>
+            </span>
+          </TableHead>
+          <TableHead>
+            <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+              <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+              <span>Tahap</span>
+            </span>
+          </TableHead>
+          <TableHead>
+            <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+              <ArrowRight className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+              <span>Langkah berikutnya</span>
+            </span>
+          </TableHead>
+          <TableHead>
+            <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+              <Clock className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+              <span>Tenggat</span>
+            </span>
+          </TableHead>
+          <TableHead numeric>
+            <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+              <Bug className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+              <span>Temuan terbuka</span>
+            </span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -175,8 +241,8 @@ function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record
           return (
             <TableRow key={p.project_id}>
               <TableCell>
-                <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:underline">
-                  <span className="text-title-sm text-ink">{p.project_name}</span>
+                <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:text-brand">
+                  <span className="text-title-sm font-normal text-ink">{p.project_name}</span>
                   <span className="text-caption text-ink-muted">{p.client_name} · PM {p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}</span>
                 </Link>
               </TableCell>
@@ -240,7 +306,7 @@ export function DashboardPage() {
         description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.${isTl ? "" : " Hanya proyek yang menjadi bagian Anda yang ditampilkan."}`}
         action={
           role === "tech_lead" || role === "super_admin" ? (
-            <Button asChild variant="solid" leadingIcon={<LayoutTemplate />}>
+            <Button asChild variant="solid" leadingIcon={<Plus />}>
               <Link to="/projects/new">Buat Project Template</Link>
             </Button>
           ) : undefined

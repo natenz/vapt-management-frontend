@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Users } from "lucide-react";
+import { Info, Users } from "lucide-react";
 import { useState } from "react";
 import { listResources, type Project, type Resource } from "@/entities/project";
 import { ROLE_LABEL, type RoleName } from "@/shared/config/roles";
@@ -144,7 +144,7 @@ export function ProjectResourcesCell({
             "group inline-flex items-center gap-2 rounded-xs px-1.5 py-1 text-left",
             "transition-colors duration-150 hover:bg-surface-subtle focus-ring",
           )}
-          aria-label="Lihat detail resource proyek"
+          aria-label="Lihat info resource proyek"
         >
           {/* Avatar stack */}
           <div className="flex items-center -space-x-1.5 overflow-hidden">
@@ -168,9 +168,9 @@ export function ProjectResourcesCell({
           </div>
 
           {/* Action yang muncul saat hover cell */}
-          <span className="inline-flex items-center gap-0.5 rounded-xs border border-border bg-surface px-1.5 py-0.5 text-[11px] font-normal text-ink-secondary shadow-xs opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100">
-            <span>Detail</span>
-            <ChevronRight className="size-3 text-ink-muted" aria-hidden />
+          <span className="inline-flex items-center gap-1 rounded-xs border border-border bg-surface px-1.5 py-0.5 text-[11px] font-normal text-ink-secondary shadow-xs opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100">
+            <Info className="size-3 text-ink-muted" aria-hidden="true" />
+            <span>Info</span>
           </span>
         </button>
       </PopoverTrigger>

@@ -1,262 +1,252 @@
 /**
- * Menguji linimasa Gantt.
+ * Menguji Gantt tahap berbasis SVAR.
  *
- * Tiga hal yang dijaga:
+ * Yang dijaga:
+ *  1. Satu batang per tahap, keadaan Selesai/Belum selesai, dan pin progres.
+ *  2. Perilaku edit lama tetap ada: drag (payload `update-task` SVAR) dan
+ *     panah keyboard mengubah jadwal per hari dalam batas rentang proyek.
+ *  3. Detail tahap terbaca saat batang diklik (pengganti popover lama).
  *
- *  1. Nama tahap tetap berada di kolom tetap dan kalender lintas bulan hanya
- *     memuat satu garis rentang tanpa titik endpoint.
- *  2. Tahap selesai memakai merah, sedangkan tahap yang belum selesai memakai
- *     abu-abu gelap; pinpoint progres membuka viewport langsung di tahap aktif.
- *  3. Bagian 11 dokumen konteks: "Clicking a timeline event should open a
- *     detail popover." Isi popover itulah satu-satunya tempat catatan tim VAPT
- *     terbaca klien, jadi kalau ia berhenti terbuka, fiturnya hilang tanpa
- *     suara — build dan typecheck tidak akan mengeluh.
+ * SVAR bergantung pada layout & ResizeObserver yang tidak ada di jsdom, jadi
+ * digantikan stub yang merender kolom grid dan taskTemplate asli serta
+ * merekam handler `intercept`/`on` agar alur drag bisa disimulasikan.
  */
-import { describe, expect, it, beforeAll, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { ShieldCheck } from "lucide-react";
-import { Gantt, type GanttItem } from "@/shared/ui/gantt";
+import { useEffect, type ComponentType, type ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-beforeAll(() => {
-  // Radix memakai pointer capture, yang tidak ada di jsdom.
-  Element.prototype.hasPointerCapture = vi.fn(() => false);
-  Element.prototype.setPointerCapture = vi.fn();
-  Element.prototype.releasePointerCapture = vi.fn();
-  Element.prototype.scrollIntoView = vi.fn();
-});
+type Handler = (ev: Record<string, unknown>) => unknown;
+const svar = vi.hoisted(() => ({
+  intercepts: new Map<string, (ev: Record<string, unknown>) => unknown>(),
+  listeners: new Map<string, (ev: Record<string, unknown>) => unknown>(),
+  exec: (() => {}) as (action: string, ev: Record<string, unknown>) => void,
+  props: {} as Record<string, unknown>,
+}));
+
+vi.mock("@svar-ui/react-gantt", () => ({
+  Willow: ({ children }: { children: ReactNode }) => <div data-testid="willow">{children}</div>,
+  locateTask: (ev: MouseEvent) => {
+    const node = (ev.target as HTMLElement).closest("[data-id]");
+    return node ? { id: node.getAttribute("data-id"), node } : null;
+  },
+  Gantt: (props: {
+    tasks: { id: string }[];
+    columns: { id: string; header: string; cell: ComponentType<{ row: unknown }> }[];
+    taskTemplate: ComponentType<{ data: unknown }>;
+    init?: (api: unknown) => void;
+  }) => {
+    svar.props = props;
+    useEffect(() => {
+      props.init?.({
+        intercept: (action: string, fn: Handler) => svar.intercepts.set(action, fn),
+        on: (action: string, fn: Handler) => svar.listeners.set(action, fn),
+        exec: (action: string, ev: Record<string, unknown>) => svar.exec(action, ev),
+        getTask: (id: string) => props.tasks.find((t) => t.id === id),
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const Bar = props.taskTemplate;
+    return (
+      <div data-testid="gantt">
+        <div role="rowgroup" aria-label="grid">
+          <div role="row">
+            {props.columns.map((c) => (
+              <span key={c.id} role="columnheader">
+                {c.header}
+              </span>
+            ))}
+          </div>
+          {props.tasks.map((t) => (
+            <div key={t.id} role="row">
+              {props.columns.map((c) => (
+                <span key={c.id} role="cell">
+                  <c.cell row={t} />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+        {props.tasks.map((t) => (
+          <div key={t.id} className="wx-bar" data-id={t.id}>
+            <Bar data={t} />
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
+vi.mock("@svar-ui/react-gantt/all.css", () => ({}));
+
+const { Gantt, clampChange } = await import("@/shared/ui/gantt");
+type GanttItem = import("@/shared/ui/gantt").GanttItem;
 
 const ITEMS: GanttItem[] = [
   {
     id: "step-1",
     label: "Langkah 1",
-    startsAt: "2026-09-03T00:00:00Z",
-    endsAt: "2026-09-07T00:00:00Z",
+    startsAt: "2026-09-03",
+    endsAt: "2026-09-07",
     state: "done",
     icon: <ShieldCheck />,
     iconClassName: "bg-activity-assessment text-on-brand",
   },
-  {
-    id: "step-2",
-    label: "Langkah 2",
-    startsAt: "2026-09-08T00:00:00Z",
-    endsAt: "2026-09-12T00:00:00Z",
-    state: "current",
-  },
-  {
-    id: "step-3",
-    label: "Langkah 3",
-    startsAt: "2026-09-13T00:00:00Z",
-    endsAt: "2026-09-18T00:00:00Z",
-    state: "todo",
-  },
+  { id: "step-2", label: "Langkah 2", startsAt: "2026-09-08", endsAt: "2026-09-12", state: "current" },
+  { id: "step-3", label: "Langkah 3", startsAt: "2026-09-13", endsAt: "2026-09-18", state: "todo" },
 ];
 
-const MONTH = new Date(2026, 8, 1);
+const execSpy = vi.fn();
+beforeEach(() => {
+  svar.intercepts.clear();
+  svar.listeners.clear();
+  execSpy.mockReset();
+  svar.exec = execSpy;
+  vi.useRealTimers();
+});
 
-function renderGantt() {
-  return render(
-    <Gantt
-      items={ITEMS}
-      initialMonth={MONTH}
-      renderDetail={(item) => <p>Catatan untuk {item.label}</p>}
-    />,
-  );
-}
+const bar = (id: string) => document.querySelector(`.wx-bar[data-id="${id}"]`) as HTMLElement;
 
-describe("Gantt", () => {
-  it("merender satu batang per langkah pada satu kanvas timeline", () => {
-    renderGantt();
-    for (const item of ITEMS) {
-      expect(screen.getByRole("button", { name: item.label }), item.label).toBeInTheDocument();
-    }
-  });
-
-  it("menyimpan keadaan pada setiap rentang kalender", () => {
-    renderGantt();
-
-    const done = screen.getByRole("button", { name: "Langkah 1" });
-    const current = screen.getByRole("button", { name: "Langkah 2" });
-    const todo = screen.getByRole("button", { name: "Langkah 3" });
-
-    expect(done).toHaveAttribute("data-state", "done");
-    expect(current).toHaveAttribute("data-state", "current");
-    expect(todo).toHaveAttribute("data-state", "todo");
-  });
-
-  it("menampilkan satu garis rentang tanpa titik endpoint", () => {
-    const { container } = renderGantt();
-
-    expect(container.querySelectorAll('[data-slot="gantt-range"]')).toHaveLength(ITEMS.length);
-    for (const item of ITEMS) {
-      const button = screen.getByRole("button", { name: item.label });
-      expect(button.children).toHaveLength(1);
-      expect(button.querySelector('[data-slot="gantt-range"]')).toHaveClass("h-10");
-    }
-  });
-
-  it("membedakan tahap selesai dan belum selesai melalui warna status", () => {
-    renderGantt();
-
-    expect(
-      screen.getByRole("button", { name: "Langkah 1" }).querySelector('[data-slot="gantt-range"]'),
-    ).toHaveClass("bg-surface-brand");
-    expect(
-      screen.getByRole("button", { name: "Langkah 2" }).querySelector('[data-slot="gantt-range"]'),
-    ).toHaveClass("bg-surface-inverse");
-    expect(
-      screen.getByRole("button", { name: "Langkah 3" }).querySelector('[data-slot="gantt-range"]'),
-    ).toHaveClass("bg-surface-inverse");
-    expect(screen.getByLabelText("Legenda status kalender")).toHaveTextContent(
-      "SelesaiBelum selesai",
-    );
-  });
-
-  it("mempertahankan warna khas tahap pada ikon di kolom kiri", () => {
-    const { container } = renderGantt();
-
-    expect(container.querySelector('[data-slot="gantt-stage-icon"]')).toHaveClass(
-      "bg-activity-assessment",
-      "text-on-brand",
-    );
-    expect(container.querySelector('[data-slot="gantt-stage-icon"]')).not.toHaveClass(
+describe("Gantt (SVAR)", () => {
+  it("merender satu batang per tahap dengan keadaan Selesai/Belum selesai", () => {
+    render(<Gantt items={ITEMS} />);
+    expect(document.querySelectorAll(".wx-bar")).toHaveLength(3);
+    expect(bar("step-1").querySelector("[data-state]")).toHaveAttribute("data-state", "done");
+    // Batang tanpa teks: nama tahap hanya di grid kiri
+    expect(bar("step-1").textContent).toBe("");
+    expect(bar("step-1").querySelector('[data-slot="gantt-range"]')?.className).toContain(
       "bg-surface-brand",
+    );
+    expect(bar("step-3").querySelector('[data-slot="gantt-range"]')?.className).toContain(
       "bg-surface-inverse",
     );
+    expect(screen.getByText("Selesai")).toBeInTheDocument();
+    expect(screen.getByText("Belum selesai")).toBeInTheDocument();
   });
 
-  it("menandai posisi progres pada tahap aktif", () => {
-    const { container } = renderGantt();
-    const pin = container.querySelector<HTMLElement>('[data-slot="gantt-progress-pin"]');
-
-    expect(pin).toHaveAttribute("title", "Posisi progres saat ini");
-    expect(pin).toHaveStyle({ left: "90%" });
-    expect(screen.getByRole("button", { name: "Langkah 2" })).toContainElement(pin);
+  it("menandai posisi progres hanya pada tahap aktif", () => {
+    render(<Gantt items={ITEMS} />);
+    expect(bar("step-2").querySelector('[data-slot="gantt-progress-pin"]')).not.toBeNull();
+    expect(bar("step-1").querySelector('[data-slot="gantt-progress-pin"]')).toBeNull();
   });
 
-  it("memusatkan viewport ke pinpoint saat pertama kali dirender", () => {
-    const clientWidth = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(440);
-    const scrollWidth = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(1320);
-
-    const { container } = renderGantt();
-    const viewport = container.querySelector<HTMLElement>('[data-slot="gantt-viewport"]');
-
-    expect(viewport?.scrollLeft).toBe(286);
-    clientWidth.mockRestore();
-    scrollWidth.mockRestore();
+  it("menggulir chart ke pin progres saat inisialisasi", () => {
+    vi.useFakeTimers();
+    render(<Gantt items={ITEMS} />);
+    vi.runAllTimers();
+    expect(execSpy).toHaveBeenCalledWith("scroll-chart", expect.objectContaining({ date: expect.any(Date) }));
   });
 
-  it("menempatkan batang pada kolom tanggalnya", () => {
-    const { container } = renderGantt();
-
-    // 3 sampai 7 September menempati kolom 3 sampai 7; batas akhir grid eksklusif.
-    const cell = container.querySelector('[style*="grid-column: 3 / 8"]');
-    expect(cell, "Langkah 1 harus mulai di kolom 3 dan berakhir di kolom 8").not.toBeNull();
-    expect(cell).not.toHaveTextContent("Langkah 1");
-    expect(container.querySelector('[data-slot="gantt-labels"]')).toHaveTextContent("Langkah 1");
-  });
-
-  it("menampilkan batang lintas bulan tanpa memotong atau mengganti halaman", () => {
-    const { container } = render(
-      <Gantt
-        items={[
-          {
-            id: "lintas",
-            label: "Lintas bulan",
-            startsAt: "2026-08-28T00:00:00Z",
-            endsAt: "2026-09-04T00:00:00Z",
-            state: "done",
-          },
-        ]}
-        initialMonth={MONTH}
-        renderDetail={() => null}
-      />,
+  it("menampilkan ikon tahap di grid dan kolom No/Item/Owner saat owner diisi", () => {
+    const { unmount } = render(<Gantt items={ITEMS} />);
+    expect(screen.getByRole("columnheader", { name: "Tahap" })).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="gantt-stage-icon"]')?.className).toContain(
+      "bg-activity-assessment",
     );
+    unmount();
 
-    expect(screen.getByText("Agustus 2026")).toBeInTheDocument();
-    expect(screen.getByText("September 2026")).toBeInTheDocument();
-    const cell = container.querySelector('[style*="grid-column: 28 / 36"]');
-    expect(cell, "batang harus menyambung dari Agustus sampai September").not.toBeNull();
+    render(<Gantt items={ITEMS.map((i) => ({ ...i, owner: "Telkom" }))} />);
+    for (const name of ["No", "Item", "Owner"]) {
+      expect(screen.getByRole("columnheader", { name })).toBeInTheDocument();
+    }
+    expect(screen.getAllByText("Telkom")).toHaveLength(3);
   });
 
-  it("membuka popover berisi catatan saat batang diklik", async () => {
-    const user = userEvent.setup();
-    renderGantt();
-
-    expect(screen.queryByText("Catatan untuk Langkah 1")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Langkah 1" }));
-
-    expect(screen.getByText("Catatan untuk Langkah 1")).toBeInTheDocument();
-  });
-
-  it("menyediakan viewport horizontal yang dapat difokuskan", () => {
-    const { container } = renderGantt();
-    const viewport = screen.getByRole("region", { name: "Timeline proyek lintas bulan" });
-
-    expect(viewport).toHaveAttribute("tabindex", "0");
-    expect(viewport).toHaveClass("overflow-x-auto", "overscroll-x-contain");
-    expect(container.querySelector('[data-slot="gantt-canvas"]')).toHaveStyle({
-      minWidth: `${30 * 44}px`,
+  it("membuka detail tahap saat batang diklik pada mode hanya-baca", () => {
+    render(<Gantt items={ITEMS} renderDetail={(item) => <p>Catatan untuk {item.label}</p>} />);
+    fireEvent.click(bar("step-2").querySelector('[data-slot="gantt-range"]')!);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Catatan untuk Langkah 2");
+    fireEvent.keyDown(screen.getByRole("region", { name: "Timeline proyek lintas bulan" }), {
+      key: "Escape",
     });
+    expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
-  it("memindahkan seluruh rentang tahap dengan drag pada badan bar", () => {
+  it("menolak editor, tambah/hapus tugas, link, dan urut ulang baris", () => {
+    render(<Gantt items={ITEMS} editable onItemChange={vi.fn()} />);
+    for (const action of ["show-editor", "add-task", "delete-task", "add-link", "move-task"]) {
+      expect(svar.intercepts.get(action)?.({})).toBe(false);
+    }
+  });
+
+  it("drag badan batang memindahkan seluruh rentang dan dibatasi rentang proyek", () => {
     const onItemChange = vi.fn();
     render(
       <Gantt
         items={ITEMS}
         editable
         rangeStart="2026-09-01"
-        rangeEnd="2026-09-30"
+        rangeEnd="2026-09-20"
         onItemChange={onItemChange}
       />,
     );
+    const update = svar.intercepts.get("update-task")!;
+    // Payload SVAR saat drag dilepas: tanggal lama + selisih hari
+    const ev = { id: "step-2", diff: 2, task: { start: new Date(), end: new Date() } };
+    expect(update(ev)).toBe(true);
+    expect(onItemChange).toHaveBeenCalledWith("step-2", "2026-09-10", "2026-09-14");
 
-    const bar = screen.getByRole("button", { name: "Langkah 2" });
-    fireEvent.pointerDown(bar, { pointerId: 1, clientX: 100 });
-    fireEvent.pointerMove(bar, { pointerId: 1, clientX: 188 });
-    fireEvent.pointerUp(bar, { pointerId: 1, clientX: 188 });
-
-    expect(onItemChange).toHaveBeenLastCalledWith("step-2", "2026-09-10", "2026-09-14");
+    update({ id: "step-3", diff: 10, task: { start: new Date(), end: new Date() } });
+    expect(onItemChange).toHaveBeenLastCalledWith("step-3", "2026-09-15", "2026-09-20");
   });
 
-  it("mengubah ujung rentang per hari melalui handle keyboard", () => {
+  it("drag ujung batang hanya mengubah tanggal mulai atau selesai", () => {
     const onItemChange = vi.fn();
-    render(
-      <Gantt
-        items={ITEMS}
-        editable
-        rangeStart="2026-09-01"
-        rangeEnd="2026-09-30"
-        onItemChange={onItemChange}
-      />,
-    );
+    render(<Gantt items={ITEMS} editable onItemChange={onItemChange} />);
+    const update = svar.intercepts.get("update-task")!;
+    update({ id: "step-1", diff: -2, task: { start: new Date() } });
+    expect(onItemChange).toHaveBeenLastCalledWith("step-1", "2026-09-01", "2026-09-07");
+    update({ id: "step-1", diff: 3, task: { end: new Date() } });
+    expect(onItemChange).toHaveBeenLastCalledWith("step-1", "2026-09-03", "2026-09-10");
+    // Pembaruan sementara selama drag tidak mengubah jadwal
+    update({ id: "step-1", diff: 1, task: { end: new Date() }, inProgress: true });
+    expect(onItemChange).toHaveBeenCalledTimes(2);
+  });
 
-    fireEvent.keyDown(screen.getByRole("button", { name: "Ubah tanggal mulai Langkah 2" }), {
-      key: "ArrowLeft",
-    });
+  it("panah keyboard pada batang terpilih menggeser per hari (Shift: selesai, Alt: mulai)", () => {
+    const onItemChange = vi.fn();
+    render(<Gantt items={ITEMS} editable onItemChange={onItemChange} />);
+    const region = screen.getByRole("region", { name: "Timeline proyek lintas bulan" });
+    fireEvent.click(bar("step-2").querySelector('[data-slot="gantt-range"]')!);
 
+    fireEvent.keyDown(region, { key: "ArrowRight" });
+    expect(onItemChange).toHaveBeenLastCalledWith("step-2", "2026-09-09", "2026-09-13");
+    fireEvent.keyDown(region, { key: "ArrowLeft", shiftKey: true });
+    expect(onItemChange).toHaveBeenLastCalledWith("step-2", "2026-09-08", "2026-09-11");
+    fireEvent.keyDown(region, { key: "ArrowLeft", altKey: true });
     expect(onItemChange).toHaveBeenLastCalledWith("step-2", "2026-09-07", "2026-09-12");
+    expect(execSpy).toHaveBeenCalledWith(
+      "update-task",
+      expect.objectContaining({ id: "step-2", eventSource: "vapt-gantt" }),
+    );
   });
 
-  it("menampilkan kolom No, Item, dan Owner serta menandai kolom akhir pekan saat owner diisi", () => {
-    const { container } = render(
-      <Gantt
-        items={[
-          { id: "s1", label: "Scoping", owner: "Telkom", startsAt: "2026-09-04", endsAt: "2026-09-04", state: "done" },
-          { id: "s2", label: "Remediasi", owner: "Indopack", startsAt: "2026-09-07", endsAt: "2026-09-11", state: "current" },
-        ]}
-        initialMonth={MONTH}
-      />,
-    );
+  it("mengganti skala Hari/Minggu", () => {
+    const onGranularityChange = vi.fn();
+    render(<Gantt items={ITEMS} granularity="day" onGranularityChange={onGranularityChange} />);
+    expect(screen.getByRole("radio", { name: "Hari" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("radio", { name: "Minggu" }));
+    expect(onGranularityChange).toHaveBeenCalledWith("week");
+  });
 
-    const labels = container.querySelector('[data-slot="gantt-labels"]')!;
-    expect(labels).toHaveTextContent("No");
-    expect(labels).toHaveTextContent("Item");
-    expect(labels).toHaveTextContent("Owner");
-    expect(labels).toHaveTextContent("Telkom");
-    expect(labels).toHaveTextContent("Indopack");
-    expect(container.querySelectorAll(".bg-info-bg").length).toBeGreaterThan(0);
+  it("menampilkan pesan bila tidak ada rentang tanggal valid", () => {
+    render(<Gantt items={[]} />);
+    expect(screen.getByText("Timeline belum memiliki rentang tanggal yang valid.")).toBeInTheDocument();
+  });
+});
+
+describe("clampChange", () => {
+  const limit = { start: new Date(2026, 8, 1), end: new Date(2026, 8, 30) };
+  const item = { startsAt: "2026-09-10", endsAt: "2026-09-15" };
+
+  it("memindahkan dengan durasi tetap dan menahan di batas rentang", () => {
+    expect(clampChange(item, "move", 3, limit)).toEqual({ startsAt: "2026-09-13", endsAt: "2026-09-18" });
+    expect(clampChange(item, "move", -20, limit)).toEqual({ startsAt: "2026-09-01", endsAt: "2026-09-06" });
+    expect(clampChange(item, "move", 30, limit)).toEqual({ startsAt: "2026-09-25", endsAt: "2026-09-30" });
+  });
+
+  it("mengubah ujung tanpa melewati ujung lainnya", () => {
+    expect(clampChange(item, "start", 10, limit)).toEqual({ startsAt: "2026-09-15", endsAt: "2026-09-15" });
+    expect(clampChange(item, "end", -10, limit)).toEqual({ startsAt: "2026-09-10", endsAt: "2026-09-10" });
+    expect(clampChange(item, "end", 40, limit)).toEqual({ startsAt: "2026-09-10", endsAt: "2026-09-30" });
   });
 });

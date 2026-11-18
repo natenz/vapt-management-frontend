@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
-interface StatusConfig {
+export interface StatusConfig {
   icon: LucideIcon;
   className: string;
 }
@@ -72,6 +72,19 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
   },
 };
 
+const FALLBACK_STYLE: StatusConfig = {
+  icon: Circle,
+  className: "bg-surface-subtle text-ink-secondary",
+};
+
+/**
+ * Ikon + kelas chip pastel per status/tahap proyek. Dipakai juga oleh label
+ * tahap di Gantt detail proyek agar warnanya sama dengan badge status.
+ */
+export function getProjectStatusStyle(name?: string | null): StatusConfig {
+  return (name && STATUS_CONFIG[name]) || FALLBACK_STYLE;
+}
+
 export function ProjectStatusBadge({
   name,
   className,
@@ -80,10 +93,7 @@ export function ProjectStatusBadge({
   className?: string;
 }) {
   const label = name ?? "-";
-  const config = STATUS_CONFIG[label] ?? {
-    icon: Circle,
-    className: "bg-surface-subtle text-ink-secondary",
-  };
+  const config = getProjectStatusStyle(label);
   const Icon = config.icon;
 
   return (

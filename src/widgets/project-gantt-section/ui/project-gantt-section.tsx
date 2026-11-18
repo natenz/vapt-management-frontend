@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { updateProjectStages, type ProjectDetail } from "@/entities/project";
+import { getProjectStatusStyle, updateProjectStages, type ProjectDetail } from "@/entities/project";
 import { fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Gantt, type GanttItem } from "@/shared/ui/gantt";
+import { Gantt, type GanttGranularity, type GanttItem } from "@/shared/ui/gantt";
 import { TabChip, Tabs, TabsContent, TabsList } from "@/shared/ui/tabs";
 import { notify } from "@/shared/ui/toast";
 import { buildStageSchedule, mandaysState } from "../model/gantt-state";
@@ -14,6 +14,9 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
   const current = project.status?.status_name ?? "";
   const serverStages = useMemo(() => buildStageSchedule(project), [project]);
   const [drafts, setDrafts] = useState(serverStages);
+  // Skala Hari/Minggu dibagi kedua tab agar tidak kembali ke default saat berpindah tab
+  const [granularity, setGranularity] = useState<GanttGranularity>("day");
+  const scale = { granularity, onGranularityChange: setGranularity };
 
   useEffect(() => {
     setDrafts(serverStages);
@@ -46,9 +49,16 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
   });
 
   const stageById = new Map(drafts.map((s) => [s.id, s]));
+  // Label tahap di grid memakai chip pastel yang sama dengan badge status proyek
+  const chipFor = (stageName: string) => {
+    const { icon: Icon, className } = getProjectStatusStyle(stageName);
+    return { icon: <Icon />, iconClassName: className };
+  };
+
   const stageItems: GanttItem[] = drafts.map((s) => ({
     id: s.id,
     label: s.label,
+    ...chipFor(s.label),
     startsAt: s.startsAt,
     endsAt: s.endsAt,
     state: s.state,
@@ -62,6 +72,8 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
       startsAt: m.start_date as string,
       endsAt: m.end_date as string,
       state: mandaysState(m, current),
+      // Penugasan aset adalah pekerjaan tahap Assessment
+      ...chipFor("Assessment"),
     }));
 
   if (stageItems.length === 0 && mandaysItems.length === 0) return null;
@@ -89,6 +101,14 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
     );
   };
 
+  // Penugasan aset sebelumnya tanpa detail; kini tooltip memuat aset, pentester, dan rentang
+  const renderMandaysDetail = (item: GanttItem) => (
+    <div className="flex flex-col gap-1 text-body-sm">
+      <span className="font-medium text-ink">{item.label}</span>
+      <span className="text-caption text-ink-muted">{fmtRange(item.startsAt, item.endsAt)}</span>
+    </div>
+  );
+
   const stageGantt = (
     <div className="flex flex-col gap-3">
       {save.error ? (
@@ -104,6 +124,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
         rangeEnd={rangeEnd}
         onItemChange={handleStageChange}
         renderDetail={renderStageDetail}
+        {...scale}
       />
     </div>
   );
@@ -156,6 +177,8 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
             <Gantt
               items={mandaysItems}
               initialMonth={mandaysItems[0] ? new Date(mandaysItems[0].startsAt) : undefined}
+              renderDetail={renderMandaysDetail}
+              {...scale}
             />
           </TabsContent>
         </Tabs>
@@ -165,6 +188,8 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
         <Gantt
           items={mandaysItems}
           initialMonth={mandaysItems[0] ? new Date(mandaysItems[0].startsAt) : undefined}
+          renderDetail={renderMandaysDetail}
+          {...scale}
         />
       )}
     </section>

@@ -275,7 +275,7 @@ describe("ProjectsPage", () => {
   it("pada role super_admin, kolom Resources mengikutsertakan PM dalam tim", async () => {
     renderPage();
     const resourceButtons = await screen.findAllByRole("button", {
-      name: /Lihat detail resource proyek/i,
+      name: /Lihat (info|detail) resource proyek/i,
     });
     expect(resourceButtons.length).toBeGreaterThan(0);
 
@@ -314,7 +314,7 @@ describe("ProjectsPage", () => {
 
     // Di baris tabel, tampil avatar stack (hanya memuat profil Budi dan Aldi, tidak memuat PM Sari)
     const resourceButtons = await screen.findAllByRole("button", {
-      name: /Lihat detail resource proyek/i,
+      name: /Lihat (info|detail) resource proyek/i,
     });
     expect(resourceButtons.length).toBeGreaterThan(0);
 

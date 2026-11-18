@@ -167,7 +167,8 @@ export function SingleSelectFilter<T extends string>({
 }: {
   title: string;
   icon: ReactNode;
-  options: { value: T; label: string }[];
+  /** `count` opsional ditampilkan rata kanan, sama seperti `FacetFilter`. */
+  options: { value: T; label: string; count?: number }[];
   value: T;
   onChange: (next: T) => void;
   defaultValue?: T;
@@ -195,7 +196,10 @@ export function SingleSelectFilter<T extends string>({
             onCheckedChange={() => onChange(option.value)}
             className="h-9 text-xs"
           >
-            {option.label}
+            <span className="min-w-0 flex-1 truncate">{option.label}</span>
+            {option.count === undefined ? null : (
+              <span className="ml-auto pl-3 text-ink-muted tabular-nums">{option.count}</span>
+            )}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>

@@ -1,39 +1,194 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, FileText } from "lucide-react";
-import { Link, useParams } from "react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+  Building2,
+  CalendarRange,
+  Download,
+  FileText,
+  FolderKanban,
+  ShieldAlert,
+} from "lucide-react";
+import { useMemo } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
 import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
-import { listProjects, ProjectStatusBadge, statusBetween } from "@/entities/project";
+import { listProjects, ProjectStatusBadge, statusBetween, type Project } from "@/entities/project";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { DataTable } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
+import {
+  EMPTY_REPORT_FILTERS,
+  PAGE_SIZE_OPTIONS,
+  applyReportFilters,
+  getReportStatusOptions,
+  hasAnyFilter,
+  parsePageSize,
+  parseReportFilters,
+  writePageSize,
+  writeReportFilters,
+  type ReportFilters,
+} from "../model/report-filters";
+import { ReportsFilterBar } from "./reports-filter-bar";
 
 /** Daftar proyek yang laporannya bisa dibuka (tahap Initial Report dan sesudahnya). */
 export function ReportsIndexPage() {
-  const { data, isLoading, error } = useQuery({ queryKey: ["projects", "all"], queryFn: () => listProjects({ limit: 100 }) });
-  const rows = (data?.data ?? []).filter((p) => statusBetween(p.status?.status_name, "Initial Report", "Done"));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const filters = useMemo(() => parseReportFilters(searchParams), [searchParams]);
+  const pageSize = parsePageSize(searchParams);
+
+  const setFilters = (next: ReportFilters) =>
+    setSearchParams((prev) => writeReportFilters(next, prev), { replace: true });
+  const setPageSize = (next: number) =>
+    setSearchParams((prev) => writePageSize(next, prev), { replace: true });
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["projects", "all"],
+    queryFn: () => listProjects({ limit: 100 }),
+  });
+
+  const allRows = useMemo(
+    () =>
+      (data?.data ?? []).filter((p) =>
+        statusBetween(p.status?.status_name, "Initial Report", "Done"),
+      ),
+    [data],
+  );
+
+  const filteredRows = useMemo(
+    () => applyReportFilters(allRows, filters),
+    [allRows, filters],
+  );
+  const statusOptions = useMemo(() => getReportStatusOptions(allRows), [allRows]);
+  const isFiltered = hasAnyFilter(filters);
+
+  const columns = useMemo<ColumnDef<Project>[]>(
+    () => [
+      {
+        accessorKey: "project_name",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Proyek</span>
+          </span>
+        ),
+        cell: ({ row }) => (
+          <Link
+            to={`/projects/${row.original.project_id}/report`}
+            className="rounded-xs text-title-sm font-normal text-ink focus-ring hover:text-brand"
+          >
+            {row.original.project_name}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: "client_name",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <Building2 className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Klien</span>
+          </span>
+        ),
+        cell: ({ row }) => (
+          <span className="text-body-sm text-ink-secondary">{row.original.client_name ?? "-"}</span>
+        ),
+      },
+      {
+        id: "range",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <CalendarRange className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Rentang tanggal</span>
+          </span>
+        ),
+        enableSorting: false,
+        cell: ({ row }) => fmtRange(row.original.start_date, row.original.end_date),
+      },
+      {
+        id: "status",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Status</span>
+          </span>
+        ),
+        cell: ({ row }) => <ProjectStatusBadge name={row.original.status?.status_name} />,
+      },
+      {
+        id: "actions",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <FileText className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Aksi</span>
+          </span>
+        ),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button asChild variant="quiet" className="h-8 px-2.5 text-xs text-brand hover:text-brand">
+            <Link to={`/projects/${row.original.project_id}/report`}>Buka Laporan</Link>
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Koreksi & Laporan" description="Proyek yang sudah masuk tahap Initial Report atau sesudahnya." />
+      <PageHeader
+        title="Koreksi & Laporan"
+        description="Proyek yang sudah masuk tahap Initial Report atau sesudahnya."
+      />
       {error ? <Alert tone="error" title="Gagal memuat">{error.message}</Alert> : null}
-      {isLoading ? <Skeleton className="h-40" /> : rows.length === 0 ? (
-        <EmptyState icon={<FileText />} title="Belum ada laporan" description="Proyek akan muncul di sini setelah masuk tahap Initial Report." />
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {rows.map((p) => (
-            <li key={p.project_id}>
-              <Link to={`/projects/${p.project_id}/report`} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface p-4 focus-ring hover:border-border-strong">
-                <span className="text-title-sm text-ink">{p.project_name}</span>
-                <ProjectStatusBadge name={p.status?.status_name} />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+
+      <div className="flex flex-col gap-4">
+        <ReportsFilterBar
+          filters={filters}
+          onChange={setFilters}
+          statusOptions={statusOptions}
+          resultCount={filteredRows.length}
+          totalCount={allRows.length}
+        />
+
+        <DataTable
+          columns={columns}
+          data={filteredRows}
+          noun="laporan"
+          caption="Daftar laporan proyek"
+          isLoading={isLoading}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageSizeChange={setPageSize}
+          getRowId={(p) => String(p.project_id)}
+          onRowClick={(p) => navigate(`/projects/${p.project_id}/report`)}
+          getRowAriaLabel={(p) => `Buka laporan ${p.project_name}`}
+          emptyState={
+            isFiltered ? (
+              <EmptyState
+                icon={<FileText />}
+                title="Tidak ada laporan yang cocok"
+                description="Coba ubah kata kunci atau kurangi filter status."
+                action={
+                  <Button variant="quiet" onClick={() => setFilters(EMPTY_REPORT_FILTERS)}>
+                    Reset filter
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={<FileText />}
+                title="Belum ada laporan"
+                description="Proyek akan muncul di sini setelah masuk tahap Initial Report."
+              />
+            )
+          }
+        />
+      </div>
     </div>
   );
 }

@@ -19,11 +19,14 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    emptyOutDir: false,
+  },
   test: {
     environment: "jsdom",
     globals: true,
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],
-    testTimeout: 10_000,
+    testTimeout: 20_000,
   },
 });

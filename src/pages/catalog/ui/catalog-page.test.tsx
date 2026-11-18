@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogVulna } from "@/entities/catalog";
 import { useSession } from "@/entities/session";
@@ -66,9 +67,17 @@ async function mount(role: "pentester" | "tech_lead") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <CatalogPage />
+      <MemoryRouter>
+        <CatalogPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+/** Pilih status lewat dropdown "Status" (desainnya sama dengan filter Severity). */
+async function pickStatus(label: RegExp) {
+  fireEvent.keyDown(screen.getByRole("button", { name: /^Status: / }), { key: "Enter" });
+  fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: label }));
 }
 
 beforeEach(() => {
@@ -83,28 +92,41 @@ beforeEach(() => {
 });
 
 describe("CatalogPage approval", () => {
-  it("pentester melihat tombol Ajukan ke katalog dan tab Pengajuan saya (Menunggu ACC)", async () => {
-    const u = userEvent.setup();
+  it("pentester melihat tombol Ajukan ke katalog dan status Pengajuan saya (Menunggu ACC)", async () => {
     await mount("pentester");
     expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
     expect(screen.queryByText("SSRF Internal")).toBeNull();
 
     expect(screen.getByRole("button", { name: /Ajukan ke katalog/ })).toBeInTheDocument();
-    await u.click(screen.getByRole("tab", { name: /Pengajuan saya/ }));
+    expect(screen.getByRole("button", { name: "Status: Disetujui" })).toBeInTheDocument();
+    await pickStatus(/^Pengajuan saya/);
     expect(await screen.findByText("SSRF Internal")).toBeInTheDocument();
     expect(screen.getByText("Menunggu ACC")).toBeInTheDocument();
   });
 
-  it("tech lead dapat melihat tab Menunggu ACC dan menekan ACC", async () => {
+  it("tech lead dapat memilih status Menunggu ACC dan menekan ACC", async () => {
     const u = userEvent.setup();
     await mount("tech_lead");
     expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
 
-    await u.click(screen.getByRole("tab", { name: /Menunggu ACC/ }));
+    await pickStatus(/^Menunggu ACC/);
+    expect(screen.getByRole("button", { name: "Status: Menunggu ACC" })).toBeInTheDocument();
     expect(await screen.findByText("SSRF Internal")).toBeInTheDocument();
     expect(screen.getByText("Budi Santoso")).toBeInTheDocument();
 
     await u.click(screen.getByRole("button", { name: "ACC" }));
     await waitFor(() => expect(api.reviewCatalog).toHaveBeenCalledWith(2, "approved"));
+  });
+
+  it("menyaring kerentanan pada input pencarian", async () => {
+    const u = userEvent.setup();
+    await mount("pentester");
+    expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
+
+    const searchInput = screen.getByRole("searchbox", { name: "Cari kerentanan" });
+    await u.type(searchInput, "nonexistent");
+
+    expect(screen.queryByText("SQL Injection")).not.toBeInTheDocument();
+    expect(screen.getByText("Tidak ada kerentanan yang cocok")).toBeInTheDocument();
   });
 });

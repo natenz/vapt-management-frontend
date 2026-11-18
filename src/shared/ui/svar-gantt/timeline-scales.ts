@@ -8,10 +8,11 @@ import {
   isSameYear,
 } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import type { Granularity } from "@/entities/project";
+/** Interval skala; identik dengan `Granularity` di entities/project (shared tidak boleh mengimpor entities). */
+export type Granularity = "day" | "week" | "month" | "year";
 
 /** Kelas CSS penanda periode hari ini (MIT `highlightTime`, pengganti marker PRO). */
-export const TODAY_CELL_CLASS = "vapt-timeline-today";
+export const TODAY_CELL_CLASS = "vapt-gantt-today";
 
 export interface TimelineScaleConfig {
   scales: {

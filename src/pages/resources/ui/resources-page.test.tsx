@@ -1,8 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { User } from "@/entities/user";
+
+beforeAll(() => {
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
+  if (!("ResizeObserver" in globalThis)) {
+    globalThis.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
+});
 
 const u = (id: number, username: string, role: string, name: string, dept = "Offensive Security") =>
   ({
@@ -14,16 +27,21 @@ const u = (id: number, username: string, role: string, name: string, dept = "Off
     profile: { user_id: id, full_name: name, department: dept },
   }) as User;
 
-vi.mock("@/entities/user", () => ({
-  listUsers: async () => [
-    u(1, "superadmin", "super_admin", "Super Admin"),
-    u(2, "techlead", "tech_lead", "Tech Lead"),
-    u(3, "pm.andi", "project_manager", "Andi"),
-    u(5, "pentester.budi", "pentester", "Budi Santoso"),
-    u(6, "pentester.citra", "pentester", "Citra Maharani"),
-    u(8, "writer.eka", "technical_writer", "Eka Putri"),
-  ],
-}));
+vi.mock("@/entities/user", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/user")>();
+  return {
+    ...actual,
+    listUsers: async () => [
+      u(1, "superadmin", "super_admin", "Super Admin"),
+      u(2, "techlead", "tech_lead", "Tech Lead"),
+      u(3, "pm.andi", "project_manager", "Andi"),
+      u(5, "pentester.budi", "pentester", "Budi Santoso"),
+      u(6, "pentester.citra", "pentester", "Citra Maharani"),
+      u(7, "pentester.dimas", "pentester", "Dimas Wibowo"),
+      u(8, "writer.eka", "technical_writer", "Eka Putri"),
+    ],
+  };
+});
 
 vi.mock("@/entities/project", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/project")>();
@@ -52,13 +70,45 @@ describe("ResourcesPage", () => {
     expect(screen.queryByText("Tech Lead")).toBeNull();
 
     const budi = screen.getByText("Budi Santoso").closest("tr")!;
-    expect(within(budi).getByText(/21 md · lewat batas/)).toBeInTheDocument();
-    expect(within(budi).getByRole("link", { name: "VAPT HRIS" })).toHaveAttribute("href", "/projects/5");
+    expect(within(budi).queryByText("pentester.budi")).toBeNull();
+    expect(within(budi).getByText("BS")).toBeInTheDocument();
+    expect(within(budi).getByText("Pentester")).toBeInTheDocument();
+    expect(within(budi).getByText(/21 MD · lewat batas/)).toBeInTheDocument();
+    const mdChip = within(budi).getByText(/21 MD · lewat batas/).closest("[data-slot='mandays-chip']")!;
+    expect(mdChip).toHaveClass("rounded-xs", "border-0");
+    const hrisLink = within(budi).getByRole("link", { name: "VAPT HRIS" });
+    expect(hrisLink).toHaveAttribute("href", "/projects/5");
+    expect(hrisLink).toHaveClass("bg-project-chip-bg", "text-project-chip-fg", "rounded-xs");
+
     const citra = screen.getByText("Citra Maharani").closest("tr")!;
-    expect(within(citra).getByText("8 md")).toBeInTheDocument();
+    expect(within(citra).getByText("8 MD")).toBeInTheDocument();
+    const dimas = screen.getByText("Dimas Wibowo").closest("tr")!;
+    expect(within(dimas).getByText("0 MD")).toBeInTheDocument();
     const eka = screen.getByText("Eka Putri").closest("tr")!;
     expect(within(eka).getByRole("link", { name: "VAPT E-Commerce" })).toBeInTheDocument();
     const andi = screen.getByText("Andi").closest("tr")!;
-    expect(within(andi).queryByText(/md/)).toBeNull();
+    expect(within(andi).queryByText(/MD/)).toBeNull();
+  });
+
+  it("menyaring resource melalui search input", async () => {
+    const userEvent = (await import("@testing-library/user-event")).default;
+    const user = userEvent.setup();
+    const { ResourcesPage } = await import("./resources-page");
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <ResourcesPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("Budi Santoso")).toBeInTheDocument();
+    expect(screen.getByText("Citra Maharani")).toBeInTheDocument();
+
+    const searchInput = screen.getByRole("searchbox", { name: "Cari resource" });
+    await user.type(searchInput, "citra");
+
+    expect(screen.getByText("Citra Maharani")).toBeInTheDocument();
+    expect(screen.queryByText("Budi Santoso")).toBeNull();
+    expect(screen.getByText("Menampilkan 1 dari 5 orang")).toBeInTheDocument();
   });
 });

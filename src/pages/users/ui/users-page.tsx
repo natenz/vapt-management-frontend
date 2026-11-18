@@ -1,9 +1,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, EyeOff, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import {
+  Building2,
+  Eye,
+  EyeOff,
+  Mail,
+  Pencil,
+  Phone,
+  Plus,
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+  User as UserIcon,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "react-router";
 import { z } from "zod";
 import { useSession } from "@/entities/session";
 import {
@@ -11,11 +26,12 @@ import {
   deleteUser,
   listRoles,
   listUsers,
+  RoleBadge,
   updateUser,
   type RoleDetail,
   type User,
 } from "@/entities/user";
-import { ROLE_LABEL, isRole, type RoleName } from "@/shared/config/roles";
+import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { Alert } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
@@ -28,10 +44,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { Field, FieldGroup, Input, SearchInput } from "@/shared/ui/input";
+import { EmptyState } from "@/shared/ui/empty-state";
+import { Field, FieldGroup, Input } from "@/shared/ui/input";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { notify } from "@/shared/ui/toast";
+import {
+  EMPTY_USER_FILTERS,
+  PAGE_SIZE_OPTIONS,
+  applyUserFilters,
+  getRoleOptions,
+  hasAnyFilter,
+  parsePageSize,
+  parseUserFilters,
+  writePageSize,
+  writeUserFilters,
+  type UserFilters,
+} from "../model/user-filters";
+import { UsersFilterBar } from "./users-filter-bar";
 
 const DEFAULT_ROLES: RoleDetail[] = [
   { role_id: 1, role_name: "super_admin", description: "Hak akses penuh kelola sistem & user" },
@@ -101,7 +131,15 @@ const updateUserSchema = z.object({
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 
 export function UsersPage() {
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = useMemo(() => parseUserFilters(searchParams), [searchParams]);
+  const pageSize = parsePageSize(searchParams);
+
+  const setFilters = (next: UserFilters) =>
+    setSearchParams((prev) => writeUserFilters(next, prev), { replace: true });
+  const setPageSize = (next: number) =>
+    setSearchParams((prev) => writePageSize(next, prev), { replace: true });
+
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [deleteUserTarget, setDeleteUserTarget] = useState<User | null>(null);
@@ -225,11 +263,24 @@ export function UsersPage() {
     },
   });
 
+  const allUsers = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
+  const filteredUsers = useMemo(
+    () => applyUserFilters(allUsers, filters),
+    [allUsers, filters],
+  );
+  const roleOptions = useMemo(() => getRoleOptions(allUsers), [allUsers]);
+  const isFiltered = hasAnyFilter(filters);
+
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
       {
         id: "name",
-        header: "Pengguna",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <UserIcon className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Pengguna</span>
+          </span>
+        ),
         accessorFn: (u) => u.profile?.full_name ?? u.username,
         cell: ({ row }) => {
           const u = row.original;
@@ -246,7 +297,7 @@ export function UsersPage() {
                 <AvatarFallback>{initials || "US"}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <span className="truncate text-title-sm text-ink">{fullName}</span>
+                <span className="truncate text-title-sm font-normal text-ink">{fullName}</span>
                 <span className="truncate text-caption text-ink-muted">@{u.username}</span>
               </div>
             </div>
@@ -255,26 +306,33 @@ export function UsersPage() {
       },
       {
         accessorKey: "email",
-        header: "Email",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <Mail className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Email</span>
+          </span>
+        ),
         cell: ({ row }) => <span className="text-body-sm text-ink-secondary">{row.original.email}</span>,
       },
       {
         id: "role",
-        header: "Role",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <ShieldCheck className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Role</span>
+          </span>
+        ),
         accessorFn: (u) => u.role?.role_name ?? "-",
-        cell: ({ row }) => {
-          const roleName = row.original.role?.role_name as RoleName | undefined;
-          const label = roleName && isRole(roleName) ? ROLE_LABEL[roleName] : (row.original.role?.role_name ?? "-");
-          return (
-            <span className="inline-flex items-center rounded-full border border-border bg-surface-subtle px-2.5 py-0.5 text-caption font-medium text-ink">
-              {label}
-            </span>
-          );
-        },
+        cell: ({ row }) => <RoleBadge role={row.original.role?.role_name} />,
       },
       {
         id: "dept",
-        header: "Departemen",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <Building2 className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Departemen</span>
+          </span>
+        ),
         accessorFn: (u) => u.profile?.department ?? "-",
         cell: ({ row }) => (
           <span className="text-body-sm text-ink-secondary">{row.original.profile?.department || "-"}</span>
@@ -282,7 +340,12 @@ export function UsersPage() {
       },
       {
         id: "phone",
-        header: "Telepon",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <Phone className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Telepon</span>
+          </span>
+        ),
         accessorFn: (u) => u.profile?.phone_number ?? "-",
         cell: ({ row }) => (
           <span className="text-body-sm text-ink-secondary">{row.original.profile?.phone_number || "-"}</span>
@@ -290,7 +353,12 @@ export function UsersPage() {
       },
       {
         id: "actions",
-        header: "Aksi",
+        header: () => (
+          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
+            <SlidersHorizontal className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
+            <span>Aksi</span>
+          </span>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const u = row.original;
@@ -347,25 +415,49 @@ export function UsersPage() {
         </Alert>
       ) : null}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <SearchInput
-          aria-label="Cari pengguna"
-          placeholder="Cari nama, username, email, atau departemen..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
+      <div className="flex flex-col gap-4">
+        <UsersFilterBar
+          filters={filters}
+          onChange={setFilters}
+          roleOptions={roleOptions}
+          resultCount={filteredUsers.length}
+          totalCount={allUsers.length}
+        />
+
+        <DataTable
+          columns={columns}
+          data={filteredUsers}
+          noun="user"
+          caption="Daftar akun pengguna sistem VAPT"
+          isLoading={usersQuery.isLoading}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageSizeChange={setPageSize}
+          getRowId={(u) => String(u.sys_user_id)}
+          onRowClick={(u) => setEditUser(u)}
+          getRowAriaLabel={(u) => `Ubah data ${u.username}`}
+          emptyState={
+            isFiltered ? (
+              <EmptyState
+                icon={<Users />}
+                title="Tidak ada pengguna yang cocok"
+                description="Coba ubah kata kunci atau kurangi filter yang aktif."
+                action={
+                  <Button variant="quiet" onClick={() => setFilters(EMPTY_USER_FILTERS)}>
+                    Reset filter
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={<Users />}
+                title="Belum ada pengguna"
+                description="Pengguna yang terdaftar di sistem akan muncul di sini."
+              />
+            )
+          }
         />
       </div>
-
-      <DataTable
-        columns={columns}
-        data={usersQuery.data ?? []}
-        noun="user"
-        caption="Daftar akun pengguna sistem VAPT"
-        globalFilter={search}
-        isLoading={usersQuery.isLoading}
-        getRowId={(u) => String(u.sys_user_id)}
-      />
 
       {/* Modal Tambah User */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

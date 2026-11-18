@@ -71,11 +71,11 @@ export const tokens = {
     {
       "name": "surface-brand",
       "value": "#d8232a",
-      "dark": "#d8232a",
+      "dark": "#991b1b",
       "alias": "red-600",
       "usage": "Solid brand fill for icon tiles, the Pill badge and the single highlighted stat tile. Text and glyphs on it: `on-brand`.",
       "derived": false,
-      "changedInDark": false
+      "changedInDark": true
     },
     {
       "name": "ink",
@@ -503,20 +503,20 @@ export const tokens = {
     {
       "name": "surface-brand-hover",
       "value": "#b3141f",
-      "dark": "#b3141f",
+      "dark": "#b91c1c",
       "alias": "red-700",
       "usage": "Isian brand saat hover (tombol Solid). Terpisah dari brand-hover karena brand-hover adalah warna TINTA: di tema gelap tinta harus lebih terang, sedangkan isian harus tetap gelap agar teks putih di atasnya tetap terbaca.",
       "derived": true,
-      "changedInDark": false
+      "changedInDark": true
     },
     {
       "name": "surface-brand-pressed",
       "value": "#7f1218",
-      "dark": "#7f1218",
+      "dark": "#7f1d1d",
       "alias": "red-800",
       "usage": "Isian brand saat pressed. Alasan pemisahannya sama dengan surface-brand-hover.",
       "derived": true,
-      "changedInDark": false
+      "changedInDark": true
     },
     {
       "name": "sev-critical",
@@ -1003,6 +1003,24 @@ export const tokens = {
       "usage": "Teks/ikon success di atas surface-inverse.",
       "derived": true,
       "changedInDark": false
+    },
+    {
+      "name": "project-chip-bg",
+      "value": "#fcebec",
+      "dark": "#382020",
+      "alias": null,
+      "usage": "Background soft red compact chip nama proyek aktif pada tabel resource.",
+      "derived": true,
+      "changedInDark": true
+    },
+    {
+      "name": "project-chip-fg",
+      "value": "#991b1b",
+      "dark": "#eca3a3",
+      "alias": null,
+      "usage": "Teks deep red compact chip nama proyek aktif pada tabel resource.",
+      "derived": true,
+      "changedInDark": true
     }
   ],
   "typeStyles": [

@@ -29,6 +29,26 @@ vi.mock("@/entities/finding", async (importOriginal) => {
   };
 });
 
+vi.mock("@/entities/project", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/project")>();
+  return {
+    ...actual,
+    listProjects: async () => ({
+      data: [
+        {
+          project_id: 4,
+          project_name: "VAPT E-Commerce",
+          client_name: "Klien Telkom",
+          start_date: "2026-10-01",
+          end_date: "2026-10-30",
+          status: { status_process_id: 6, status_name: "Initial Report" },
+        },
+      ],
+      meta: { page: 1, limit: 100, total: 1 },
+    }),
+  };
+});
+
 // jsdom tidak punya dua API ini; Tabs memakainya untuk chevron dan auto-scroll chip.
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
@@ -37,6 +57,7 @@ beforeAll(() => {
 
 describe("ReportPage", () => {
   it("dua tab: Laporan Proyek (semua temuan) dan Laporan per Aset (dikelompokkan, aset kosong tetap tampil)", async () => {
+    const user = userEvent.setup();
     const { ReportPage } = await import("./reports-page");
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -48,11 +69,32 @@ describe("ReportPage", () => {
     expect(await screen.findByText("SQLi login")).toBeInTheDocument();
     expect(screen.getAllByText(/Weak JWT|Verbose errors|SQLi login/)).toHaveLength(3);
 
-    await userEvent.click(screen.getByRole("tab", { name: /Laporan per Aset/ }));
+    await user.click(screen.getByRole("tab", { name: /Laporan per Aset/ }));
     const checkout = await screen.findByRole("region", { name: "Laporan aset Checkout API" });
     expect(within(checkout).getAllByText(/Weak JWT|Verbose errors/)).toHaveLength(2);
     expect(within(checkout).queryByText("SQLi login")).toBeNull();
     const kosong = screen.getByRole("region", { name: "Laporan aset Aset Kosong" });
     expect(within(kosong).getByText("Tidak ada temuan pada aset ini.")).toBeInTheDocument();
+  });
+});
+
+describe("ReportsIndexPage", () => {
+  it("merender tabel proyek siap laporan beserta toolbar dan aksinya", async () => {
+    const { ReportsIndexPage } = await import("./reports-page");
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <ReportsIndexPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("VAPT E-Commerce")).toBeInTheDocument();
+    expect(screen.getByText("Klien Telkom")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Buka Laporan" })).toHaveAttribute(
+      "href",
+      "/projects/4/report",
+    );
+    expect(screen.getByText("1 laporan")).toBeInTheDocument();
   });
 });

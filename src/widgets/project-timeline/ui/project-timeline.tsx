@@ -1,6 +1,3 @@
-import "@svar-ui/react-gantt/all.css";
-import "./project-timeline.css";
-
 import { Gantt, Willow, locateTask } from "@svar-ui/react-gantt";
 import type { IApi, IColumnConfig, ITask } from "@svar-ui/react-gantt";
 import { format } from "date-fns";
@@ -29,14 +26,16 @@ import { FacetFilter, SingleSelectFilter } from "@/shared/ui/facet-filter";
 import { SearchInput } from "@/shared/ui/input";
 import { Pagination } from "@/shared/ui/pagination";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { useColorScheme, useMediaQuery } from "../lib/use-color-scheme";
-import { GROUP_BAR_CLASS, statusBarClass } from "../model/status-colors";
 import {
+  GanttTooltip,
+  TODAY_CELL_CLASS,
   exclusiveEnd,
   getTimelineScales,
   isCurrentPeriod,
-  TODAY_CELL_CLASS,
-} from "../model/timeline-scales";
+  useColorScheme,
+  useMediaQuery,
+} from "@/shared/ui/svar-gantt";
+import { GROUP_BAR_CLASS, statusBarClass } from "../model/status-colors";
 import {
   DEFAULT_TIMELINE_FILTERS,
   DEFAULT_TIMELINE_PAGE_SIZE,
@@ -212,7 +211,7 @@ export function ProjectTimeline({
   ].join("|");
 
   return (
-    <div data-slot="project-timeline" className="vapt-timeline flex flex-col gap-4">
+    <div data-slot="project-timeline" className="vapt-gantt flex flex-col gap-4">
       {/* Toolbar: pencarian kiri, filter & pengaturan kanan */}
       <div
         role="search"
@@ -483,20 +482,9 @@ function TimelineBar({ data }: { data: ITask }) {
   );
 }
 
-const TOOLTIP_WIDTH = 256;
-const TOOLTIP_HEIGHT = 168;
-
 function TimelineTooltip({ task, x, y }: { task: TimelineTask; x: number; y: number }) {
-  // Di kanan-bawah kursor; dibalik bila mendekati tepi layar
-  const left = x + 16 + TOOLTIP_WIDTH > window.innerWidth ? x - 16 - TOOLTIP_WIDTH : x + 16;
-  const top = y + 16 + TOOLTIP_HEIGHT > window.innerHeight ? y - 16 - TOOLTIP_HEIGHT : y + 16;
   return (
-    <div
-      role="tooltip"
-      data-slot="project-timeline-tooltip"
-      style={{ left: Math.max(8, left), top: Math.max(8, top), width: TOOLTIP_WIDTH }}
-      className="pointer-events-none fixed z-50 rounded-md border border-border bg-surface p-3 text-xs text-ink shadow-raised"
-    >
+    <GanttTooltip x={x} y={y} data-slot="project-timeline-tooltip">
       <p className="truncate text-sm text-ink">{task.text}</p>
       {task.kind === "group" ? (
         <p className="mt-1 text-ink-muted">{task.childCount} proyek</p>
@@ -517,6 +505,6 @@ function TimelineTooltip({ task, x, y }: { task: TimelineTask; x: number; y: num
           </>
         ) : null}
       </dl>
-    </div>
+    </GanttTooltip>
   );
 }

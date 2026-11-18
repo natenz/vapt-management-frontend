@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSession } from "@/entities/session";
 import type { RoleDetail, User } from "@/entities/user";
@@ -34,13 +35,17 @@ const mockCreateUser = vi.fn();
 const mockUpdateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 
-vi.mock("@/entities/user", () => ({
-  listUsers: async () => mockUsers,
-  listRoles: async () => mockRoles,
-  createUser: (...args: unknown[]) => mockCreateUser(...args),
-  updateUser: (...args: unknown[]) => mockUpdateUser(...args),
-  deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
-}));
+vi.mock("@/entities/user", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/user")>();
+  return {
+    ...actual,
+    listUsers: async () => mockUsers,
+    listRoles: async () => mockRoles,
+    createUser: (...args: unknown[]) => mockCreateUser(...args),
+    updateUser: (...args: unknown[]) => mockUpdateUser(...args),
+    deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
+  };
+});
 
 describe("UsersPage", () => {
   let queryClient: QueryClient;
@@ -67,7 +72,9 @@ describe("UsersPage", () => {
   const renderComponent = () =>
     render(
       <QueryClientProvider client={queryClient}>
-        <UsersPage />
+        <MemoryRouter>
+          <UsersPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
@@ -190,5 +197,19 @@ describe("UsersPage", () => {
         email: "budi.updated@vapt.local",
       }));
     });
+  });
+
+  it("menyaring daftar pengguna saat mengetik di search input", async () => {
+    const user = userEvent.setup();
+    renderComponent();
+    expect(await screen.findByText("Super Admin")).toBeInTheDocument();
+    expect(screen.getByText("Budi Santoso")).toBeInTheDocument();
+
+    const searchInput = screen.getByRole("searchbox", { name: "Cari pengguna" });
+    await user.type(searchInput, "budi");
+
+    expect(screen.getByText("Budi Santoso")).toBeInTheDocument();
+    expect(screen.queryByText("Super Admin")).not.toBeInTheDocument();
+    expect(screen.getByText("Menampilkan 1 dari 2 user")).toBeInTheDocument();
   });
 });

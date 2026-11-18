@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { SeverityBadge, SEVERITY_ORDER, severityRank } from "./severity-badge";
+import { SeverityBadge, SeverityChip, SEVERITY_ORDER, severityRank } from "./severity-badge";
 
 describe("SeverityBadge", () => {
   it("merender ikon dan kata untuk setiap severity", () => {
@@ -55,5 +55,24 @@ describe("SeverityBadge", () => {
   it("menampilkan jumlah dengan angka tabular saat diberikan", () => {
     render(<SeverityBadge severity="high" count={11} />);
     expect(screen.getByText("11")).toHaveClass("tabular");
+  });
+});
+
+describe("SeverityChip", () => {
+  it("merender chip ikon borderless dan kata di luar chip untuk setiap severity", () => {
+    for (const severity of SEVERITY_ORDER) {
+      const { container, unmount } = render(<SeverityChip severity={severity} />);
+      const chip = container.querySelector('[data-slot="severity-chip"]');
+
+      expect(chip, `${severity} harus merender chip`).not.toBeNull();
+      expect(chip?.className).toContain(`bg-sev-${severity}-bg`);
+      expect(chip?.className).toContain("border-0");
+      expect(chip?.querySelector("svg"), `${severity} harus punya ikon`).not.toBeNull();
+      // Kata berada di luar chip (chip hanya ikon, aria-hidden)
+      expect(chip?.textContent).toBe("");
+      expect(container.textContent?.trim()).not.toBe("");
+
+      unmount();
+    }
   });
 });
