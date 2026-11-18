@@ -69,23 +69,31 @@ describe("DashboardPage", () => {
     expect(within(watch).getByText("Proyek Laporan")).toBeInTheDocument();
   });
 
-  it("tech lead: antrean ACC katalog dari pentest dan 5 proyek terakhir, tanpa tabel giliran", async () => {
+  it("tech lead: menampilkan ringkasan operasional, proyek berjalan & progres, ketersediaan personil, dan persetujuan katalog", async () => {
     await mount("tech_lead");
-    const acc = await screen.findByRole("region", { name: "ACC katalog dari pentest" });
+    expect(await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" })).toBeInTheDocument();
+    const projectsSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
+    expect(within(projectsSec).getByText("Proyek Uji")).toBeInTheDocument();
+    expect(within(projectsSec).getByText("Proyek Remediasi")).toBeInTheDocument();
+
+    const resourceSec = screen.getByRole("region", { name: "Ketersediaan & Penugasan Personil" });
+    expect(within(resourceSec).getByText("Budi Santoso")).toBeInTheDocument();
+    expect(within(resourceSec).getByRole("link", { name: /Linimasa Tim/ })).toHaveAttribute("href", "/resources?tampilan=timeline");
+
+    const acc = screen.getByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" });
     expect(within(acc).getByText("Stored XSS")).toBeInTheDocument();
     expect(within(acc).getByText("IDOR profil")).toBeInTheDocument();
-    expect(within(acc).getByRole("link", { name: /Tinjau dan setujui/ })).toHaveAttribute("href", "/catalog");
-    const latest = screen.getByRole("region", { name: "Proyek terakhir" });
-    const rows = within(latest).getAllByRole("row").slice(1);
-    expect(rows).toHaveLength(3); // mock punya 3 proyek; id terbesar di atas
-    expect(rows[0]).toHaveTextContent("Proyek Remediasi");
+    expect(within(acc).getByRole("link", { name: /Buka Basis Data Katalog Lengkap/ })).toHaveAttribute("href", "/catalog");
+
+    expect(screen.getByRole("region", { name: "Pintasan Kerja Tech Lead" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
   it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {
     await mount("pentester");
     await screen.findByRole("region", { name: "Giliran Anda" });
-    expect(screen.queryByRole("region", { name: "ACC katalog dari pentest" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Ringkasan Operasional Tech Lead" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
   });
 
   it("tech writer: Initial Report jadi giliran, Assessment hanya dipantau", async () => {

@@ -1,27 +1,24 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, startOfDay } from "date-fns";
 import {
-  AlertTriangle,
   ArrowRight,
-  BookCheck,
   Bug,
   CalendarRange,
   Clock,
   FolderKanban,
   Plus,
   ShieldAlert,
-  User as UserIcon,
   UserPlus,
 } from "lucide-react";
 import { Link } from "react-router";
-import { listCatalog, type CatalogVulna } from "@/entities/catalog";
-import { listFindings, SeverityChip } from "@/entities/finding";
+import { listCatalog } from "@/entities/catalog";
+import { listFindings } from "@/entities/finding";
 import { currentMonth, getResourceLoad, listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { listUsers } from "@/entities/user";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
 import { cn } from "@/shared/lib/cn";
-import { fmtDate, toSeverityKey } from "@/shared/lib/format";
+import { fmtDate } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -29,6 +26,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { SuperAdminDashboard } from "./superadmin-dashboard";
+import { TechLeadDashboard } from "./techlead-dashboard";
 
 // Batas proyek per role ditegakkan BE (service/access.go roleStatuses). Di sini hanya dipilah:
 // "giliran" = status yang menunggu tindakan role ini; sisanya proyek berjalan yang cukup dipantau.
@@ -82,122 +80,6 @@ function deadline(end?: string | null, today = new Date()) {
   if (days < 0) return { text: `Lewat ${-days} hari`, tone: "text-error" };
   if (days === 0) return { text: "Hari ini", tone: "text-warning" };
   return { text: `${days} hari lagi`, tone: days <= 3 ? "text-warning" : "" };
-}
-
-const LATEST_COUNT = 5;
-
-/** Proyek yang paling baru dibuat (project_id terbesar), status apa pun termasuk Draft dan Done. */
-function LatestProjects({ rows, loading }: { rows: Project[]; loading: boolean }) {
-  return (
-    <section className="flex flex-col gap-3" aria-label="Proyek terakhir">
-      <h2 className="text-title-md text-ink">Proyek terakhir</h2>
-      {loading ? (
-        <Skeleton className="h-40" />
-      ) : rows.length === 0 ? (
-        <EmptyState icon={<FolderKanban />} title="Belum ada proyek" description="Proyek yang baru dibuat akan muncul di sini." />
-      ) : (
-        <Table boxed>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Proyek</span>
-                </span>
-              </TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Tahap</span>
-                </span>
-              </TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <CalendarRange className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Rentang tanggal</span>
-                </span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((p) => (
-              <TableRow key={p.project_id}>
-                <TableCell>
-                  <Link to={`/projects/${p.project_id}`} className="flex flex-col focus-ring hover:text-brand">
-                    <span className="text-title-sm font-normal text-ink">{p.project_name}</span>
-                    <span className="text-caption text-ink-muted">{p.client_name} · PM {p.pm?.profile?.full_name ?? p.pm?.username ?? "-"}</span>
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <ProjectStatusBadge name={p.status?.status_name ?? ""} />
-                </TableCell>
-                <TableCell className="text-body-sm text-ink tabular">{fmtDate(p.start_date)} s/d {fmtDate(p.end_date)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </section>
-  );
-}
-
-/** Antrean ACC katalog. Pengajuan berstatus pending hanya datang dari pentester (BE catalogStatusForActor). */
-function CatalogQueue({ rows, loading, error }: { rows: CatalogVulna[]; loading: boolean; error?: Error | null }) {
-  return (
-    <section className="flex flex-col gap-3" aria-label="ACC katalog dari pentest">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-title-md text-ink">
-          ACC katalog dari pentest <span className="text-body-sm text-ink-muted">({rows.length})</span>
-        </h2>
-        <Button asChild variant="link" trailingIcon={<ArrowRight />}>
-          <Link to="/catalog">{rows.length > 0 ? "Tinjau dan setujui" : "Buka katalog"}</Link>
-        </Button>
-      </div>
-      {error ? (
-        <Alert tone="error" title="Pengajuan belum bisa dimuat" compact>{error.message}</Alert>
-      ) : loading ? (
-        <Skeleton className="h-40" />
-      ) : rows.length === 0 ? (
-        <EmptyState icon={<BookCheck />} title="Tidak ada pengajuan" description="Pengajuan kerentanan baru dari pentester akan muncul di sini untuk Anda setujui." />
-      ) : (
-        <Table boxed>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Kerentanan</span>
-                </span>
-              </TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <AlertTriangle className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Severity</span>
-                </span>
-              </TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-                  <UserIcon className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-                  <span>Diajukan oleh</span>
-                </span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((c) => (
-              <TableRow key={c.vulna_id}>
-                <TableCell className="text-title-sm font-normal text-ink">{c.title}</TableCell>
-                <TableCell>
-                  <SeverityChip severity={toSeverityKey(c.severity)} />
-                </TableCell>
-                <TableCell className="text-body-sm text-ink-secondary">{c.creator?.profile?.full_name ?? c.creator?.username ?? "-"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </section>
-  );
 }
 
 function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record<string, string>; openCount: Map<number, number> }) {
@@ -284,16 +166,16 @@ export function DashboardPage() {
   const isTechLead = role === "tech_lead";
   const isTlView = isTechLead || isSuperAdmin;
 
-  // Data tambahan khusus Super Admin (Executive & Resource Capacity Overview)
+  // Data tambahan khusus Super Admin & Tech Lead (Executive & Resource Capacity Overview)
   const users = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers(),
-    enabled: isSuperAdmin,
+    enabled: isSuperAdmin || isTechLead,
   });
   const load = useQuery({
     queryKey: ["workload", "detail", currentMonth()],
     queryFn: () => getResourceLoad(currentMonth()),
-    enabled: isSuperAdmin,
+    enabled: isSuperAdmin || isTechLead,
   });
 
   const withFindings = isTlView ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
@@ -315,7 +197,6 @@ export function DashboardPage() {
     queryFn: () => listCatalog({ status: "pending" }),
     enabled: isTechLead || isSuperAdmin,
   });
-  const latest = [...(projects.data?.data ?? [])].sort((a, b) => b.project_id - a.project_id).slice(0, LATEST_COUNT);
   const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
 
   return (
@@ -334,9 +215,14 @@ export function DashboardPage() {
               </Button>
             </div>
           ) : isTechLead ? (
-            <Button asChild variant="solid" leadingIcon={<Plus />}>
-              <Link to="/projects/new">Buat Project Template</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" leadingIcon={<CalendarRange />}>
+                <Link to="/resources?tampilan=timeline">Linimasa Tim</Link>
+              </Button>
+              <Button asChild variant="solid" leadingIcon={<Plus />}>
+                <Link to="/projects/new">Buat Project Template</Link>
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -352,13 +238,13 @@ export function DashboardPage() {
           isLoading={projects.isLoading || users.isLoading || load.isLoading}
         />
       ) : isTechLead ? (
-        <>
-          <CatalogQueue rows={pendingRows} loading={pending.isLoading} error={pending.error} />
-          <LatestProjects rows={latest} loading={projects.isLoading} />
-          <Button asChild variant="link" trailingIcon={<ArrowRight />} className="self-start">
-            <Link to="/projects">Semua proyek</Link>
-          </Button>
-        </>
+        <TechLeadDashboard
+          projects={projects.data?.data ?? []}
+          users={users.data ?? []}
+          catalogQueue={pendingRows}
+          loadMap={load.data ?? {}}
+          isLoading={projects.isLoading || users.isLoading || load.isLoading}
+        />
       ) : projects.isLoading ? (
         <Skeleton className="h-40" />
       ) : (
