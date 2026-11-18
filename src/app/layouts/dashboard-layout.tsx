@@ -8,7 +8,12 @@ export function DashboardLayout() {
       <AppSidebar />
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AppHeader />
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-8 lg:px-6">
+        {/*
+          scrollbar-gutter: stable — ruang scrollbar selalu disediakan, sehingga
+          konten tidak bergeser ke samping saat halaman berganti antara panjang
+          (ada scrollbar) dan pendek (tanpa scrollbar), mis. Overview ↔ Timeline.
+        */}
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-8 [scrollbar-gutter:stable] lg:px-6">
           <div className="mx-auto max-w-wide">
             <Outlet />
           </div>

@@ -1,0 +1,96 @@
+/*
+ * Jembatan tema SVAR Willow → token Vermilion.
+ * Semua nilai berasal dari var(--color-*) sehingga otomatis mengikuti
+ * tema terang/gelap tanpa perlu berganti ke WillowDark.
+ */
+.vapt-timeline .wx-willow-theme {
+  --wx-font-family: var(--font-sans);
+  --wx-font-size: 12px;
+  --wx-font-size-md: 12px;
+  --wx-font-size-sm: 11px;
+  --wx-font-weight-md: 400;
+  --wx-font-weight-b: 400;
+  --wx-header-font-weight: 400;
+
+  --wx-background: var(--color-surface);
+  --wx-background-alt: var(--color-surface-subtle);
+  --wx-background-hover: var(--color-surface-subtle);
+  --wx-color-font: var(--color-ink);
+  --wx-color-font-alt: var(--color-ink-muted);
+  --wx-color-primary: var(--color-ink);
+  --wx-color-primary-selected: var(--color-surface-subtle);
+  --wx-border-color: var(--color-border);
+  --wx-border: 1px solid var(--color-border);
+  --wx-border-medium: 1px solid var(--color-border);
+  --wx-border-radius: 6px;
+
+  --wx-gantt-border-color: var(--color-border);
+  --wx-gantt-border: 1px solid var(--color-border);
+  --wx-gantt-select-color: var(--color-surface-subtle);
+  --wx-gantt-bar-border-radius: 4px;
+  --wx-gantt-bar-shadow: none;
+  --wx-gantt-bar-font: 400 12px var(--font-sans);
+  /* Warna batang digambar oleh taskTemplate (kelas Tailwind per status) */
+  --wx-gantt-task-color: transparent;
+  --wx-gantt-task-fill-color: transparent;
+  --wx-gantt-task-border: 0;
+  --wx-gantt-summary-color: transparent;
+  --wx-gantt-summary-fill-color: transparent;
+  --wx-gantt-summary-border: 0;
+
+  --wx-grid-header-font: 400 12px var(--font-sans);
+  --wx-grid-header-font-color: var(--color-ink-muted);
+  --wx-grid-header-text-transform: none;
+  --wx-grid-body-font: 400 12px var(--font-sans);
+  --wx-grid-body-font-color: var(--color-ink);
+  --wx-table-select-background: var(--color-surface-subtle);
+  --wx-table-header-background: var(--color-surface);
+
+  --wx-timescale-font: 400 12px var(--font-sans);
+  --wx-timescale-font-color: var(--color-ink-muted);
+  --wx-timescale-border: 1px solid var(--color-border);
+
+}
+
+/* Penanda periode hari ini (highlightTime MIT, pengganti vertical marker PRO) */
+.vapt-timeline .vapt-timeline-today {
+  background-color: color-mix(in oklab, var(--color-brand) 7%, transparent);
+}
+.vapt-timeline .wx-scale .vapt-timeline-today {
+  color: var(--color-brand);
+}
+
+/* Batang hanya-baca: kursor penunjuk, tanpa pegangan drag/progress/link */
+.vapt-timeline .wx-bar {
+  cursor: pointer;
+  overflow: visible;
+}
+.vapt-timeline .wx-bar .wx-link,
+.vapt-timeline .wx-bar .wx-progress-marker {
+  display: none;
+}
+
+/* Ikon buka/ciutkan grup: chevron CSS (font ikon SVAR tidak dimuat, fonts={false}) */
+.vapt-timeline .wx-toggle-icon {
+  display: inline-flex;
+  width: 16px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
+.vapt-timeline .wx-toggle-icon::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease-out;
+}
+.vapt-timeline .wx-toggle-icon.wxi-menu-down::before {
+  transform: translateY(-2px) rotate(45deg);
+}
+.vapt-timeline .wx-toggle-icon:hover {
+  color: var(--color-ink);
+}
