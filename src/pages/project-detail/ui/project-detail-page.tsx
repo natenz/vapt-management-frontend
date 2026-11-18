@@ -81,6 +81,29 @@ export function ProjectDetailPage() {
     },
   });
 
+  const pData = project.data;
+
+  const pmProfile = useMemo(
+    () => (pData?.pm ? toUserProfileInfo(pData.pm, "Project Manager") : null),
+    [pData?.pm],
+  );
+
+  const teamProfiles = useMemo(() => {
+    if (!pData?.resources) return [];
+    const list = pData.resources.map((r) => {
+      const sysUser = r.user?.sys_user;
+      return toUserProfileInfo(
+        sysUser ?? {
+          sys_user_id: r.user_id,
+          username: r.user?.full_name?.toLowerCase().replace(/\s+/g, ".") ?? `user.${r.user_id}`,
+          profile: { user_id: r.user_id, full_name: r.user?.full_name ?? `User ${r.user_id}` },
+        },
+        r.user?.full_name ?? `User ${r.user_id}`,
+      );
+    });
+    return Array.from(new Map(list.map((m) => [m.id ?? m.name, m])).values());
+  }, [pData?.resources]);
+
   if (project.isLoading) return <Skeleton className="h-96" />;
   if (project.error || !project.data) {
     return <Alert tone="error" title="Proyek tidak ditemukan">{project.error?.message ?? "Anda tidak punya akses ke proyek ini."}</Alert>;
@@ -124,22 +147,6 @@ export function ProjectDetailPage() {
   const canEditAssets = current === "Planning" && ownsAsPm && (role === "project_manager" || role === "super_admin");
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
   const canAssign = current === "Planning" && role === "project_manager" && ownsAsPm;
-
-  const pmProfile = useMemo(() => toUserProfileInfo(p.pm, "Project Manager"), [p.pm]);
-  const teamProfiles = useMemo(() => {
-    const list = (p.resources ?? []).map((r) => {
-      const sysUser = r.user?.sys_user;
-      return toUserProfileInfo(
-        sysUser ?? {
-          sys_user_id: r.user_id,
-          username: r.user?.full_name?.toLowerCase().replace(/\s+/g, ".") ?? `user.${r.user_id}`,
-          profile: { user_id: r.user_id, full_name: r.user?.full_name ?? `User ${r.user_id}` },
-        },
-        r.user?.full_name ?? `User ${r.user_id}`,
-      );
-    });
-    return Array.from(new Map(list.map((m) => [m.id ?? m.name, m])).values());
-  }, [p.resources]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -199,7 +206,7 @@ export function ProjectDetailPage() {
             <span>Project Manager</span>
           </dt>
           <dd className="mt-0.5">
-            {p.pm ? (
+            {p.pm && pmProfile ? (
               <UserProfilePopover user={pmProfile}>
                 <button
                   type="button"
