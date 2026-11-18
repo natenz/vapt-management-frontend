@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Bug, FileText } from "lucide-react";
+import {
+  ArrowRight,
+  Bug,
+  CalendarRange,
+  Clock,
+  FileText,
+  Info,
+  Layers,
+  UserCheck,
+} from "lucide-react";
+import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   changeProjectStatus,
@@ -10,8 +20,14 @@ import {
   statusBetween,
 } from "@/entities/project";
 import { useSession } from "@/entities/session";
+import {
+  TeamResourcesPopover,
+  UserProfilePopover,
+  toUserProfileInfo,
+} from "@/entities/user";
 import { fmtDate, fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Progress } from "@/shared/ui/progress";
@@ -109,6 +125,22 @@ export function ProjectDetailPage() {
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
   const canAssign = current === "Planning" && role === "project_manager" && ownsAsPm;
 
+  const pmProfile = useMemo(() => toUserProfileInfo(p.pm, "Project Manager"), [p.pm]);
+  const teamProfiles = useMemo(() => {
+    const list = (p.resources ?? []).map((r) => {
+      const sysUser = r.user?.sys_user;
+      return toUserProfileInfo(
+        sysUser ?? {
+          sys_user_id: r.user_id,
+          username: r.user?.full_name?.toLowerCase().replace(/\s+/g, ".") ?? `user.${r.user_id}`,
+          profile: { user_id: r.user_id, full_name: r.user?.full_name ?? `User ${r.user_id}` },
+        },
+        r.user?.full_name ?? `User ${r.user_id}`,
+      );
+    });
+    return Array.from(new Map(list.map((m) => [m.id ?? m.name, m])).values());
+  }, [p.resources]);
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -150,18 +182,105 @@ export function ProjectDetailPage() {
         </Alert>
       ) : null}
 
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-4">
-        {[
-          ["Rentang tanggal", fmtRange(p.start_date, p.end_date)],
-          ["Project Manager", p.pm?.profile?.full_name ?? p.pm?.username ?? "-"],
-          ["Total mandays", `${p.total_mandays} md`],
-          ["Aset / anggota tim", `${p.assets.length} aset · ${p.resources.length} orang`],
-        ].map(([k, v]) => (
-          <div key={k} className="flex flex-col gap-1 bg-surface p-4">
-            <dt className="text-caption text-ink-muted">{k}</dt>
-            <dd className="text-title-sm text-ink tabular">{v}</dd>
-          </div>
-        ))}
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-4">
+        {/* 1. Rentang tanggal */}
+        <div className="flex flex-col gap-1.5 bg-surface p-4">
+          <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
+            <CalendarRange className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span>Rentang tanggal</span>
+          </dt>
+          <dd className="text-title-sm text-ink tabular">{fmtRange(p.start_date, p.end_date)}</dd>
+        </div>
+
+        {/* 2. Project Manager */}
+        <div className="flex flex-col gap-1.5 bg-surface p-4">
+          <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
+            <UserCheck className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span>Project Manager</span>
+          </dt>
+          <dd className="mt-0.5">
+            {p.pm ? (
+              <UserProfilePopover user={pmProfile}>
+                <button
+                  type="button"
+                  className="group inline-flex items-center gap-2 rounded-xs -ml-1 px-1 py-0.5 text-left transition-colors hover:bg-surface-subtle focus-ring"
+                  aria-label={`Lihat profil Project Manager ${pmProfile.name}`}
+                >
+                  <Avatar size="sm" className="size-6 text-[10px] shrink-0 border border-border">
+                    <AvatarFallback className="text-[10px] font-normal bg-surface-subtle text-ink">
+                      {pmProfile.initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-body-sm font-medium text-ink truncate group-hover:text-brand transition-colors">
+                      {pmProfile.name}
+                    </span>
+                    {pmProfile.username ? (
+                      <span className="text-[11px] text-ink-muted truncate">@{pmProfile.username}</span>
+                    ) : null}
+                  </div>
+                </button>
+              </UserProfilePopover>
+            ) : (
+              <span className="text-title-sm text-ink-muted">-</span>
+            )}
+          </dd>
+        </div>
+
+        {/* 3. Total mandays */}
+        <div className="flex flex-col gap-1.5 bg-surface p-4">
+          <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
+            <Clock className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span>Total mandays</span>
+          </dt>
+          <dd className="text-title-sm text-ink tabular">{p.total_mandays} md</dd>
+        </div>
+
+        {/* 4. Aset / anggota tim */}
+        <div className="flex flex-col gap-1.5 bg-surface p-4">
+          <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
+            <Layers className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
+            <span>Aset & Anggota tim</span>
+          </dt>
+          <dd className="flex flex-wrap items-center justify-between gap-2 mt-0.5">
+            <span className="text-body-sm font-normal text-ink tabular">
+              {(p.assets ?? []).length} aset · {teamProfiles.length} orang
+            </span>
+            {teamProfiles.length > 0 ? (
+              <TeamResourcesPopover members={teamProfiles}>
+                <button
+                  type="button"
+                  className="group inline-flex items-center gap-1 rounded-xs -mr-1 px-1.5 py-0.5 text-left transition-colors hover:bg-surface-subtle focus-ring"
+                  aria-label="Lihat profil anggota tim proyek"
+                >
+                  <div className="flex items-center -space-x-1.5 overflow-hidden">
+                    {teamProfiles.slice(0, 3).map((m, i) => (
+                      <Avatar
+                        key={m.id ?? i}
+                        size="sm"
+                        className="size-5 text-[9px] shrink-0 border border-surface"
+                        title={`${m.name} (${m.role ?? "Anggota"})`}
+                      >
+                        <AvatarFallback className="text-[9px] font-normal bg-surface-subtle text-ink">
+                          {m.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {teamProfiles.length > 3 ? (
+                      <span className="flex size-5 items-center justify-center rounded-full border border-surface bg-surface-subtle text-[8px] font-normal text-ink-muted">
+                        +{teamProfiles.length - 3}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="inline-flex items-center gap-0.5 rounded-xs border border-border bg-surface px-1.5 py-0.5 text-[11px] font-normal text-ink-secondary shadow-xs opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100">
+                    <Info className="size-3 text-ink-muted" aria-hidden="true" />
+                    <span>Info</span>
+                  </span>
+                </button>
+              </TeamResourcesPopover>
+            ) : null}
+          </dd>
+        </div>
       </dl>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
@@ -206,11 +325,28 @@ export function ProjectDetailPage() {
                         </span>
                         <span className="flex flex-col items-end text-body-sm text-ink-secondary tabular">
                           <span>{a.mandays} md</span>
-                          {rows.length === 0 ? <span className="text-ink-muted">belum ada pentester</span> : rows.map((m) => (
-                            <span key={m.mandays_id} className="text-caption text-ink-muted">
-                              {m.pentester?.profile?.full_name ?? m.pentester?.username ?? `User ${m.pentester_id}`} · {m.allocated_mandays} md
-                            </span>
-                          ))}
+                          {rows.length === 0 ? <span className="text-ink-muted">belum ada pentester</span> : rows.map((m) => {
+                            const pentesterProfile = toUserProfileInfo(m.pentester, `User ${m.pentester_id}`);
+                            return (
+                              <UserProfilePopover key={m.mandays_id} user={pentesterProfile} align="end">
+                                <button
+                                  type="button"
+                                  className="group inline-flex items-center gap-1.5 rounded-xs px-1 py-0.5 text-caption text-ink-muted hover:bg-surface-subtle hover:text-ink focus-ring transition-colors"
+                                  aria-label={`Lihat profil pentester ${pentesterProfile.name}`}
+                                >
+                                  <Avatar size="sm" className="size-4.5 text-[9px] shrink-0 border border-border">
+                                    <AvatarFallback className="text-[9px] font-normal bg-surface-subtle text-ink">
+                                      {pentesterProfile.initials}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium group-hover:text-brand transition-colors">
+                                    {pentesterProfile.name}
+                                  </span>
+                                  <span className="text-ink-secondary">· {m.allocated_mandays} md</span>
+                                </button>
+                              </UserProfilePopover>
+                            );
+                          })}
                           {rows.length > 0 && left > 0 ? <span className="text-caption text-warning">belum dialokasikan {left} md</span> : null}
                         </span>
                       </li>
