@@ -35,6 +35,7 @@ import {
   type ReportFilters,
 } from "../model/report-filters";
 import { ReportsFilterBar } from "./reports-filter-bar";
+import { ReportPreview } from "./report-preview";
 
 /** Daftar proyek yang laporannya bisa dibuka (tahap Initial Report dan sesudahnya). */
 export function ReportsIndexPage() {
@@ -215,7 +216,7 @@ function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; s
   );
 }
 
-/** Data laporan dari GET /projects/:id/report. Generate PDF/DOCX belum ada di BE. */
+/** Tampilkan data laporan dan aksi DOCX untuk proyek maupun asset. */
 export function ReportPage() {
   const { projectId } = useParams();
   const id = Number(projectId);
@@ -253,9 +254,12 @@ export function ReportPage() {
         title={`Report: ${data.project.project_name}`}
         description={`${fmtRange(data.project.start_date, data.project.end_date)} · dibuat ${fmtDate(data.generated_at)}`}
         action={
-          <Button onClick={() => void downloadDocx()} disabled={downloadingAssetId !== undefined} leadingIcon={<Download />}>
-            {downloadingAssetId === null ? "Menyiapkan DOCX..." : "Unduh DOCX"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ReportPreview projectId={id} name={data.project.project_name} />
+            <Button onClick={() => void downloadDocx()} disabled={downloadingAssetId !== undefined} leadingIcon={<Download />}>
+              {downloadingAssetId === null ? "Menyiapkan DOCX..." : "Unduh DOCX"}
+            </Button>
+          </div>
         }
       />
       {downloadError ? <Alert tone="error" title="Unduh report gagal">{downloadError}</Alert> : null}
@@ -291,15 +295,17 @@ export function ReportPage() {
                   {SEVERITIES.map((s) => (<SeverityBadge key={s} severity={toSeverityKey(s)} count={bySeverity[s] ?? 0} />))}
                 </span>
               </header>
-              <Button
-                variant="outline"
-                className="self-start"
-                onClick={() => void downloadDocx(asset.assets_id)}
-                disabled={downloadingAssetId !== undefined}
-                leadingIcon={<Download />}
-              >
-                {downloadingAssetId === asset.assets_id ? "Menyiapkan DOCX..." : "Unduh DOCX asset"}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <ReportPreview projectId={id} assetId={asset.assets_id} name={asset.asset_name} />
+                <Button
+                  variant="outline"
+                  onClick={() => void downloadDocx(asset.assets_id)}
+                  disabled={downloadingAssetId !== undefined}
+                  leadingIcon={<Download />}
+                >
+                  {downloadingAssetId === asset.assets_id ? "Menyiapkan DOCX..." : "Unduh DOCX asset"}
+                </Button>
+              </div>
               <ul className="flex flex-col gap-3">
                 {findings.length === 0 ? <li className="text-body-sm text-ink-muted">Tidak ada findings pada asset ini.</li> : null}
                 {findings.map((f) => (<FindingItem key={f.vulna_id} f={f} showAsset={false} />))}

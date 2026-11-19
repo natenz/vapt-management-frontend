@@ -6,6 +6,14 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ProjectReport } from "@/entities/finding";
 import { useSession } from "@/entities/session";
 
+const downloadReportDocx = vi.hoisted(() => vi.fn(() => Promise.resolve(new Blob())));
+
+vi.mock("docx-preview", () => ({
+  renderAsync: async (_file: Blob, container: HTMLElement) => {
+    container.textContent = "Isi DOCX";
+  },
+}));
+
 const report = {
   generated_at: "2026-11-09T00:00:00Z",
   project: { project_id: 4, project_name: "VAPT E-Commerce", client_name: "X", total_mandays: 13, pm_id: 1, start_date: "2026-10-01", end_date: "2026-10-30" },
@@ -27,6 +35,7 @@ vi.mock("@/entities/finding", async (importOriginal) => {
   return {
     ...actual,
     getReport: async () => report,
+    downloadReportDocx,
   };
 });
 
@@ -76,6 +85,35 @@ describe("ReportPage", () => {
     expect(within(checkout).queryByText("SQLi login")).toBeNull();
     const kosong = screen.getByRole("region", { name: "Report asset Asset Kosong" });
     expect(within(kosong).getByText("Tidak ada findings pada asset ini.")).toBeInTheDocument();
+  });
+
+  it("membuka pratinjau DOCX proyek dan asset yang dipilih", async () => {
+    const user = userEvent.setup();
+    const { ReportPage } = await import("./reports-page");
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={["/projects/4/report"]}>
+          <Routes><Route path="/projects/:projectId/report" element={<ReportPage />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const trigger = await screen.findByRole("button", { name: "Pratinjau report" });
+    await user.click(trigger);
+    const projectPreview = screen.getByRole("dialog", { name: "Pratinjau report" });
+    expect(within(projectPreview).getByText("VAPT E-Commerce")).toBeInTheDocument();
+    expect(await within(projectPreview).findByTitle("Dokumen report")).toHaveAttribute("sandbox", "");
+    expect(downloadReportDocx).toHaveBeenLastCalledWith(4, undefined, expect.any(AbortSignal));
+
+    await user.keyboard("{Escape}");
+    expect(trigger).toHaveFocus();
+    await user.click(screen.getByRole("tab", { name: /Report per Asset/ }));
+    const asset = screen.getByRole("region", { name: "Report asset Checkout API" });
+    await user.click(within(asset).getByRole("button", { name: "Pratinjau report asset" }));
+    const assetPreview = screen.getByRole("dialog", { name: "Pratinjau report" });
+    expect(within(assetPreview).getByText("Checkout API")).toBeInTheDocument();
+    expect(await within(assetPreview).findByTitle("Dokumen report")).toHaveAttribute("srcdoc", expect.stringContaining("Isi DOCX"));
+    expect(downloadReportDocx).toHaveBeenLastCalledWith(4, 7, expect.any(AbortSignal));
   });
 });
 

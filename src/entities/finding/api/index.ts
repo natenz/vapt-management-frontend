@@ -36,11 +36,12 @@ export const addEvidence = async (id: number, body: EvidenceInput) =>
 export const getReport = async (projectId: number) =>
   (await apiRequest(`/projects/${projectId}/report`, { method: "GET" }, reportSchema)).data;
 
-export const downloadReportDocx = (projectId: number, assetId?: number) =>
+export const downloadReportDocx = (projectId: number, assetId?: number, signal?: AbortSignal) =>
   apiBlobRequest(`/projects/${projectId}/report.docx`, {
     query: { asset_id: assetId },
     accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     errorMessage: "Report DOCX tidak dapat diunduh",
+    signal,
   });
 
 export const uploadEvidence = async (id: number, file: File) => {
