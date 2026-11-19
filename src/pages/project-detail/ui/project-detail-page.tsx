@@ -43,7 +43,6 @@ import { TeamSidebar } from "@/widgets/project-team-sidebar";
 // tidak muncul bagi role yang pasti ditolak. BE tetap sumber kebenaran.
 // Tahap berlabel `auto` juga maju sendiri saat tanggal selesainya lewat (BE AutoAdvance); tombolnya untuk memajukan lebih cepat.
 const PM = ["project_manager", "super_admin"];
-const shortDate = (v: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(new Date(v));
 const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: boolean; back?: { to: string; label: string } }> = {
   // Serah ke PM = kickoff: proyek langsung masuk Scoping, PM menyiapkan aset & pentester di tahap itu.
   Draft: { to: "Scoping", label: "Kickoff proyek", roles: ["tech_lead", "super_admin"] },
@@ -304,10 +303,7 @@ export function ProjectDetailPage() {
             </div>
             <Progress value={(statusIndex / (PROJECT_STATUSES.length - 1)) * 100} aria-label="Kemajuan proyek" />
             <Stepper
-              steps={PROJECT_STATUSES.map((s) => {
-                const st = p.stages?.find((x) => x.stage_name === s);
-                return { id: s, label: s, hint: st?.end_date ? `s/d ${shortDate(st.end_date)}` : undefined };
-              })}
+              steps={PROJECT_STATUSES.map((s) => ({ id: s, label: s }))}
               currentIndex={statusIndex}
               allDone={current === "Done"}
             />
