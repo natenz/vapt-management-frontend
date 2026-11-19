@@ -5,7 +5,6 @@ import { id as idLocale } from "date-fns/locale";
 import {
   CalendarCheck,
   FolderKanban,
-  OctagonAlert,
   ShieldCheck,
   User as UserIcon,
   Users,
@@ -23,7 +22,7 @@ import { Alert } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state";
-import { FacetFilter, SingleSelectFilter } from "@/shared/ui/facet-filter";
+import { FacetFilter } from "@/shared/ui/facet-filter";
 import { SearchInput } from "@/shared/ui/input";
 import { Skeleton } from "@/shared/ui/skeleton";
 import {
@@ -36,10 +35,8 @@ import {
   useMediaQuery,
 } from "@/shared/ui/svar-gantt";
 import {
-  AVAILABILITY_OPTIONS,
   DEFAULT_RESOURCE_TIMELINE_FILTERS,
   buildResourceTimelineTasks,
-  type ResourceTimelineAvailability,
   type ResourceTimelineFilters,
   type ResourceTimelineTask,
 } from "../model/resource-timeline-tasks";
@@ -166,7 +163,7 @@ export function ResourceTimeline({
   };
 
   const isFiltered =
-    Boolean(filters.search) || filters.roles.length > 0 || filters.availability !== "all";
+    Boolean(filters.search) || filters.roles.length > 0;
 
   const updateFilters = (patch: Partial<ResourceTimelineFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
@@ -229,7 +226,7 @@ export function ResourceTimeline({
               type="button"
               variant="quiet"
               onClick={() =>
-                setFilters({ search: "", roles: [], availability: "all" })
+                setFilters({ search: "", roles: [] })
               }
               className="h-9 gap-1.5 px-2.5 text-xs"
             >
@@ -244,17 +241,6 @@ export function ResourceTimeline({
             options={ROLE_OPTIONS}
             selected={filters.roles}
             onChange={(roles) => updateFilters({ roles })}
-          />
-
-          <SingleSelectFilter
-            title="Kapasitas"
-            icon={<Users className="size-3.5" />}
-            options={AVAILABILITY_OPTIONS}
-            value={filters.availability}
-            defaultValue="all"
-            onChange={(availability) =>
-              updateFilters({ availability: availability as ResourceTimelineAvailability })
-            }
           />
 
           <Button
@@ -312,7 +298,7 @@ export function ResourceTimeline({
                 <Button
                   variant="outline"
                   onClick={() =>
-                    setFilters({ search: "", roles: [], availability: "all" })
+                    setFilters({ search: "", roles: [] })
                   }
                 >
                   Reset filter
@@ -440,19 +426,10 @@ function MandaysCell(props: CellProps) {
 
   if (row.kind === "user") {
     const md = row.totalMandays ?? 0;
-    const over = Boolean(row.isOverloaded);
     return (
       <div className="flex items-center justify-end pr-2">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs font-normal tabular-nums",
-            over
-              ? "bg-rose-50 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300"
-              : "bg-surface-subtle text-ink-secondary",
-          )}
-        >
-          {over ? <OctagonAlert className="size-3 shrink-0" aria-hidden="true" /> : null}
-          <span>{md} MD</span>
+        <span className="inline-flex items-center rounded-xs bg-surface-subtle px-1.5 py-0.5 text-xs font-normal text-ink-secondary tabular-nums">
+          {md} MD
         </span>
       </div>
     );
@@ -535,16 +512,8 @@ function ResourceTooltip({
           </div>
           <div className="flex flex-col gap-1 text-[11px] text-ink-muted">
             <div className="flex items-center justify-between">
-              <span>Beban Mandays:</span>
-              <span
-                className={cn(
-                  "font-medium tabular-nums",
-                  task.isOverloaded ? "text-rose-600 dark:text-rose-400" : "text-ink",
-                )}
-              >
-                {task.totalMandays ?? 0} MD
-                {task.isOverloaded ? " (Lewat batas)" : ""}
-              </span>
+              <span>Mandays bulan ini:</span>
+              <span className="font-medium text-ink tabular-nums">{task.totalMandays ?? 0} MD</span>
             </div>
             <div className="flex items-center justify-between">
               <span>Proyek Aktif:</span>

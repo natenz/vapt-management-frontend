@@ -1,6 +1,6 @@
 /**
  * Dashboard Superadmin — bento box lintas modul: proyek & siklus, temuan &
- * risiko, tim & kapasitas, katalog & aktivitas. Halaman ini hanya menyusun
+ * risiko, tim & mandays, katalog & aktivitas. Halaman ini hanya menyusun
  * grid; angka dihitung di `model/superadmin-metrics`, data di `use-superadmin-data`.
  */
 import { BookCheck, FolderKanban, ShieldAlert, Users } from "lucide-react";
@@ -9,7 +9,6 @@ import type { Project } from "@/entities/project";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { SummaryTile } from "@/shared/ui/summary-tile";
 import {
-  capacity,
   catalogStats,
   findingTotals,
   monthlyTrend,
@@ -18,13 +17,14 @@ import {
   riskiestProjects,
   roleComposition,
   stageFunnel,
+  teamMandays,
   upcomingDeadlines,
 } from "../model/superadmin-metrics";
 import { useSuperAdminData } from "../model/use-superadmin-data";
 import { ActivityCard, CatalogCard, ShortcutsCard } from "./superadmin/catalog-activity-cards";
 import { FindingStatusCard, RiskiestProjectsCard, SeverityCard } from "./superadmin/finding-cards";
 import { DeadlineCard, ProjectTrendCard, StageFunnelCard } from "./superadmin/project-cards";
-import { CapacityCard, RoleCompositionCard } from "./superadmin/team-cards";
+import { PentesterMandaysCard, RoleCompositionCard } from "./superadmin/team-cards";
 
 interface SuperAdminDashboardProps {
   projects: readonly Project[];
@@ -42,7 +42,7 @@ export function SuperAdminDashboard({ projects, isLoading }: SuperAdminDashboard
   const totals = useMemo(() => findingTotals(data.reports.data), [data.reports.data]);
   const risky = useMemo(() => riskiestProjects(data.reports.data, 5), [data.reports.data]);
   const roles = useMemo(() => roleComposition(users), [users]);
-  const cap = useMemo(() => capacity(users, data.load.data ?? {}), [users, data.load.data]);
+  const cap = useMemo(() => teamMandays(users, data.load.data ?? {}), [users, data.load.data]);
   const catalog = useMemo(
     () => catalogStats(data.catalog.approved, data.catalog.pending, data.catalog.rejected),
     [data.catalog.approved, data.catalog.pending, data.catalog.rejected],
@@ -120,7 +120,7 @@ export function SuperAdminDashboard({ projects, isLoading }: SuperAdminDashboard
         <RiskiestProjectsCard rows={risky} isLoading={reportsLoading} failed={data.reports.failed} />
 
         {/* Tim & penanganan */}
-        <CapacityCard
+        <PentesterMandaysCard
           data={cap}
           isLoading={usersLoading || data.load.isLoading}
           error={data.load.error}

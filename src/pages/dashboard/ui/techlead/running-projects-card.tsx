@@ -18,12 +18,24 @@ const HEALTH: Record<Health, { label: string; tone: "success" | "warning" | "err
   late: { label: "Terlambat", tone: "error", icon: <OctagonAlert /> },
 };
 
-export function RunningProjectsCard({ rows, isLoading }: { rows: RunningProject[]; isLoading: boolean }) {
+export function RunningProjectsCard({
+  rows,
+  isLoading,
+  colSpan = 8,
+  scrollable = false,
+}: {
+  rows: RunningProject[];
+  isLoading: boolean;
+  colSpan?: 7 | 8 | 12;
+  /** Kartu setinggi layar dan menampilkan semua proyek (di-scroll), bukan hanya 6 teratas. */
+  scrollable?: boolean;
+}) {
   const late = rows.filter((r) => r.health === "late").length;
   const risk = rows.filter((r) => r.health === "at-risk").length;
   return (
     <BentoCard
-      colSpan={8}
+      colSpan={colSpan}
+      scrollable={scrollable}
       role="region"
       aria-label="Proyek Berjalan & Progres"
       title="Proyek Berjalan & Progres"
@@ -63,7 +75,7 @@ export function RunningProjectsCard({ rows, isLoading }: { rows: RunningProject[
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.slice(0, 6).map(({ project: p, stage, time, daysLeft, health }) => {
+              {(scrollable ? rows : rows.slice(0, 6)).map(({ project: p, stage, time, daysLeft, health }) => {
                 const h = HEALTH[health];
                 return (
                   <TableRow key={p.project_id}>

@@ -3,7 +3,6 @@ import type { ProjectReport } from "@/entities/finding";
 import type { Project } from "@/entities/project";
 import type { User } from "@/entities/user";
 import {
-  capacity,
   catalogStats,
   findingTotals,
   hasFindingsStage,
@@ -14,6 +13,7 @@ import {
   riskiestProjects,
   roleComposition,
   stageFunnel,
+  teamMandays,
   upcomingDeadlines,
 } from "./superadmin-metrics";
 
@@ -132,14 +132,19 @@ describe("tim, katalog & aktivitas", () => {
     ]);
   });
 
-  it("kapasitas menandai pentester yang melewati batas mandays", () => {
-    const users = [user(1, "pentester"), user(2, "pentester"), user(3, "project_manager")];
-    const cap = capacity(users, { 1: { mandays: 25, projects: [] }, 2: { mandays: 4, projects: [] } });
-    expect(cap.pentesters).toBe(2);
-    expect(cap.team).toBe(3);
+  it("mandays tim: total, jumlah pentester ditugaskan, urut MD tertinggi, tanpa penilaian batas", () => {
+    const users = [user(1, "pentester"), user(2, "pentester"), user(4, "pentester"), user(3, "project_manager")];
+    const cap = teamMandays(users, { 1: { mandays: 25, projects: [] }, 2: { mandays: 4, projects: [] } });
+    expect(cap.pentesters).toBe(3);
+    expect(cap.team).toBe(4);
     expect(cap.used).toBe(29);
-    expect(cap.overloaded.map((o) => o.user.sys_user_id)).toEqual([1]);
-    expect(cap.ranking[0]?.mandays).toBe(25);
+    expect(cap.assigned).toBe(2);
+    expect(cap.ranking.map((r) => [r.user.sys_user_id, r.mandays])).toEqual([
+      [1, 25],
+      [2, 4],
+      [4, 0],
+    ]);
+    expect(cap).not.toHaveProperty("overloaded");
   });
 
   it("statistik katalog menghitung rasio persetujuan dari yang sudah ditinjau", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectReport } from "@/entities/finding";
 import type { Project, ProjectDetail } from "@/entities/project";
-import { assessmentReadiness, pmQueue, pmTimeline, remediationProgress } from "./pm-metrics";
+import { pmQueue } from "./pm-metrics";
 
 const TODAY = "2026-11-19";
 
@@ -70,35 +70,5 @@ describe("perlu tindakan PM", () => {
     ]);
     expect(rows[0]!.findings).toEqual({ total: 2, open: 1, remediated: 1, closed: 0 });
     expect(rows[1]!.progress).toBe(43); // 3 dari 7 hari Scoping
-  });
-});
-
-describe("kesiapan Assessment", () => {
-  it("menandai aset tanpa pentester dan mandays aset melebihi jatah", () => {
-    const [k] = assessmentReadiness(projects, details, TODAY);
-    expect(k!.project.project_id).toBe(1);
-    expect([k!.startDate, k!.startsIn]).toEqual(["2026-11-23", 4]); // fallback akhir Scoping
-    expect(k!.checklist.map((c) => c.done)).toEqual([true, false, false, true]);
-    expect(k!.ready).toBe(false);
-  });
-});
-
-describe("remediasi & linimasa", () => {
-  it("menyarankan Retesting bila tak ada temuan terbuka, urut yang siap diputuskan", () => {
-    const rows = remediationProgress(projects, reports);
-    expect(rows.map((r) => [r.project.project_id, r.handled, !!r.hint])).toEqual([
-      [2, 100, true],
-      [4, 50, false],
-    ]);
-  });
-
-  it("satu batang tahap berjalan per proyek, terlambat ditandai", () => {
-    const t = pmTimeline(projects, details, 6, TODAY);
-    expect(t.bars.map((b) => [b.projectId, b.sub, b.overdue])).toEqual([
-      [2, "Remediasi", false],
-      [4, "Retesting", true],
-      [1, "Scoping", false],
-      [3, "Assessment", false],
-    ]);
   });
 });

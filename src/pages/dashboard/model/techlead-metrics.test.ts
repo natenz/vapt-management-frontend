@@ -3,8 +3,6 @@ import type { Project, ProjectDetail } from "@/entities/project";
 import type { User } from "@/entities/user";
 import {
   bookedInRange,
-  findEarliestSlot,
-  loadInRange,
   mondayOf,
   runningProjects,
   timeProgress,
@@ -62,47 +60,22 @@ describe("kalender & porsi mandays", () => {
   });
 });
 
-describe("beban & slot", () => {
+describe("MD terjadwal mingguan", () => {
   const users = [user(1), user(2), user(3)];
   const details = [
     detail(10, [
-      assign(2, "2026-11-23", "2026-12-06", 20), // penuh 2 minggu
-      assign(3, "2026-11-23", "2026-12-06", 7), // 70%
+      assign(2, "2026-11-23", "2026-12-06", 14), // 1 MD per hari kalender
+      assign(3, "2026-11-23", "2026-12-06", 7),
     ]),
   ];
 
-  it("mengurutkan pentester dari yang paling longgar dan memberi level", () => {
-    const rows = loadInRange(users, details, "2026-11-23", "2026-12-06");
-    expect(rows.map((r) => [r.user.sys_user_id, r.booked, r.level])).toEqual([
-      [1, 0, "free"],
-      [3, 7, "busy"],
-      [2, 20, "full"],
-    ]);
-    expect(rows[2]?.projects).toEqual([{ id: 10, name: "Proyek 10" }]);
-  });
-
-  it("heatmap mingguan dimulai dari minggu ini", () => {
+  it("heatmap mingguan dimulai dari minggu ini dan hanya berisi MD (tanpa level beban)", () => {
     const { weeks, rows } = weeklyHeatmap(users, details, 3, "2026-11-19");
     expect(weeks.map((w) => w.start)).toEqual(["2026-11-16", "2026-11-23", "2026-11-30"]);
     const citra = rows.find((r) => r.user.sys_user_id === 2)!;
-    expect(citra.cells[0]?.booked).toBe(0);
-    expect(citra.cells[1]?.level).toBe("full");
-  });
-
-  it("slot tercepat adalah Senin pertama dengan cukup pentester longgar", () => {
-    const slot = findEarliestSlot({
-      pentesters: users,
-      details,
-      durationDays: 14,
-      teamSize: 2,
-      from: "2026-11-20",
-    });
-    expect(slot?.start).toBe("2026-11-30");
-    expect(slot?.end).toBe("2026-12-13");
-    expect(slot?.candidates.map((c) => c.user.sys_user_id)).toEqual([1, 3]);
-    expect(
-      findEarliestSlot({ pentesters: users, details, durationDays: 14, teamSize: 4, from: "2026-11-20" }),
-    ).toBeNull();
+    expect(citra.cells.map((c) => c.booked)).toEqual([0, 5, 5]);
+    expect(Object.keys(citra.cells[1]!)).toEqual(["booked"]);
+    expect(rows.find((r) => r.user.sys_user_id === 1)!.cells.every((c) => c.booked === 0)).toBe(true);
   });
 });
 

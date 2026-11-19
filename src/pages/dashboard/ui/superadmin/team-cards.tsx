@@ -1,21 +1,18 @@
-import { ArrowRight, Clock, OctagonAlert, UsersRound } from "lucide-react";
+import { ArrowRight, Clock, UsersRound } from "lucide-react";
 import { Link } from "react-router";
 import { RoleBadge, toUserProfileInfo, UserProfilePopover } from "@/entities/user";
-import { MANDAYS_LIMIT, isOverLimit } from "@/shared/config/workload";
-import { cn } from "@/shared/lib/cn";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { BentoCard } from "@/shared/ui/bento-grid";
 import { Button } from "@/shared/ui/button";
-import { CapacityGauge } from "@/shared/ui/charts";
-import type { Capacity } from "../../model/superadmin-metrics";
+import type { TeamMandays } from "../../model/superadmin-metrics";
 import { CardEmpty, CardError, CardSkeleton } from "./card-states";
 
-export function CapacityCard({
+export function PentesterMandaysCard({
   data,
   isLoading,
   error,
 }: {
-  data: Capacity;
+  data: TeamMandays;
   isLoading: boolean;
   error: unknown;
 }) {
@@ -23,9 +20,9 @@ export function CapacityCard({
     <BentoCard
       colSpan={4}
       role="region"
-      aria-label="Kapasitas Tim"
-      title="Kapasitas Pentester"
-      description={`Bulan ini · batas ${MANDAYS_LIMIT} MD per orang.`}
+      aria-label="Mandays Pentester"
+      title="Mandays Pentester"
+      description={`Bulan ini · ${data.used} MD ditugaskan ke ${data.assigned} dari ${data.pentesters} pentester.`}
       icon={<Clock />}
       action={
         <Button asChild variant="link" trailingIcon={<ArrowRight />} className="h-auto p-0 text-xs">
@@ -34,63 +31,32 @@ export function CapacityCard({
       }
     >
       {error ? (
-        <CardError title="Beban mandays belum bisa dihitung" error={error} />
+        <CardError title="Mandays belum bisa dihitung" error={error} />
       ) : isLoading ? (
         <CardSkeleton rows={5} />
+      ) : data.ranking.length === 0 ? (
+        <CardEmpty>Belum ada pentester terdaftar.</CardEmpty>
       ) : (
-        <div className="flex flex-col gap-3">
-          <CapacityGauge
-            current={Math.round(data.used)}
-            limit={data.limit}
-            label="Total alokasi"
-            unit="MD"
-            subtext={
-              data.overloaded.length > 0
-                ? `${data.overloaded.length} pentester melewati batas`
-                : "Tidak ada pentester melewati batas"
-            }
-          />
-          {data.overloaded.length > 0 ? (
-            <div className="flex items-start gap-2 rounded-sm bg-error-bg p-2.5 text-xs text-error">
-              <OctagonAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-              <span>Perlu redistribusi penugasan agar beban kembali di bawah {MANDAYS_LIMIT} MD.</span>
-            </div>
-          ) : null}
-          {data.ranking.length === 0 ? (
-            <CardEmpty>Belum ada pentester terdaftar.</CardEmpty>
-          ) : (
-            <ul className="flex max-h-52 flex-col divide-y divide-border overflow-y-auto">
-              {data.ranking.slice(0, 6).map(({ user, mandays }) => {
-                const info = toUserProfileInfo(user);
-                const over = isOverLimit(mandays);
-                return (
-                  <li key={user.sys_user_id} className="flex items-center justify-between gap-2 py-2">
-                    <UserProfilePopover user={info}>
-                      <button
-                        type="button"
-                        className="flex min-w-0 items-center gap-2 rounded-xs text-left focus-ring"
-                      >
-                        <Avatar size="sm" className="shrink-0">
-                          <AvatarFallback>{info.initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="truncate text-xs text-ink">{info.name}</span>
-                      </button>
-                    </UserProfilePopover>
-                    <span
-                      className={cn(
-                        "inline-flex shrink-0 items-center gap-1 rounded-xs px-2 py-0.5 text-xs tabular-nums",
-                        over ? "bg-error-bg text-error" : "bg-surface-subtle text-ink-secondary",
-                      )}
-                    >
-                      {over ? <OctagonAlert className="size-3" aria-hidden /> : null}
-                      {mandays} MD
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+        <ul className="flex max-h-64 flex-col divide-y divide-border overflow-y-auto">
+          {data.ranking.map(({ user, mandays }) => {
+            const info = toUserProfileInfo(user);
+            return (
+              <li key={user.sys_user_id} className="flex items-center justify-between gap-2 py-2">
+                <UserProfilePopover user={info}>
+                  <button type="button" className="flex min-w-0 items-center gap-2 rounded-xs text-left focus-ring">
+                    <Avatar size="sm" className="shrink-0">
+                      <AvatarFallback>{info.initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate text-xs text-ink">{info.name}</span>
+                  </button>
+                </UserProfilePopover>
+                <span className="inline-flex shrink-0 rounded-xs bg-surface-subtle px-2 py-0.5 text-xs text-ink-secondary tabular-nums">
+                  {mandays} MD
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </BentoCard>
   );

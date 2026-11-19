@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { BentoCard, BentoGrid } from "../bento-grid";
-import { AreaLineChart, CapacityGauge, DonutChart, StackedBarChart } from "./index";
+import { AreaLineChart, DonutChart, StackedBarChart } from "./index";
 
 describe("BentoGrid & BentoCard", () => {
   it("merender bento grid container dan kartu dengan atribut data-slot", () => {
@@ -67,13 +67,5 @@ describe("Native SVG Charts", () => {
     expect(screen.getByText("Scoping")).toBeInTheDocument();
     expect(screen.getByText("Assessment")).toBeInTheDocument();
     expect(screen.getByText(/70%/)).toBeInTheDocument();
-  });
-
-  it("CapacityGauge: merender beban saat ini terhadap limit", () => {
-    render(<CapacityGauge current={16} limit={20} label="Kapasitas Pentester" />);
-
-    expect(screen.getByText("Kapasitas Pentester")).toBeInTheDocument();
-    expect(screen.getByText("16")).toBeInTheDocument();
-    expect(screen.getByText(/\/ 20 MD/)).toBeInTheDocument();
   });
 });

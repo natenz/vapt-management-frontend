@@ -6,7 +6,6 @@ import {
   ClipboardCheck,
   Clock,
   FolderKanban,
-  OctagonAlert,
   ShieldCheck,
   User as UserIcon,
   Users,
@@ -20,8 +19,6 @@ import {
   getDefaultScheduleRangeValue,
   type ScheduleRangeValue,
 } from "@/features/schedule-range";
-import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
-import { cn } from "@/shared/lib/cn";
 import { Alert } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
@@ -140,20 +137,13 @@ const columns: ColumnDef<ResourceRow>[] = [
         return <div className="text-right text-ink-muted">-</div>;
       }
       const md = row.original.load.mandays ?? 0;
-      const full = isOverLimit(md);
       return (
         <div className="flex justify-end">
           <span
             data-slot="mandays-chip"
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-xs border-0 px-2 py-0.5 text-xs font-normal tabular-nums",
-              full
-                ? "bg-rose-50 text-rose-700 dark:bg-rose-400/15 dark:text-rose-300"
-                : "bg-surface-subtle text-ink-secondary",
-            )}
+            className="inline-flex items-center rounded-xs border-0 bg-surface-subtle px-2 py-0.5 text-xs font-normal text-ink-secondary tabular-nums"
           >
-            {full ? <OctagonAlert className="size-3 shrink-0" aria-hidden="true" /> : null}
-            <span>{md} MD{full ? " · lewat batas" : ""}</span>
+            {md} MD
           </span>
         </div>
       );
@@ -218,14 +208,15 @@ export function ResourcesPage() {
   const isFiltered = hasAnyFilter(filters, thisMonth);
 
   const count = (role: string) => allRows.filter((r) => roleOf(r.user) === role).length;
-  const available = allRows.filter((r) => roleOf(r.user) === "pentester" && !isOverLimit(r.load.mandays)).length;
+  // Fakta saja: belum ada aturan batas beban per orang, jadi yang dihitung adalah yang punya penugasan.
+  const assigned = allRows.filter((r) => roleOf(r.user) === "pentester" && r.load.mandays > 0).length;
   const loading = users.isLoading || load.isLoading;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Resource"
-        description={`Siapa saja yang tersedia untuk ditempatkan di proyek. Mandays dihitung per bulan (${monthLabel(filters.month)}) dan mulai dari 0 tiap ganti bulan; merah bila lebih dari ${MANDAYS_LIMIT} md.`}
+        description={`Siapa saja yang bisa ditempatkan di proyek beserta mandays yang sudah ditugaskan. Mandays dihitung per bulan (${monthLabel(filters.month)}) dan mulai dari 0 tiap ganti bulan.`}
       />
       {users.error ? <Alert tone="error" title="Gagal memuat daftar orang">{users.error.message}</Alert> : null}
       {load.error ? <Alert tone="warning" title="Beban mandays belum bisa dihitung">{load.error.message}</Alert> : null}
@@ -236,7 +227,7 @@ export function ResourcesPage() {
           value={loading ? null : count("pentester")}
           unit="Orang"
           loading={loading}
-          note={{ text: `${available} masih punya kapasitas` }}
+          note={{ text: `${assigned} punya penugasan bulan ini` }}
         />
         <SummaryTile
           icon={<ClipboardCheck />}

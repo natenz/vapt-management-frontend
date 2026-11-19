@@ -186,7 +186,7 @@ export function DashboardPage() {
   });
   const name = user?.profile?.full_name ?? user?.username ?? "";
 
-  // Tech Lead: detail proyek (penugasan mandays) untuk heatmap & perencana slot.
+  // Tech Lead: detail proyek (penugasan mandays) untuk tabel penugasan mingguan.
   // Key sama dengan linimasa di /resources sehingga cache terpakai bersama.
   const details = useQuery({
     queryKey: ["projects", "active-details", currentMonth()],

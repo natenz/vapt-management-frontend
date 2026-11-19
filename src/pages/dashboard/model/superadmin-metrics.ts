@@ -10,7 +10,6 @@ import type { ProjectReport } from "@/entities/finding";
 import type { Project, ProjectStatus, ResourceLoad, StatusLog } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { PROJECT_STATUSES, SEVERITIES } from "@/shared/api/schemas";
-import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 
 const DONE = "Done";
 const OPEN_FINDING = new Set(["open", "reopened"]);
@@ -196,7 +195,7 @@ export function riskiestProjects(reports: readonly ProjectReport[], limit = 5): 
     .slice(0, limit);
 }
 
-/* ---------- Tim & kapasitas ---------- */
+/* ---------- Tim & mandays ---------- */
 
 export const TEAM_ROLES = ["pentester", "technical_writer", "project_manager"] as const;
 const ROLE_ORDER = ["super_admin", "tech_lead", "project_manager", "pentester", "technical_writer"];
@@ -216,20 +215,25 @@ export function roleComposition(users: readonly User[]): { role: string; count: 
     });
 }
 
-export interface Capacity {
+/**
+ * MD yang ditugaskan ke pentester bulan ini. Fakta saja: belum ada aturan resmi batas
+ * beban per orang (BE tidak menegakkannya), jadi tidak ada "kapasitas" atau "lewat batas".
+ */
+export interface TeamMandays {
   pentesters: number;
   team: number;
+  /** Total MD pentester di bulan berjalan. */
   used: number;
-  limit: number;
-  overloaded: { user: User; mandays: number }[];
-  /** Pentester dengan beban tertinggi lebih dulu. */
+  /** Pentester yang punya penugasan (MD > 0) bulan ini. */
+  assigned: number;
+  /** Pentester dengan MD tertinggi lebih dulu. */
   ranking: { user: User; mandays: number }[];
 }
 
-export function capacity(
+export function teamMandays(
   users: readonly User[],
   loadMap: Readonly<Record<number, ResourceLoad>>,
-): Capacity {
+): TeamMandays {
   const pentesters = users.filter((u) => u.role?.role_name === "pentester");
   const ranking = pentesters
     .map((user) => ({ user, mandays: loadMap[user.sys_user_id]?.mandays ?? 0 }))
@@ -239,8 +243,7 @@ export function capacity(
     pentesters: pentesters.length,
     team: users.filter((u) => (TEAM_ROLES as readonly string[]).includes(u.role?.role_name ?? "")).length,
     used,
-    limit: Math.max(pentesters.length * MANDAYS_LIMIT, MANDAYS_LIMIT),
-    overloaded: ranking.filter((r) => isOverLimit(r.mandays)),
+    assigned: ranking.filter((r) => r.mandays > 0).length,
     ranking,
   };
 }

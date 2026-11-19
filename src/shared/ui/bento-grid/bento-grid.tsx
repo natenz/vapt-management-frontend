@@ -1,8 +1,9 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "@/shared/lib/cn";
 
 export interface BentoGridProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**

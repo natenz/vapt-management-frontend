@@ -35,7 +35,7 @@ type FormValues = z.input<typeof schema>;
 export function ProjectNewPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  // Prefill dari perencana slot dashboard Tech Lead (?mulai=YYYY-MM-DD&selesai=YYYY-MM-DD)
+  // Prefill tanggal lewat tautan (?mulai=YYYY-MM-DD&selesai=YYYY-MM-DD)
   const isoParam = (k: string) => {
     const v = params.get(k) ?? "";
     return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;

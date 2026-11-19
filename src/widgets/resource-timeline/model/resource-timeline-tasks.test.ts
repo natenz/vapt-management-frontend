@@ -90,7 +90,8 @@ describe("buildResourceTimelineTasks", () => {
     expect(budiRow?.type).toBe("summary");
     expect(budiRow?.userName).toBe("Budi Santoso");
     expect(budiRow?.childCount).toBe(2);
-    expect(budiRow?.isOverloaded).toBe(true); // 22 MD > limit 20
+    expect(budiRow?.totalMandays).toBe(22);
+    expect(budiRow).not.toHaveProperty("isOverloaded"); // tidak ada penilaian batas beban
 
     const budiAssignments = tasks.filter((t) => t.parent === "user:5");
     expect(budiAssignments).toHaveLength(2);
@@ -129,21 +130,6 @@ describe("buildResourceTimelineTasks", () => {
     const userRows = tasks.filter((t) => t.kind === "user");
     expect(userRows.every((u) => u.roleName === "pentester")).toBe(true);
     expect(userRows.some((u) => u.userId === 3)).toBe(false);
-  });
-
-  it("menyaring berdasarkan kapasitas (overloaded)", () => {
-    const tasks = buildResourceTimelineTasks(
-      mockUsers,
-      mockProjects,
-      { ...DEFAULT_RESOURCE_TIMELINE_FILTERS, availability: "overloaded" },
-      testRange,
-      new Set(),
-      { 5: { mandays: 25 }, 6: { mandays: 10 } },
-    );
-
-    const userRows = tasks.filter((t) => t.kind === "user");
-    expect(userRows).toHaveLength(1);
-    expect(userRows[0]?.userId).toBe(5);
   });
 
   it("menyaring berdasarkan kata kunci pencarian", () => {

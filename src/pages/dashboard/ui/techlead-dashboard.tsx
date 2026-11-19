@@ -1,7 +1,8 @@
 /**
- * Dashboard Tech Lead — bento box untuk dua keputusan utama:
- * 1. Menjadwalkan proyek baru: kapan slot yang cocok dan siapa yang ditugaskan
- *    (proyek berjalan + progres, beban pentester, heatmap mingguan, perencana slot).
+ * Dashboard Tech Lead — bento box untuk dua pekerjaan utama:
+ * 1. Memantau proyek dan penugasan tim: progres proyek berjalan, MD terjadwal
+ *    pentester per minggu dan per bulan. Belum ada aturan resmi batas beban per
+ *    orang, jadi dashboard tidak menilai "tersedia/penuh"; Tech Lead yang memutuskan.
  * 2. Mengelola katalog kerentanan: meninjau dan meng-ACC usulan dari tim.
  * Angka dihitung di `model/techlead-metrics`.
  */
@@ -10,19 +11,14 @@ import { useMemo } from "react";
 import type { CatalogVulna } from "@/entities/catalog";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
-import { isOverLimit } from "@/shared/config/workload";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { SummaryTile } from "@/shared/ui/summary-tile";
-import { capacity } from "../model/superadmin-metrics";
+import { teamMandays } from "../model/superadmin-metrics";
 import { pentestersOf, runningProjects } from "../model/techlead-metrics";
-import { CapacityCard } from "./superadmin/team-cards";
+import { PentesterMandaysCard } from "./superadmin/team-cards";
 import { CatalogReviewCard } from "./techlead/catalog-review-card";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
-import { SlotPlannerCard } from "./techlead/slot-planner-card";
 import { WorkloadHeatmapCard } from "./techlead/workload-heatmap-card";
-
-/** Di bawah ambang ini (MD bulan ini) pentester dianggap siap menerima proyek baru. */
-const AVAILABLE_BELOW = 15;
 
 export interface TechLeadDashboardProps {
   projects: readonly Project[];
@@ -30,7 +26,7 @@ export interface TechLeadDashboardProps {
   catalogQueue: readonly CatalogVulna[];
   loadMap: Readonly<Record<number, ResourceLoad>>;
   isLoading: boolean;
-  /** Detail proyek (penugasan mandays) untuk heatmap & perencana slot. */
+  /** Detail proyek (penugasan mandays) untuk tabel penugasan mingguan. */
   details?: readonly ProjectDetail[];
   detailsLoading?: boolean;
   detailsError?: unknown;
@@ -51,8 +47,7 @@ export function TechLeadDashboard({
 }: TechLeadDashboardProps) {
   const pentesters = useMemo(() => pentestersOf(users), [users]);
   const running = useMemo(() => runningProjects(projects), [projects]);
-  const cap = useMemo(() => capacity(users, loadMap), [users, loadMap]);
-  const available = cap.ranking.filter((r) => !isOverLimit(r.mandays) && r.mandays < AVAILABLE_BELOW);
+  const cap = useMemo(() => teamMandays(users, loadMap), [users, loadMap]);
   const late = running.filter((r) => r.health === "late").length;
   const atRisk = running.filter((r) => r.health === "at-risk").length;
 
@@ -76,24 +71,20 @@ export function TechLeadDashboard({
           }
         />
         <SummaryTile
-          label="Ketersediaan Pentester"
-          value={isLoading ? null : available.length}
-          unit="Siap Ditugaskan"
+          label="Pentester Ditugaskan"
+          value={isLoading ? null : cap.assigned}
+          unit="Orang"
           icon={<UserCheck />}
           loading={isLoading}
-          note={{ text: `beban < ${AVAILABLE_BELOW} MD bulan ini, dari ${cap.pentesters} pentester` }}
+          note={{ text: `punya penugasan bulan ini, dari ${cap.pentesters} pentester` }}
         />
         <SummaryTile
-          label="Beban Mandays Tim"
+          label="Mandays Tim"
           value={isLoading ? null : Math.round(cap.used)}
           unit="MD"
           icon={<Clock />}
           loading={isLoading}
-          note={
-            cap.overloaded.length > 0
-              ? { value: `${cap.overloaded.length} personil`, text: "melebihi batas alokasi" }
-              : { text: `dari kapasitas ${cap.limit} MD bulan ini` }
-          }
+          note={{ text: "ditugaskan ke pentester bulan ini" }}
         />
         <SummaryTile
           label="Antrean Usulan Katalog"
@@ -108,23 +99,17 @@ export function TechLeadDashboard({
       </section>
 
       <BentoGrid aria-label="Bento dashboard Tech Lead">
-        {/* Penjadwalan proyek baru */}
-        <SlotPlannerCard
-          pentesters={pentesters}
-          details={details}
-          isLoading={isLoading || detailsLoading}
-          error={detailsError}
-        />
+        {/* Penugasan tim */}
         <WorkloadHeatmapCard
           pentesters={pentesters}
           details={details}
           isLoading={isLoading || detailsLoading}
           error={detailsError}
         />
+        <PentesterMandaysCard data={cap} isLoading={isLoading} error={null} />
 
         {/* Pemantauan */}
-        <RunningProjectsCard rows={running} isLoading={isLoading} />
-        <CapacityCard data={cap} isLoading={isLoading} error={null} />
+        <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} />
 
         {/* Katalog */}
         <CatalogReviewCard queue={catalogQueue} approvedCount={approvedCount} isLoading={isLoading} />

@@ -1,30 +1,20 @@
 import { addDays } from "date-fns";
 import type { ProjectDetail } from "@/entities/project";
 import type { User } from "@/entities/user";
-import { isOverLimit, MANDAYS_LIMIT } from "@/shared/config/workload";
 import type { DateRange } from "@/shared/lib/date-range";
 import { parseDateOnly } from "@/shared/lib/date-range";
 import { exclusiveEnd } from "@/shared/ui/svar-gantt";
 
-export type ResourceTimelineAvailability = "all" | "available" | "overloaded";
-
+// Tidak ada filter "tersedia/lewat batas": belum ada aturan resmi batas beban per orang.
 export interface ResourceTimelineFilters {
   search: string;
   roles: string[];
-  availability: ResourceTimelineAvailability;
 }
 
 export const DEFAULT_RESOURCE_TIMELINE_FILTERS: ResourceTimelineFilters = {
   search: "",
   roles: [],
-  availability: "all",
 };
-
-export const AVAILABILITY_OPTIONS: { value: ResourceTimelineAvailability; label: string }[] = [
-  { value: "all", label: "Semua kapasitas" },
-  { value: "available", label: `Tersedia (≤ ${MANDAYS_LIMIT} MD)` },
-  { value: "overloaded", label: `Lewat batas (> ${MANDAYS_LIMIT} MD)` },
-];
 
 export interface ResourceTimelineTask {
   id: string;
@@ -43,7 +33,6 @@ export interface ResourceTimelineTask {
   initials?: string;
   department?: string;
   totalMandays?: number;
-  isOverloaded?: boolean;
   childCount?: number;
   // Assignment row fields
   projectId?: number;
@@ -173,17 +162,6 @@ export function buildResourceTimelineTasks(
     }
 
     const assignments = userAssignments.get(u.sys_user_id) ?? [];
-    const totalMd = loadMap[u.sys_user_id]?.mandays ?? 0;
-    const overloaded = role === "pentester" && isOverLimit(totalMd);
-
-    // Availability filter
-    if (filters.availability === "available" && overloaded) {
-      return false;
-    }
-    if (filters.availability === "overloaded" && !overloaded) {
-      return false;
-    }
-
     // Search filter
     if (query) {
       const name = nameOf(u).toLowerCase();
@@ -211,7 +189,6 @@ export function buildResourceTimelineTasks(
     const fullName = nameOf(u);
     const role = roleOf(u);
     const totalMd = loadMap[uid]?.mandays ?? 0;
-    const overloaded = role === "pentester" && isOverLimit(totalMd);
     const isOpen = !collapsedUserIds.has(userKey);
 
     // Tentukan tanggal rentang baris induk personil
@@ -244,7 +221,6 @@ export function buildResourceTimelineTasks(
       initials: getInitials(fullName),
       department: u.profile?.department ?? undefined,
       totalMandays: totalMd,
-      isOverloaded: overloaded,
       childCount: assignments.length,
     });
 

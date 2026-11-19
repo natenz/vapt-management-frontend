@@ -91,9 +91,9 @@ const mockUsers: User[] = [
 ];
 
 const mockLoadMap: Record<number, ResourceLoad> = {
-  201: { mandays: 8, projects: [] }, // Available (8 MD, remaining 12 MD)
-  202: { mandays: 16, projects: [] }, // Busy / Padat (16 MD)
-  203: { mandays: 24, projects: [] }, // Overloaded (> 20 MD)
+  201: { mandays: 8, projects: [] },
+  202: { mandays: 16, projects: [] },
+  203: { mandays: 24, projects: [] },
 };
 
 const mockCatalogQueue: CatalogVulna[] = [
@@ -115,7 +115,7 @@ const mockCatalogQueue: CatalogVulna[] = [
   },
 ];
 
-// Citra penuh 2 minggu mulai Senin depan, Dimas 70% — Budi bebas.
+// Citra 20 MD dan Dimas 7 MD selama 2 minggu mulai Senin depan; Budi belum terjadwal.
 const mockDetails = [
   {
     ...mockProjects[0]!,
@@ -174,13 +174,15 @@ describe("TechLeadDashboard", () => {
     expect(within(summarySection).getByText("Proyek Berjalan")).toBeInTheDocument();
     expect(within(summarySection).getByText("02")).toBeInTheDocument();
 
-    // Ketersediaan: 1 pentester tersedia (Budi, 8 MD) dan Antrean: 1 usulan (keduanya diformat "01")
-    expect(within(summarySection).getByText("Ketersediaan Pentester")).toBeInTheDocument();
-    expect(within(summarySection).getAllByText("01")).toHaveLength(2);
+    // Pentester ditugaskan: ketiganya punya MD bulan ini ("03"); tidak ada tile ketersediaan/batas
+    expect(within(summarySection).getByText("Pentester Ditugaskan")).toBeInTheDocument();
+    expect(within(summarySection).getByText("03")).toBeInTheDocument();
+    expect(within(summarySection).queryByText("Ketersediaan Pentester")).not.toBeInTheDocument();
 
-    // Total Beban Mandays: 8 + 16 + 24 = 48 MD
-    expect(within(summarySection).getByText("Beban Mandays Tim")).toBeInTheDocument();
+    // Total mandays tim: 8 + 16 + 24 = 48 MD
+    expect(within(summarySection).getByText("Mandays Tim")).toBeInTheDocument();
     expect(within(summarySection).getByText("48")).toBeInTheDocument();
+    expect(within(summarySection).getByText("01")).toBeInTheDocument(); // antrean katalog
 
     // Antrean Usulan Katalog
     expect(within(summarySection).getByText("Antrean Usulan Katalog")).toBeInTheDocument();
@@ -201,35 +203,26 @@ describe("TechLeadDashboard", () => {
     expect(within(projectSec).queryByText("Audit API Gateway Legacy")).not.toBeInTheDocument();
   });
 
-  it("heatmap beban mingguan menandai minggu yang penuh dan menautkan linimasa", () => {
+  it("penugasan mingguan menampilkan MD terjadwal tanpa persen kapasitas dan menautkan linimasa", () => {
     renderDashboard();
 
-    const heatmap = screen.getByRole("region", { name: "Ketersediaan & Penugasan Personil" });
+    const heatmap = screen.getByRole("region", { name: "Penugasan Pentester Mingguan" });
     const citra = within(heatmap).getByRole("rowheader", { name: "Citra Lestari" }).closest("tr")!;
-    // 20 MD / 14 hari kalender → 5 hari kerja = 7,1 MD dari kapasitas 5 MD
-    expect(within(citra).getAllByText("143%")).toHaveLength(2);
+    // 20 MD / 14 hari kalender → 5 hari kerja = 7,1 MD per minggu
+    expect(within(citra).getAllByText("7.1")).toHaveLength(2);
+    expect(within(heatmap).queryByText(/%/)).not.toBeInTheDocument();
     expect(within(heatmap).getByRole("rowheader", { name: "Budi Santoso" })).toBeInTheDocument();
 
     const timelineLink = within(heatmap).getByRole("link", { name: "Cek Benturan Jadwal di Linimasa" });
     expect(timelineLink).toHaveAttribute("href", "/resources?tampilan=timeline");
   });
 
-  it("perencana slot merekomendasikan slot tercepat saat pentester longgar kurang", () => {
+  it("tidak ada perencana slot maupun kartu kapasitas berbatas", () => {
     renderDashboard();
-
-    const planner = screen.getByRole("region", { name: "Perencana Slot Proyek Baru" });
-    // Default: mulai Senin depan (23 Nov), 14 hari, tim 2 orang
-    expect(within(planner).getByLabelText("Tanggal mulai")).toHaveValue("2026-11-23");
-    expect(within(planner).getByRole("status")).toHaveTextContent("Hanya 1 pentester longgar, butuh 2.");
-
-    fireEvent.click(within(planner).getByRole("button", { name: "Pakai slot ini" }));
-    expect(within(planner).getByLabelText("Tanggal mulai")).toHaveValue("2026-11-30");
-    expect(within(planner).getByRole("status")).toHaveTextContent("2 pentester longgar");
-    expect(within(planner).getAllByText("Rekomendasi")).toHaveLength(2);
-    expect(within(planner).getByRole("link", { name: "Buat proyek dengan jadwal ini" })).toHaveAttribute(
-      "href",
-      "/projects/new?mulai=2026-11-30&selesai=2026-12-13",
-    );
+    expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
+    const md = screen.getByRole("region", { name: "Mandays Pentester" });
+    expect(within(md).getByText("24 MD")).toBeInTheDocument();
+    expect(within(md).queryByText(/batas/)).not.toBeInTheDocument();
   });
 
   it("menampilkan usulan katalog kerentanan dan menyetujui saat tombol Setujui ditekan", async () => {

@@ -95,6 +95,6 @@ describe("ResourceTimeline", () => {
       screen.getByPlaceholderText("Cari personil atau proyek..."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Role/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Kapasitas/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Kapasitas/i })).not.toBeInTheDocument();
   });
 });

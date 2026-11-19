@@ -10,6 +10,12 @@ export interface BentoCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "ti
   children: ReactNode;
   /** Lebar kolom desktop (span-12, span-8, span-7, span-6, span-5, span-4, span-3). */
   colSpan?: 3 | 4 | 5 | 6 | 7 | 8 | 12;
+  /**
+   * Tinggi kartu mengikuti tinggi baris grid induk (mis. grid yang mengisi sisa layar),
+   * walau isinya sedikit; isi yang lebih di-scroll di dalam kartu. Di bawah `lg`
+   * (kartu tersusun ke bawah) tinggi dibatasi 70dvh.
+   */
+  scrollable?: boolean;
 }
 
 const COL_SPAN_CLASSES: Record<number, string> = {
@@ -34,6 +40,7 @@ export function BentoCard({
   badge,
   children,
   colSpan = 4,
+  scrollable = false,
   className,
   ...props
 }: BentoCardProps) {
@@ -46,12 +53,13 @@ export function BentoCard({
         "group flex flex-col justify-between rounded-xl border border-border bg-surface p-5 sm:p-6",
         "transition-all duration-200 hover:border-brand/35 hover:shadow-xs",
         spanClass,
+        scrollable && "max-h-[70dvh] min-h-0 justify-start lg:max-h-none",
         className,
       )}
       {...props}
     >
       {(title || description || action || icon || badge) && (
-        <header className="mb-4 flex flex-wrap items-start justify-between gap-2.5">
+        <header className="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-2.5">
           <div className="flex items-start gap-2.5">
             {icon && (
               <span
@@ -75,7 +83,12 @@ export function BentoCard({
         </header>
       )}
 
-      <div className="flex-1 flex flex-col">{children}</div>
+      <div
+        data-slot="bento-card-body"
+        className={cn("flex flex-1 flex-col", scrollable && "min-h-0 overflow-y-auto overscroll-contain")}
+      >
+        {children}
+      </div>
     </article>
   );
 }

@@ -73,9 +73,10 @@ describe("ResourcesPage", () => {
     expect(within(budi).queryByText("pentester.budi")).toBeNull();
     expect(within(budi).getByText("BS")).toBeInTheDocument();
     expect(within(budi).getByText("Pentester")).toBeInTheDocument();
-    expect(within(budi).getByText(/21 MD · lewat batas/)).toBeInTheDocument();
-    const mdChip = within(budi).getByText(/21 MD · lewat batas/).closest("[data-slot='mandays-chip']")!;
-    expect(mdChip).toHaveClass("rounded-xs", "border-0");
+    // Hanya fakta MD, tanpa penilaian "lewat batas" (belum ada aturan batas beban).
+    const mdChip = within(budi).getByText("21 MD").closest("[data-slot='mandays-chip']")!;
+    expect(mdChip).toHaveClass("rounded-xs", "border-0", "bg-surface-subtle");
+    expect(within(budi).queryByText(/lewat batas/)).toBeNull();
     const hrisLink = within(budi).getByRole("link", { name: "VAPT HRIS" });
     expect(hrisLink).toHaveAttribute("href", "/projects/5");
     expect(hrisLink).toHaveClass("bg-project-chip-bg", "text-project-chip-fg", "rounded-xs");
