@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiRequest } from "@/shared/api";
+import { apiBlobRequest, apiRequest } from "@/shared/api";
 import {
   evidenceSchema,
   findingSchema,
@@ -35,3 +35,11 @@ export const addEvidence = async (id: number, body: EvidenceInput) =>
 
 export const getReport = async (projectId: number) =>
   (await apiRequest(`/projects/${projectId}/report`, { method: "GET" }, reportSchema)).data;
+
+export const uploadEvidence = async (id: number, file: File) => {
+  const body = new FormData();
+  body.append("file", file);
+  return (await apiRequest(`/vulnas/${id}/evidences/upload`, { method: "POST", body }, evidenceSchema)).data;
+};
+
+export const getEvidencePhoto = (id: number) => apiBlobRequest(`/evidences/${id}/file`);

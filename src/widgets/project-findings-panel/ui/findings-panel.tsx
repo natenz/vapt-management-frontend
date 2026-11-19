@@ -11,6 +11,7 @@ import {
   updateFinding,
   FINDING_STATUSES,
   SeverityBadge,
+  EvidencePhoto,
   SEVERITIES,
   type Finding,
   type FindingStatus,
@@ -304,6 +305,11 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   )
                 )}
               </span>
+              {(f.evidences ?? []).some((evidence) => evidence.s3_bucket === "local") ? (
+                <div className="flex w-full flex-wrap gap-2" aria-label={`Evidence ${f.custom_title}`}>
+                  {(f.evidences ?? []).filter((evidence) => evidence.s3_bucket === "local").map((evidence) => <EvidencePhoto key={evidence.evidence_id} evidence={evidence} />)}
+                </div>
+              ) : null}
               {notingId === f.vulna_id ? <NoteEditor f={f} onDone={() => setNotingId(null)} /> : null}
               {editingId === f.vulna_id ? (
                 <EditFinding

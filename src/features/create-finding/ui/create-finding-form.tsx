@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { listCatalog } from "@/entities/catalog";
-import { createFinding, SEVERITIES } from "@/entities/finding";
+import { createFinding, uploadEvidence, SEVERITIES, type Finding } from "@/entities/finding";
 import type { ProjectDetail } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { Alert } from "@/shared/ui/alert";
@@ -45,8 +46,16 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
   const queryClient = useQueryClient();
   const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
   const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
-  const fromCatalog = Boolean(watch("catalog_vulna_id"));
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoError, setPhotoError] = useState("");
+  const [savedFinding, setSavedFinding] = useState<Finding | null>(null);
+  const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
+  useEffect(() => {
+    const next = photos.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setPreviews(next);
+    return () => next.forEach(({ url }) => URL.revokeObjectURL(url));
+  }, [photos]);
   const sessionUser = useSession((s) => s.user);
   // Pentester hanya boleh mencatat temuan di aset yang ditugaskan ke dia (baris mandays).
   const isPentester = sessionUser?.role?.role_name === "pentester";
@@ -56,8 +65,10 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
   const assets = (project.assets ?? []).filter((a) => !isPentester || assignedIds.has(a.assets_id));
 
   const mutation = useMutation({
-    mutationFn: (v: Values) =>
-      createFinding(id, {
+    mutationFn: async (v: Values) => {
+      let finding = savedFinding;
+      if (!finding) {
+        finding = await createFinding(id, {
         asset_id: Number(v.asset_id),
         finding_code: v.finding_code || undefined,
         catalog_vulna_id: v.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
@@ -65,7 +76,16 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
         severity: v.severity || undefined,
         cvss_score: v.cvss_score ? Number(v.cvss_score) : undefined,
         endpoint: v.endpoint || undefined,
-      }),
+        });
+        setSavedFinding(finding);
+        void queryClient.invalidateQueries({ queryKey: ["findings", id] });
+      }
+      for (const photo of photos) {
+        await uploadEvidence(finding.vulna_id, photo);
+        void queryClient.invalidateQueries({ queryKey: ["findings", id] });
+        setPhotos((remaining) => remaining.filter((file) => file !== photo));
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["findings", id] });
       notify.success("Temuan dicatat");
@@ -76,7 +96,8 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
   return (
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v))} className="flex flex-col gap-5">
       {mutation.error ? <Alert tone="error" title="Gagal menyimpan temuan">{mutation.error.message}</Alert> : null}
-      <div className="flex flex-col gap-4">
+      {savedFinding && mutation.error ? <Alert tone="info" title="Temuan sudah tersimpan" compact>Foto yang gagal diunggah masih ada di sini. Klik Coba unggah lagi untuk melanjutkan tanpa membuat temuan baru.</Alert> : null}
+      <fieldset disabled={mutation.isPending || Boolean(savedFinding)} className="flex min-w-0 flex-col gap-4">
         <FieldGroup>
           <Field label="Aset" error={errors.asset_id?.message} helper={isPentester && assets.length === 0 ? "Belum ada aset yang ditugaskan ke kamu di proyek ini. Minta PM menugaskan lewat Assign Pentester." : undefined}>
             {(f) => (
@@ -86,9 +107,15 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
               </select>
             )}
           </Field>
-          <Field label="Dari katalog kerentanan" helper="Judul, severity, dan CVSS terisi otomatis dari katalog.">
+          <Field label="Dari katalog kerentanan" helper="Judul, severity, dan CVSS terisi otomatis dari katalog. Semuanya bisa kamu ubah.">
             {(f) => (
-              <select className={selectClass} defaultValue="" {...f} {...register("catalog_vulna_id")}>
+              <select className={selectClass} defaultValue="" {...f} {...register("catalog_vulna_id", { onChange: (event) => {
+                const selected = approvedCatalog.find((item) => String(item.vulna_id) === event.target.value);
+                if (!selected) return;
+                setValue("custom_title", selected.title, { shouldValidate: true });
+                setValue("severity", selected.severity, { shouldValidate: true });
+                setValue("cvss_score", selected.cvss_score == null ? "" : String(selected.cvss_score), { shouldValidate: true });
+              } })}>
                 <option value="">Tidak, isi sendiri</option>
                 {(approvedCatalog).map((c) => (<option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>))}
               </select>
@@ -101,20 +128,39 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Severity" error={errors.severity?.message}>
               {(f) => (
-                <select className={selectClass} disabled={fromCatalog} defaultValue="" {...f} {...register("severity")}>
-                  <option value="" disabled>{fromCatalog ? "Dari katalog" : "Pilih severity"}</option>
+                <select className={selectClass} defaultValue="" {...f} {...register("severity")}>
+                  <option value="" disabled>Pilih severity</option>
                   {SEVERITIES.map((s) => (<option key={s} value={s}>{s}</option>))}
                 </select>
               )}
             </Field>
-            <Field label="CVSS score" error={errors.cvss_score?.message}>{(f) => <Input type="number" step="0.1" min={0} max={10} disabled={fromCatalog} {...f} {...register("cvss_score")} />}</Field>
+            <Field label="CVSS score" error={errors.cvss_score?.message}>{(f) => <Input type="number" step="0.1" min={0} max={10} {...f} {...register("cvss_score")} />}</Field>
           </div>
           <Field label="Endpoint" helper="Contoh: POST /api/v1/login">{(f) => <Input {...f} {...register("endpoint")} />}</Field>
         </FieldGroup>
-      </div>
+      </fieldset>
+      <Field label="Foto evidence" error={photoError || undefined} helper="Opsional. Maksimal 5 foto PNG/JPEG, masing-masing 5 MB. Foto disimpan bersama temuan.">
+        {(field) => <Input {...field} type="file" accept="image/png,image/jpeg" multiple disabled={mutation.isPending} onChange={(event) => {
+          const selected = Array.from(event.target.files ?? []);
+          event.target.value = "";
+          if (photos.length + selected.length > 5) { setPhotoError("Maksimal 5 foto evidence"); return; }
+          if (selected.some((file) => !["image/png", "image/jpeg"].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+            setPhotoError("Gunakan foto PNG/JPEG maksimal 5 MB per foto"); return;
+          }
+          setPhotoError("");
+          setPhotos((current) => [...current, ...selected]);
+        }} />}
+      </Field>
+      {previews.length > 0 ? <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label="Foto yang akan diunggah">
+        {previews.map(({ file, url }, index) => <li key={`${file.name}-${index}`} className="min-w-0 rounded-sm border border-border p-2">
+          <img src={url} alt={`Pratinjau ${file.name}`} className="h-24 w-full rounded-xs object-contain" />
+          <p className="truncate text-caption text-ink-secondary">{file.name}</p>
+          <Button type="button" disabled={mutation.isPending} aria-label={`Hapus foto ${file.name}`} onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}>Hapus</Button>
+        </li>)}
+      </ul> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <Button type="button" onClick={onCancel} disabled={mutation.isPending}>Batal</Button>
-        <Button type="submit" variant="solid" loading={mutation.isPending}>Simpan temuan</Button>
+        <Button type="submit" variant="solid" loading={mutation.isPending}>{savedFinding ? "Coba unggah lagi" : "Simpan temuan"}</Button>
       </div>
     </form>
   );

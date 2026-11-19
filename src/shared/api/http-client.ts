@@ -33,7 +33,8 @@ export async function apiRequest<T>(
 ): Promise<{ data: T; meta?: { page: number; limit: number; total: number } }> {
   const { auth = true, body, query, ...init } = options;
   const headers = new Headers({ Accept: "application/json" });
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  const multipart = body instanceof FormData;
+  if (body !== undefined && !multipart) headers.set("Content-Type", "application/json");
   const token = auth ? adapter?.getToken() : null;
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
@@ -42,7 +43,7 @@ export async function apiRequest<T>(
     response = await fetch(buildUrl(path, query), {
       ...init,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Tidak dapat terhubung ke server. Periksa koneksi dan konfigurasi API.");
@@ -73,4 +74,19 @@ export async function apiRequest<T>(
     throw new ApiError("Respons server tidak sesuai kontrak API", 502, parsed.error.issues);
   }
   return { data: parsed.data.data as T, meta: parsed.data.meta };
+}
+
+/** Unduh foto melalui autentikasi yang sama dengan permintaan API lainnya. */
+export async function apiBlobRequest(path: string): Promise<Blob> {
+  const headers = new Headers({ Accept: "image/png, image/jpeg" });
+  const token = adapter?.getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  let response: Response;
+  try { response = await fetch(buildUrl(path), { headers }); }
+  catch { throw new ApiError("Tidak dapat terhubung ke server."); }
+  if (!response.ok) {
+    if (response.status === 401) adapter?.onUnauthorized();
+    throw new ApiError("Foto evidence tidak dapat dimuat", response.status);
+  }
+  return response.blob();
 }

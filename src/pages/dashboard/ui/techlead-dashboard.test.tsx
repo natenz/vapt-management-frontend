@@ -184,11 +184,11 @@ describe("TechLeadDashboard", () => {
     expect(within(summarySection).queryByText("Ketersediaan Pentester")).not.toBeInTheDocument();
     expect(within(summarySection).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
-    // Usulan Katalog dengan Call To Action menuju /catalog?status=pending
+    // Usulan Katalog dengan Call To Action menuju /catalog
     expect(within(summarySection).getByText("Usulan Katalog")).toBeInTheDocument();
     expect(within(summarySection).getByText("01")).toBeInTheDocument();
     const ctaLink = within(summarySection).getByRole("link", { name: /Tinjau/ });
-    expect(ctaLink).toHaveAttribute("href", "/catalog?status=pending");
+    expect(ctaLink).toHaveAttribute("href", "/catalog");
   });
 
   it("merender tabel proyek berjalan dengan kemajuan dan tenggat", () => {

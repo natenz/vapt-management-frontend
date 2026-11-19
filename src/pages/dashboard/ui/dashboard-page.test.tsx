@@ -95,7 +95,7 @@ describe("DashboardPage", () => {
     await mount("tech_lead");
     const summarySec = await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" });
     expect(summarySec).toBeInTheDocument();
-    expect(within(summarySec).getByRole("link", { name: /Tinjau/ })).toHaveAttribute("href", "/catalog?status=pending");
+    expect(within(summarySec).getByRole("link", { name: /Tinjau/ })).toHaveAttribute("href", "/catalog");
     expect(within(summarySec).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
     const projectsSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
