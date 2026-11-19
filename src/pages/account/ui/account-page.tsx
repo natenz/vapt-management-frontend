@@ -193,7 +193,7 @@ export function AccountPage() {
                 <h2 className="truncate text-title-md text-ink">{fullName}</h2>
                 <p className="truncate text-body-sm text-ink-muted">@{currentUser?.username}</p>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="inline-flex items-center rounded-full border border-border bg-surface-subtle px-2.5 py-0.5 text-caption font-medium text-ink">
+                  <span className="inline-flex items-center rounded-sm border border-border bg-surface-subtle px-2.5 py-0.5 text-caption font-medium text-ink">
                     {roleLabel}
                   </span>
                   {currentUser?.profile?.department ? (

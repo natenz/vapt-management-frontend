@@ -59,7 +59,7 @@ export function AppHeader() {
           </NavLink>
         )}
       />
-      <span className="hidden rounded-full border border-border px-3 py-1 text-caption text-ink-secondary sm:inline-flex">
+      <span className="hidden rounded-sm border border-border px-3 py-1 text-caption text-ink-secondary sm:inline-flex">
         {roleLabel}
       </span>
       <ThemeToggle />

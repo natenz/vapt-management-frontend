@@ -82,6 +82,8 @@ export const projectSchema = z.object({
   status: statusSchema.optional().nullable(),
   pm_id: z.number(),
   pm: userSchema.optional().nullable(),
+  /** Waktu proyek dibuat (BE: projects.created_at). Dipakai untuk urutan "proyek baru". */
+  created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
 });
 export type Project = z.infer<typeof projectSchema>;

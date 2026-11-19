@@ -2,7 +2,9 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, startOfDay } from "date-fns";
 import {
   ArrowRight,
+  BookOpen,
   Bug,
+  FileText,
   CalendarRange,
   Clock,
   FolderKanban,
@@ -13,7 +15,14 @@ import {
 import { Link } from "react-router";
 import { listCatalog } from "@/entities/catalog";
 import { listFindings } from "@/entities/finding";
-import { currentMonth, getResourceLoad, listProjects, ProjectStatusBadge, type Project } from "@/entities/project";
+import {
+  currentMonth,
+  getResourceLoad,
+  listActiveProjectDetails,
+  listAllProjects,
+  ProjectStatusBadge,
+  type Project,
+} from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { listUsers } from "@/entities/user";
 import { ROLE_LABEL, isRole } from "@/shared/config/roles";
@@ -25,8 +34,11 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { PentesterDashboard } from "./pentester-dashboard";
+import { PmDashboard } from "./pm-dashboard";
 import { SuperAdminDashboard } from "./superadmin-dashboard";
 import { TechLeadDashboard } from "./techlead-dashboard";
+import { WriterDashboard } from "./writer-dashboard";
 
 // Batas proyek per role ditegakkan BE (service/access.go roleStatuses). Di sini hanya dipilah:
 // "giliran" = status yang menunggu tindakan role ini; sisanya proyek berjalan yang cukup dipantau.
@@ -44,26 +56,6 @@ const RUNNING: Record<string, string> = {
 };
 
 const VIEWS: Record<string, RoleView> = {
-  pentester: {
-    turn: ["Assessment", "Analysis", "Retesting"],
-    turnHint: "Proyek yang sedang Anda uji, analisis, atau uji ulang.",
-    next: { ...RUNNING, Assessment: "Uji aset dan catat temuan", Analysis: "Validasi dan lengkapi temuan", Retesting: "Uji ulang temuan yang diperbaiki" },
-  },
-  technical_writer: {
-    turn: ["Initial Report", "Final Report Drafting", "Final Presentation"],
-    turnHint: "Proyek yang laporannya perlu Anda susun atau presentasikan.",
-    next: { ...RUNNING, "Initial Report": "Koreksi temuan dan susun Initial Report", "Final Report Drafting": "Susun Final Report", "Final Presentation": "Presentasikan hasil ke klien" },
-  },
-  project_manager: {
-    turn: ["Planning", "Remediasi", "Retesting"],
-    turnHint: "Proyek Anda yang perlu disiapkan, atau menunggu keputusan Anda di Remediasi/Retesting.",
-    next: {
-      ...RUNNING,
-      Planning: "Isi aset, assign tim, lalu kickoff",
-      Remediasi: "Mulai Retesting setelah klien selesai",
-      Retesting: "Tutup Retesting atau kembalikan ke Remediasi",
-    },
-  },
   tech_lead: {
     turn: ["Draft"],
     turnHint: "Template yang perlu dilengkapi lalu diserahkan ke PM.",
@@ -154,7 +146,8 @@ export function DashboardPage() {
   const user = useSession((s) => s.user);
   const role = user?.role?.role_name ?? "";
   const view = VIEWS[role] ?? VIEWS.tech_lead!;
-  const projects = useQuery({ queryKey: ["projects", "all"], queryFn: () => listProjects({ limit: 100 }) });
+  // Key sama dengan halaman /projects (listAllProjects menangani paging BE > 100 proyek)
+  const projects = useQuery({ queryKey: ["projects", "all"], queryFn: listAllProjects });
 
   const active = (projects.data?.data ?? [])
     .filter((p) => p.status?.status_name !== "Done")
@@ -165,20 +158,23 @@ export function DashboardPage() {
   const isSuperAdmin = role === "super_admin";
   const isTechLead = role === "tech_lead";
   const isTlView = isTechLead || isSuperAdmin;
+  const isPentester = role === "pentester";
+  const isWriter = role === "technical_writer";
+  const isPm = role === "project_manager";
 
-  // Data tambahan khusus Super Admin & Tech Lead (Executive & Resource Capacity Overview)
+  // Data tambahan Tech Lead. Super Admin mengambil datanya sendiri lewat useSuperAdminData.
   const users = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers(),
-    enabled: isSuperAdmin || isTechLead,
+    enabled: isTechLead,
   });
   const load = useQuery({
     queryKey: ["workload", "detail", currentMonth()],
     queryFn: () => getResourceLoad(currentMonth()),
-    enabled: isSuperAdmin || isTechLead,
+    enabled: isTechLead,
   });
 
-  const withFindings = isTlView ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
+  const withFindings = isTlView || isPentester || isWriter || isPm ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
   const findings = useQueries({
     queries: withFindings.map((p) => ({ queryKey: ["findings", p.project_id], queryFn: () => listFindings(p.project_id) })),
   });
@@ -186,16 +182,28 @@ export function DashboardPage() {
   withFindings.forEach((p, i) => {
     const list = findings[i]?.data;
     if (!list) return;
-    const mine = role === "pentester" ? list.filter((f) => f.pentester_id === user?.sys_user_id) : list;
-    openCount.set(p.project_id, mine.filter((f) => OPEN.includes(f.status)).length);
+    openCount.set(p.project_id, list.filter((f) => OPEN.includes(f.status)).length);
   });
   const name = user?.profile?.full_name ?? user?.username ?? "";
 
-  // Tech Lead / Super Admin: data antrean katalog
+  // Tech Lead: detail proyek (penugasan mandays) untuk heatmap & perencana slot.
+  // Key sama dengan linimasa di /resources sehingga cache terpakai bersama.
+  const details = useQuery({
+    queryKey: ["projects", "active-details", currentMonth()],
+    queryFn: () => listActiveProjectDetails(currentMonth()),
+    enabled: isTechLead,
+  });
+  const approved = useQuery({
+    queryKey: ["catalog", "approved"],
+    queryFn: () => listCatalog({ status: "approved" }),
+    enabled: isTechLead,
+  });
+
+  // Tech Lead: data antrean katalog
   const pending = useQuery({
     queryKey: ["catalog", "pending"],
     queryFn: () => listCatalog({ status: "pending" }),
-    enabled: isTechLead || isSuperAdmin,
+    enabled: isTechLead,
   });
   const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
 
@@ -223,6 +231,21 @@ export function DashboardPage() {
                 <Link to="/projects/new">Buat Project Template</Link>
               </Button>
             </div>
+          ) : isPentester || isWriter || isPm ? (
+            <div className="flex items-center gap-2">
+              {isPentester ? (
+                <Button asChild variant="outline" leadingIcon={<BookOpen />}>
+                  <Link to="/catalog">Katalog Kerentanan</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline" leadingIcon={<FileText />}>
+                  <Link to="/reports">Laporan</Link>
+                </Button>
+              )}
+              <Button asChild variant="solid" leadingIcon={<FolderKanban />}>
+                <Link to="/projects">Proyek Saya</Link>
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -230,13 +253,7 @@ export function DashboardPage() {
       {projects.error ? <Alert tone="error" title="Gagal memuat proyek">{projects.error.message}</Alert> : null}
 
       {isSuperAdmin ? (
-        <SuperAdminDashboard
-          projects={projects.data?.data ?? []}
-          users={users.data ?? []}
-          catalogQueue={pendingRows}
-          loadMap={load.data ?? {}}
-          isLoading={projects.isLoading || users.isLoading || load.isLoading}
-        />
+        <SuperAdminDashboard projects={projects.data?.data ?? []} isLoading={projects.isLoading} />
       ) : isTechLead ? (
         <TechLeadDashboard
           projects={projects.data?.data ?? []}
@@ -244,7 +261,21 @@ export function DashboardPage() {
           catalogQueue={pendingRows}
           loadMap={load.data ?? {}}
           isLoading={projects.isLoading || users.isLoading || load.isLoading}
+          details={details.data ?? []}
+          detailsLoading={details.isLoading}
+          detailsError={details.error}
+          approvedCount={approved.data ? approved.data.length : null}
         />
+      ) : isPentester ? (
+        <PentesterDashboard
+          projects={projects.data?.data ?? []}
+          sysUserId={user?.sys_user_id ?? 0}
+          isLoading={projects.isLoading}
+        />
+      ) : isPm ? (
+        <PmDashboard projects={projects.data?.data ?? []} isLoading={projects.isLoading} />
+      ) : isWriter ? (
+        <WriterDashboard projects={projects.data?.data ?? []} isLoading={projects.isLoading} />
       ) : projects.isLoading ? (
         <Skeleton className="h-40" />
       ) : (

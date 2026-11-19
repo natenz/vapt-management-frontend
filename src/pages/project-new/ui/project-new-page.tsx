@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { z } from "zod";
 import { createProject, currentMonth, getWorkload, monthLabel } from "@/entities/project";
 import { listUsers } from "@/entities/user";
@@ -34,6 +34,12 @@ type FormValues = z.input<typeof schema>;
 
 export function ProjectNewPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  // Prefill dari perencana slot dashboard Tech Lead (?mulai=YYYY-MM-DD&selesai=YYYY-MM-DD)
+  const isoParam = (k: string) => {
+    const v = params.get(k) ?? "";
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
+  };
   const queryClient = useQueryClient();
   const pms = useQuery({ queryKey: ["users", "project_manager"], queryFn: () => listUsers({ role: "project_manager" }) });
   const pentesters = useQuery({ queryKey: ["users", "pentester"], queryFn: () => listUsers({ role: "pentester" }) });
@@ -41,7 +47,12 @@ export function ProjectNewPage() {
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { resource_user_ids: [], projected_mandays: "" },
+    defaultValues: {
+      resource_user_ids: [],
+      projected_mandays: "",
+      start_date: isoParam("mulai") ?? "",
+      end_date: isoParam("selesai") ?? "",
+    },
   });
 
   // Beban pentester dihitung di bulan mulai proyek (atau bulan ini sebelum tanggal diisi).

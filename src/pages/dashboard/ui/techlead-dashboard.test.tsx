@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as catalogModule from "@/entities/catalog";
 import type { CatalogVulna } from "@/entities/catalog";
-import type { Project, ResourceLoad } from "@/entities/project";
+import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { TechLeadDashboard } from "./techlead-dashboard";
 
@@ -115,6 +115,20 @@ const mockCatalogQueue: CatalogVulna[] = [
   },
 ];
 
+// Citra penuh 2 minggu mulai Senin depan, Dimas 70% — Budi bebas.
+const mockDetails = [
+  {
+    ...mockProjects[0]!,
+    assets: [],
+    resources: [],
+    stages: [],
+    mandays: [
+      { mandays_id: 1, asset_id: 1, pentester_id: 202, start_date: "2026-11-23", end_date: "2026-12-06", allocated_mandays: 20 },
+      { mandays_id: 2, asset_id: 1, pentester_id: 203, start_date: "2026-11-23", end_date: "2026-12-06", allocated_mandays: 7 },
+    ],
+  },
+] as ProjectDetail[];
+
 function renderDashboard(props: {
   projects?: Project[];
   users?: User[];
@@ -135,6 +149,8 @@ function renderDashboard(props: {
           catalogQueue={props.catalogQueue ?? mockCatalogQueue}
           loadMap={props.loadMap ?? mockLoadMap}
           isLoading={props.isLoading ?? false}
+          details={mockDetails}
+          approvedCount={12}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -142,6 +158,13 @@ function renderDashboard(props: {
 }
 
 describe("TechLeadDashboard", () => {
+  // Kamis, 19 Nov 2026 — hanya Date yang dipalsukan agar timer RTL tetap jalan
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 19, 9));
+  });
+  afterEach(() => vi.useRealTimers());
+
   it("merender 4 SummaryTile operasional eksekutif dengan kalkulasi yang akurat", () => {
     renderDashboard();
 
@@ -178,32 +201,35 @@ describe("TechLeadDashboard", () => {
     expect(within(projectSec).queryByText("Audit API Gateway Legacy")).not.toBeInTheDocument();
   });
 
-  it("menampilkan pemetaan ketersediaan personil beserta peringatan overload", () => {
+  it("heatmap beban mingguan menandai minggu yang penuh dan menautkan linimasa", () => {
     renderDashboard();
 
-    const resourceSec = screen.getByRole("region", { name: "Ketersediaan & Penugasan Personil" });
+    const heatmap = screen.getByRole("region", { name: "Ketersediaan & Penugasan Personil" });
+    const citra = within(heatmap).getByRole("rowheader", { name: "Citra Lestari" }).closest("tr")!;
+    // 20 MD / 14 hari kalender → 5 hari kerja = 7,1 MD dari kapasitas 5 MD
+    expect(within(citra).getAllByText("143%")).toHaveLength(2);
+    expect(within(heatmap).getByRole("rowheader", { name: "Budi Santoso" })).toBeInTheDocument();
 
-    // Peringatan overload untuk Dimas (24 MD)
-    expect(
-      within(resourceSec).getByText(/1 Pentester Melebihi Batas \(> 20 MD\)/),
-    ).toBeInTheDocument();
-
-    // Daftar personil
-    expect(within(resourceSec).getByText("Budi Santoso")).toBeInTheDocument();
-    expect(within(resourceSec).getByText("Sisa kapasitas: 12 MD")).toBeInTheDocument();
-    expect(within(resourceSec).getByText("Tersedia")).toBeInTheDocument();
-
-    expect(within(resourceSec).getByText("Citra Lestari")).toBeInTheDocument();
-    expect(within(resourceSec).getByText("Padat")).toBeInTheDocument();
-
-    expect(within(resourceSec).getByText("Dimas Anggara")).toBeInTheDocument();
-    expect(within(resourceSec).getByText("Penuh")).toBeInTheDocument();
-
-    // Tombol linimasa
-    const timelineLink = within(resourceSec).getByRole("link", {
-      name: "Cek Benturan Jadwal di Linimasa",
-    });
+    const timelineLink = within(heatmap).getByRole("link", { name: "Cek Benturan Jadwal di Linimasa" });
     expect(timelineLink).toHaveAttribute("href", "/resources?tampilan=timeline");
+  });
+
+  it("perencana slot merekomendasikan slot tercepat saat pentester longgar kurang", () => {
+    renderDashboard();
+
+    const planner = screen.getByRole("region", { name: "Perencana Slot Proyek Baru" });
+    // Default: mulai Senin depan (23 Nov), 14 hari, tim 2 orang
+    expect(within(planner).getByLabelText("Tanggal mulai")).toHaveValue("2026-11-23");
+    expect(within(planner).getByRole("status")).toHaveTextContent("Hanya 1 pentester longgar, butuh 2.");
+
+    fireEvent.click(within(planner).getByRole("button", { name: "Pakai slot ini" }));
+    expect(within(planner).getByLabelText("Tanggal mulai")).toHaveValue("2026-11-30");
+    expect(within(planner).getByRole("status")).toHaveTextContent("2 pentester longgar");
+    expect(within(planner).getAllByText("Rekomendasi")).toHaveLength(2);
+    expect(within(planner).getByRole("link", { name: "Buat proyek dengan jadwal ini" })).toHaveAttribute(
+      "href",
+      "/projects/new?mulai=2026-11-30&selesai=2026-12-13",
+    );
   });
 
   it("menampilkan usulan katalog kerentanan dan menyetujui saat tombol Setujui ditekan", async () => {

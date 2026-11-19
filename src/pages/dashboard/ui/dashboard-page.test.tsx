@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { useSession } from "@/entities/session";
@@ -16,12 +16,28 @@ const p = (id: number, name: string, status: string) => ({
 });
 
 // BE sudah menyaring proyek per role (access.go roleStatuses); mock mewakili jawaban BE.
+const projectsResponse = {
+  data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Laporan", "Initial Report")],
+  meta: { page: 1, limit: 100, total: 3 },
+};
+const api = vi.hoisted(() => ({ getReport: vi.fn() }));
+
 vi.mock("@/entities/project", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/project")>()),
-  listProjects: async () => ({
-    data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Laporan", "Initial Report")],
-    meta: { page: 1, limit: 100, total: 3 },
+  listProjects: async () => projectsResponse,
+  listAllProjects: async () => projectsResponse,
+  listActiveProjectDetails: async () => [],
+  getProject: async (id: number) => ({
+    ...projectsResponse.data.find((x) => x.project_id === id)!,
+    assets: [],
+    resources: [],
+    stages: [],
+    mandays: [],
   }),
+  listStatuses: async () => [],
+  listStatusLogs: async (id: number) => [
+    { status_process_log_id: id, status_name: "Assessment", status_create_at: "2026-11-18T08:00:00Z" },
+  ],
   getResourceLoad: async () => ({
     5: { mandays: 22, projects: [] },
   }),
@@ -46,6 +62,7 @@ vi.mock("@/entities/catalog", async (importOriginal) => ({
 vi.mock("@/entities/finding", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/finding")>()),
   listFindings: async () => [],
+  getReport: api.getReport,
 }));
 
 async function mount(role: string) {
@@ -59,14 +76,19 @@ async function mount(role: string) {
 }
 
 describe("DashboardPage", () => {
-  it("pentester: Assessment masuk Giliran Anda, Remediasi dan Initial Report hanya dipantau", async () => {
+  it("pentester: bento prioritas kerja, Assessment di atas, Remediasi/Initial Report menunggu role lain", async () => {
     await mount("pentester");
-    const turn = await screen.findByRole("region", { name: "Giliran Anda" });
-    expect(within(turn).getByText("Proyek Uji")).toBeInTheDocument();
-    expect(within(turn).getByText("Uji aset dan catat temuan")).toBeInTheDocument();
-    const watch = screen.getByRole("region", { name: "Sedang berjalan" });
-    expect(within(watch).getByText("Proyek Remediasi")).toBeInTheDocument();
-    expect(within(watch).getByText("Proyek Laporan")).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Ringkasan Kerja Pentester" })).toBeInTheDocument();
+    const priority = screen.getByRole("region", { name: "Prioritas Kerja" });
+    const rows = await within(priority).findAllByRole("row");
+    // baris 0 = header; giliran pentester (Assessment) paling atas
+    expect(within(rows[1]!).getByText("Proyek Uji")).toBeInTheDocument();
+    expect(within(rows[1]!).getByText("Uji aset dan catat temuan")).toBeInTheDocument();
+    expect(within(priority).getAllByText("Menunggu role lain")).toHaveLength(2);
+    for (const name of ["Linimasa Saya", "Proyek Baru", "Siap Diuji Ulang", "Temuan Saya"]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
   it("tech lead: menampilkan ringkasan operasional, proyek berjalan & progres, ketersediaan personil, dan persetujuan katalog", async () => {
@@ -77,38 +99,109 @@ describe("DashboardPage", () => {
     expect(within(projectsSec).getByText("Proyek Remediasi")).toBeInTheDocument();
 
     const resourceSec = screen.getByRole("region", { name: "Ketersediaan & Penugasan Personil" });
-    expect(within(resourceSec).getByText("Budi Santoso")).toBeInTheDocument();
-    expect(within(resourceSec).getByRole("link", { name: /Linimasa Tim/ })).toHaveAttribute("href", "/resources?tampilan=timeline");
+    expect(await within(resourceSec).findByText("Budi Santoso")).toBeInTheDocument();
+    expect(within(resourceSec).getByRole("link", { name: /Cek Benturan Jadwal di Linimasa/ })).toHaveAttribute("href", "/resources?tampilan=timeline");
 
     const acc = screen.getByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" });
     expect(within(acc).getByText("Stored XSS")).toBeInTheDocument();
     expect(within(acc).getByText("IDOR profil")).toBeInTheDocument();
-    expect(within(acc).getByRole("link", { name: /Buka Basis Data Katalog Lengkap/ })).toHaveAttribute("href", "/catalog");
+    expect(within(acc).getByRole("link", { name: /Kelola katalog/ })).toHaveAttribute("href", "/catalog");
 
-    expect(screen.getByRole("region", { name: "Pintasan Kerja Tech Lead" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Perencana Slot Proyek Baru" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
   it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {
     await mount("pentester");
-    await screen.findByRole("region", { name: "Giliran Anda" });
+    await screen.findByRole("region", { name: "Prioritas Kerja" });
     expect(screen.queryByRole("region", { name: "Ringkasan Operasional Tech Lead" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
   });
 
-  it("tech writer: Initial Report jadi giliran, Assessment hanya dipantau", async () => {
+  it("tech writer: Initial Report di atas antrean laporan dan membuka halaman report", async () => {
+    api.getReport.mockReset();
+    api.getReport.mockImplementation(async (id: number) => ({
+      generated_at: "",
+      project: projectsResponse.data.find((x) => x.project_id === id)!,
+      assets: [],
+      summary: { total_findings: 1 },
+      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "open", evidences: [] }],
+    }));
     await mount("technical_writer");
-    const turn = await screen.findByRole("region", { name: "Giliran Anda" });
-    expect(within(turn).getByText("Proyek Laporan")).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "Sedang berjalan" })).getByText("Proyek Uji")).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Ringkasan Kerja Technical Writer" })).toBeInTheDocument();
+    const queue = screen.getByRole("region", { name: "Antrean Laporan" });
+    const rows = await within(queue).findAllByRole("row");
+    expect(within(rows[1]!).getByRole("link", { name: /Proyek Laporan/ })).toHaveAttribute("href", "/projects/2/report");
+    expect(within(rows[1]!).getByText("Koreksi temuan dan susun Initial Report")).toBeInTheDocument();
+    expect(within(queue).getAllByText("Menunggu role lain")).toHaveLength(2);
+    const quality = screen.getByRole("region", { name: "Kelengkapan Temuan" });
+    expect(await within(quality).findByText("Temuan 2")).toBeInTheDocument();
+    for (const name of ["Linimasa Saya", "Volume Temuan"]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
   });
 
-  it("super admin: menampilkan ringkasan eksekutif, proyek prioritas, dan pantauan kapasitas", async () => {
+  it("project manager: Remediasi di atas daftar tindakan, kartu kickoff, remediasi, dan jadwal", async () => {
+    api.getReport.mockReset();
+    api.getReport.mockImplementation(async (id: number) => ({
+      generated_at: "",
+      project: projectsResponse.data.find((x) => x.project_id === id)!,
+      assets: [],
+      summary: { total_findings: 1 },
+      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "remediated" }],
+    }));
+    await mount("project_manager");
+    expect(await screen.findByRole("region", { name: "Ringkasan Proyek Project Manager" })).toBeInTheDocument();
+    const queue = screen.getByRole("region", { name: "Perlu Tindakan Anda" });
+    const rows = await within(queue).findAllByRole("row");
+    expect(within(rows[1]!).getByText("Proyek Remediasi")).toBeInTheDocument();
+    expect(within(rows[1]!).getByText("Mulai Retesting setelah klien selesai")).toBeInTheDocument();
+    const remediation = screen.getByRole("region", { name: "Progres Remediasi" });
+    expect(await within(remediation).findByText(/Siap mulai Retesting/)).toBeInTheDocument();
+    for (const name of ["Proyek Berjalan & Progres", "Kesiapan Kickoff", "Linimasa Saya"]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("link", { name: /^Laporan$/ })).toHaveAttribute("href", "/reports");
+  });
+
+  it("super admin: bento lintas modul (proyek, temuan, tim, katalog, aktivitas)", async () => {
+    api.getReport.mockReset();
+    api.getReport.mockImplementation(async (id: number) => {
+      // Satu report gagal tidak boleh menjatuhkan kartu lain
+      if (id === 2) throw new Error("gagal");
+      const project = projectsResponse.data.find((x) => x.project_id === id)!;
+      return {
+        generated_at: "",
+        project,
+        assets: [],
+        summary: { total_findings: 1 },
+        findings: [{ vulna_id: id, custom_title: "SQLi", severity: "Critical", status: "open" }],
+      };
+    });
     await mount("super_admin");
     expect(await screen.findByRole("region", { name: "Ringkasan Eksekutif Sistem" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Proyek Prioritas & Tenggat" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Pantauan Kapasitas Tim" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Pintasan Administrasi" })).toBeInTheDocument();
+    for (const name of [
+      "Tren Proyek",
+      "Severity Temuan Terbuka",
+      "Siklus Tahap Proyek",
+      "Proyek Paling Berisiko",
+      "Kapasitas Tim",
+      "Komposisi Pengguna",
+      "Status Penanganan Temuan",
+      "Tenggat Terdekat",
+      "Aktivitas Terbaru",
+      "Katalog Kerentanan",
+      "Pintasan Administrasi",
+    ]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
+    // Report hanya untuk proyek Assessment ke atas (ketiganya), proyek gagal ditandai
+    await waitFor(() => expect(api.getReport).toHaveBeenCalledTimes(3));
+    const risky = screen.getByRole("region", { name: "Proyek Paling Berisiko" });
+    expect(await within(risky).findByText("Proyek Uji")).toBeInTheDocument();
+    expect(within(risky).getByText(/1 proyek belum termuat/)).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Kapasitas Tim" })).getByText("Budi Santoso")).toBeInTheDocument();
+    expect(await within(screen.getByRole("region", { name: "Aktivitas Terbaru" })).findAllByText("Proyek Uji")).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: /Tambah Pengguna/ })).toHaveAttribute("href", "/users");
     expect(screen.getAllByRole("link", { name: /Buat Proyek/ })[0]).toHaveAttribute("href", "/projects/new");
   });
