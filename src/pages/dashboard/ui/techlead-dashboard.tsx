@@ -72,7 +72,7 @@ export function TechLeadDashboard({
               variant="outline"
               className="h-7 gap-1 border-ink-inverse/30 bg-transparent px-2.5 text-caption font-medium text-ink-inverse hover:border-ink-inverse hover:bg-ink-inverse/15 hover:text-ink-inverse"
             >
-              <Link to="/catalog?status=pending">
+              <Link to="/catalog">
                 <span>Tinjau</span>
                 <ArrowRight className="size-3" aria-hidden="true" />
               </Link>
