@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { z } from "zod";
 import {
   changeFindingStatus,
@@ -18,6 +17,8 @@ import {
 } from "@/entities/finding";
 import { useSession } from "@/entities/session";
 import type { ProjectDetail } from "@/entities/project";
+import { CreateFindingForm } from "@/features/create-finding";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Field, Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
@@ -189,6 +190,7 @@ function EditFinding({
 export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const qc = useQueryClient();
   const user = useSession((u) => u.user);
+  const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [notingId, setNotingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -226,7 +228,20 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="findings" className="text-title-md text-ink">Temuan <span className="text-body-sm text-ink-muted">({data?.length ?? 0})</span></h2>
         {canRecord ? (
-          <Button asChild variant="solid" leadingIcon={<Plus />}><Link to={`/projects/${project.project_id}/findings/new`}>Tambah temuan</Link></Button>
+          <Dialog open={creating} onOpenChange={setCreating}>
+            <DialogTrigger asChild>
+              <Button type="button" variant="solid" leadingIcon={<Plus />}>Tambah temuan</Button>
+            </DialogTrigger>
+            <DialogContent size="lg" className="max-h-[90dvh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Tambah temuan</DialogTitle>
+                <DialogDescription>{project.project_name}</DialogDescription>
+              </DialogHeader>
+              <div className="mt-6">
+                <CreateFindingForm project={project} onSuccess={() => setCreating(false)} onCancel={() => setCreating(false)} />
+              </div>
+            </DialogContent>
+          </Dialog>
         ) : null}
       </div>
       {(data ?? []).length > 0 ? (
