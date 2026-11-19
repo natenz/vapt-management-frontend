@@ -223,6 +223,7 @@ export function ResourcesPage() {
           label="Pentester"
           value={loading ? null : count("pentester")}
           unit="Orang"
+          fill="brand"
           loading={loading}
         />
         <SummaryTile
@@ -230,6 +231,7 @@ export function ResourcesPage() {
           label="Technical Writer"
           value={loading ? null : count("technical_writer")}
           unit="Orang"
+          fill="info"
           loading={loading}
         />
         <SummaryTile
@@ -237,6 +239,7 @@ export function ResourcesPage() {
           label="Project Manager"
           value={loading ? null : count("project_manager")}
           unit="Orang"
+          fill="warning"
           loading={loading}
         />
         <SummaryTile
@@ -244,6 +247,7 @@ export function ResourcesPage() {
           label="Total"
           value={loading ? null : allRows.length}
           unit="Orang"
+          fill="success"
           loading={loading}
         />
       </section>

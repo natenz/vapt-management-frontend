@@ -16,7 +16,7 @@ type SummaryTileProps = {
   /** Kata benda yang dihitung: "Proyek", "Temuan". */
   unit: string;
   icon: ReactNode;
-  fill?: "charcoal" | "brand";
+  fill?: "charcoal" | "brand" | "info" | "warning" | "success";
   /** Keterangan di bawah. `value` opsional ditebalkan sebelum teks. */
   note?: { value?: ReactNode; text: string };
   loading?: boolean;
@@ -39,7 +39,15 @@ export function SummaryTile({
       aria-busy={loading || undefined}
       className={cn(
         "flex flex-col rounded-md p-6 text-ink-inverse",
-        fill === "brand" ? "gradient-brand-deep-tile" : "gradient-charcoal-tile",
+        fill === "brand"
+          ? "gradient-brand-deep-tile"
+          : fill === "info"
+            ? "gradient-info-tile"
+            : fill === "warning"
+              ? "gradient-warning-tile"
+              : fill === "success"
+                ? "gradient-success-tile"
+                : "gradient-charcoal-tile",
       )}
     >
       <div className="flex items-start justify-between gap-4">
