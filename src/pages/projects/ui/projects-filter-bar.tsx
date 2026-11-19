@@ -18,6 +18,7 @@ interface ProjectsFilterBarProps {
   /** Jumlah baris setelah semua filter (termasuk pencarian). */
   resultCount: number;
   totalCount: number;
+  projectNoun?: string;
 }
 
 export function ProjectsFilterBar({
@@ -27,6 +28,7 @@ export function ProjectsFilterBar({
   clientOptions,
   resultCount,
   totalCount,
+  projectNoun = "proyek",
 }: ProjectsFilterBarProps) {
   const update = (patch: Partial<ProjectFilters>) => onChange({ ...filters, ...patch });
   const isFiltered = hasAnyFilter(filters);
@@ -34,14 +36,14 @@ export function ProjectsFilterBar({
   return (
     <div
       role="search"
-      aria-label="Filter proyek"
+      aria-label={`Filter ${projectNoun}`}
       className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
     >
       {/* Kiri: pencarian + total proyek */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <SearchInput
-          aria-label="Cari proyek"
-          placeholder="Cari nama proyek atau klien"
+          aria-label={`Cari ${projectNoun}`}
+          placeholder={`Cari nama ${projectNoun} atau klien`}
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
           className="h-9 sm:w-72"
@@ -51,8 +53,8 @@ export function ProjectsFilterBar({
           className="shrink-0 text-xs whitespace-nowrap text-ink-muted tabular-nums"
         >
           {isFiltered
-            ? `Menampilkan ${resultCount} dari ${totalCount} proyek`
-            : `${totalCount} proyek`}
+            ? `Menampilkan ${resultCount} dari ${totalCount} ${projectNoun}`
+            : `${totalCount} ${projectNoun}`}
         </p>
       </div>
 

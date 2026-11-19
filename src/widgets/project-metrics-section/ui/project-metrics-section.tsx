@@ -32,6 +32,8 @@ interface ProjectMetricsSectionProps {
   onViewChange?: (view: ScheduleView) => void;
   /** Isi tab Timeline; dirakit oleh halaman agar widget tidak saling bergantung. */
   renderTimeline?: (context: TimelineRenderContext) => ReactNode;
+  projectLabel?: string;
+  projectNoun?: string;
 }
 
 export function ProjectMetricsSection({
@@ -42,6 +44,8 @@ export function ProjectMetricsSection({
   view: controlledView,
   onViewChange,
   renderTimeline,
+  projectLabel = "Proyek",
+  projectNoun = "proyek",
 }: ProjectMetricsSectionProps) {
   const cleanupObserverRef = useRef<(() => void) | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(1000);
@@ -185,7 +189,7 @@ export function ProjectMetricsSection({
       <Tabs value={view} onValueChange={(v) => setView(v === "timeline" ? "timeline" : "overview")}>
         {/* 1. Baris kontrol di luar card: pengalih tampilan (kiri) + filter grafik (kanan) */}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <SegmentedTabsList aria-label="Tampilan jadwal proyek" className="self-start">
+          <SegmentedTabsList aria-label={`Tampilan jadwal ${projectNoun}`} className="self-start">
             <SegmentedTabsTrigger value="overview">Overview</SegmentedTabsTrigger>
             <SegmentedTabsTrigger value="timeline">Timeline</SegmentedTabsTrigger>
           </SegmentedTabsList>
@@ -202,7 +206,7 @@ export function ProjectMetricsSection({
         <TabsContent value="overview" className="mt-4">
           <div className="min-w-0 rounded-md border border-border bg-surface p-6">
             <div data-slot="project-schedule-summary">
-              <h2 className="text-sm font-normal text-ink-muted">Overview Jadwal Proyek</h2>
+              <h2 className="text-sm font-normal text-ink-muted">Overview Jadwal {projectLabel}</h2>
               <div className="mt-1 flex items-baseline gap-3">
                 {isLoading ? (
                   <Skeleton className="h-9 w-12" />
@@ -273,7 +277,7 @@ export function ProjectMetricsSection({
                         <span className="text-lg leading-none text-ink tabular-nums">
                           {tooltipPoint.count}
                         </span>
-                        <span className="text-ink-secondary">proyek terjadwal</span>
+                        <span className="text-ink-secondary">{projectNoun} terjadwal</span>
                       </div>
 
                       {/* Daftar proyek */}
@@ -293,13 +297,13 @@ export function ProjectMetricsSection({
                           ))}
                           {tooltipPoint.projectNames.length > 3 ? (
                             <li className="pl-3.5 text-[11px] text-ink-muted">
-                              +{tooltipPoint.projectNames.length - 3} proyek lainnya
+                              +{tooltipPoint.projectNames.length - 3} {projectNoun} lainnya
                             </li>
                           ) : null}
                         </ul>
                       ) : (
                         <p className="mt-2 border-t border-border pt-2 text-[11px] text-ink-muted">
-                          Tidak ada proyek pada periode ini
+                          Tidak ada {projectNoun} pada periode ini
                         </p>
                       )}
                     </div>

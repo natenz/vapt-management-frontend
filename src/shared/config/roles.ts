@@ -56,5 +56,9 @@ export function isRole(name: string | undefined | null): name is RoleName {
 }
 
 export function navFor(role: string | undefined) {
-  return isRole(role) ? NAV.filter((i) => i.roles.includes(role)) : [];
+  if (!isRole(role)) return [];
+
+  return NAV.filter((i) => i.roles.includes(role)).map((item) =>
+    role === "tech_lead" && item.to === "/projects" ? { ...item, label: "Projects" } : item,
+  );
 }

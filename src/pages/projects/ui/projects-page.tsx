@@ -61,6 +61,9 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const role = useSession((s) => s.user?.role?.role_name);
   const currentUserId = useSession((s) => s.user?.sys_user_id);
+  const isTechLead = role === "tech_lead";
+  const projectLabel = isTechLead ? "Projects" : "Proyek";
+  const projectNoun = isTechLead ? "projects" : "proyek";
   const includePm = role !== "project_manager";
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -88,7 +91,7 @@ export function ProjectsPage() {
         header: () => (
           <span className="inline-flex items-center gap-1.5 font-normal normal-case">
             <FolderKanban className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-            <span>Proyek</span>
+            <span>{projectLabel}</span>
           </span>
         ),
         cell: ({ row }) => (
@@ -159,23 +162,23 @@ export function ProjectsPage() {
         cell: ({ row }) => <ProjectStatusBadge name={row.original.status?.status_name} />,
       },
     ];
-  }, [includePm, currentUserId]);
+  }, [includePm, currentUserId, projectLabel]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Proyek"
-        description="Proyek-proyek yang bisa kamu buka."
+        title={projectLabel}
+        description={`${projectLabel} yang bisa kamu buka.`}
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
-              <Link to="/projects/new">Buat Template Proyek</Link>
+              <Link to="/projects/new">Buat Template {projectLabel}</Link>
             </Button>
           ) : undefined
         }
       />
       {error && view === "overview" ? (
-        <Alert tone="error" title="Gagal memuat proyek">
+        <Alert tone="error" title={`Gagal memuat ${projectNoun}`}>
           {error.message}
         </Alert>
       ) : null}
@@ -187,6 +190,8 @@ export function ProjectsPage() {
         isLoading={isLoading}
         view={view}
         onViewChange={setView}
+        projectLabel={projectLabel}
+        projectNoun={projectNoun}
         renderTimeline={({ schedule, onScheduleChange }) => (
           // Memakai data kueri yang sama dengan Overview: tanpa request tambahan
           <ProjectTimeline
@@ -209,12 +214,13 @@ export function ProjectsPage() {
             clientOptions={clientOptions}
             resultCount={filteredProjects.length}
             totalCount={allProjects.length}
+            projectNoun={projectNoun}
           />
           <DataTable
             columns={columns}
             data={filteredProjects}
-            noun="proyek"
-            caption="Daftar Proyek"
+            noun={projectNoun}
+            caption={`Daftar ${projectLabel}`}
             isLoading={isLoading}
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
@@ -226,7 +232,7 @@ export function ProjectsPage() {
               isFiltered ? (
                 <EmptyState
                   icon={<FolderKanban />}
-                  title="Tidak ada proyek yang cocok"
+                  title={`Tidak ada ${projectNoun} yang cocok`}
                   description="Coba ubah kata kunci atau kurangi filter yang aktif."
                   action={
                     <Button variant="quiet" onClick={() => setFilters(EMPTY_PROJECT_FILTERS)}>
@@ -237,8 +243,8 @@ export function ProjectsPage() {
               ) : (
                 <EmptyState
                   icon={<FolderKanban />}
-                  title="Belum ada proyek"
-                  description="Proyek yang bisa kamu buka akan muncul di sini."
+                  title={`Belum ada ${projectNoun}`}
+                  description={`${projectLabel} yang bisa kamu buka akan muncul di sini.`}
                 />
               )
             }
