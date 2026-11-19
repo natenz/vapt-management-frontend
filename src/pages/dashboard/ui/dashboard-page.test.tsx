@@ -152,7 +152,7 @@ describe("DashboardPage", () => {
     }
   });
 
-  it("project manager: 3 KPI, Proyek Berjalan selebar penuh tanpa Perlu Tindakan Anda, kartu lain tidak ada", async () => {
+  it("project manager: 2 KPI, Proyek Berjalan selebar penuh tanpa Perlu Tindakan Anda, kartu lain tidak ada", async () => {
     api.getReport.mockReset();
     api.getReport.mockImplementation(async (id: number) => ({
       generated_at: "",
@@ -163,9 +163,10 @@ describe("DashboardPage", () => {
     }));
     await mount("project_manager");
     const summary = await screen.findByRole("region", { name: "Ringkasan Proyek Project Manager" });
-    for (const label of ["Proyek Saya", "Jadwal Bermasalah", "Total Findings"]) {
+    for (const label of ["Projects", "Total Findings"]) {
       expect(within(summary).getByText(label)).toBeInTheDocument();
     }
+    expect(within(summary).queryByText("Jadwal Bermasalah")).not.toBeInTheDocument();
     expect(within(summary).queryByText("Findings Terbuka")).not.toBeInTheDocument();
     expect(within(summary).queryByText("Persiapan Assessment")).not.toBeInTheDocument();
 

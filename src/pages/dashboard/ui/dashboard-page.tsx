@@ -237,7 +237,7 @@ export function DashboardPage() {
                 </Button>
               )}
               <Button asChild variant="solid" leadingIcon={<FolderKanban />}>
-                <Link to="/projects">Proyek Saya</Link>
+                <Link to="/projects">{isPm ? "Projects" : "Proyek Saya"}</Link>
               </Button>
             </div>
           ) : undefined

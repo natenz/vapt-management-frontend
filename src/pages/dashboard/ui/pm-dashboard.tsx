@@ -2,7 +2,7 @@
  * Dashboard Project Manager — ringkas: tiga angka utama, lalu daftar proyek
  * berjalan beserta progresnya selebar penuh.
  */
-import { Bug, CalendarClock, FolderKanban } from "lucide-react";
+import { Bug, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
 import type { Project } from "@/entities/project";
 import { BentoGrid } from "@/shared/ui/bento-grid";
@@ -30,29 +30,20 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
   const running = useMemo(() => runningProjects(data.active, today), [data.active, today]);
 
   const reportsLoading = isLoading || data.reports.isLoading;
-  const late = running.filter((r) => r.health === "late").length;
-  const risk = running.filter((r) => r.health === "at-risk").length;
   const totalFindings = queue.reduce((s, r) => s + (r.findings?.total ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-5" data-slot="pm-dashboard">
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2"
         aria-label="Ringkasan Proyek Project Manager"
       >
         <SummaryTile
-          label="Proyek Saya"
+          label="Projects"
           value={isLoading ? null : data.active.length}
           unit="Proyek"
           icon={<FolderKanban />}
           fill="brand"
-          loading={isLoading}
-        />
-        <SummaryTile
-          label="Jadwal Bermasalah"
-          value={isLoading ? null : late + risk}
-          unit="Proyek"
-          icon={<CalendarClock />}
           loading={isLoading}
         />
         <SummaryTile
