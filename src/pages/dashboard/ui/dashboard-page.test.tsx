@@ -141,7 +141,7 @@ describe("DashboardPage", () => {
     }
   });
 
-  it("project manager: Remediasi di atas daftar tindakan, kartu kickoff, remediasi, dan jadwal", async () => {
+  it("project manager: Remediasi di atas daftar tindakan, kartu kesiapan Assessment, remediasi, dan jadwal", async () => {
     api.getReport.mockReset();
     api.getReport.mockImplementation(async (id: number) => ({
       generated_at: "",
@@ -158,7 +158,7 @@ describe("DashboardPage", () => {
     expect(within(rows[1]!).getByText("Mulai Retesting setelah klien selesai")).toBeInTheDocument();
     const remediation = screen.getByRole("region", { name: "Progres Remediasi" });
     expect(await within(remediation).findByText(/Siap mulai Retesting/)).toBeInTheDocument();
-    for (const name of ["Proyek Berjalan & Progres", "Kesiapan Kickoff", "Linimasa Saya"]) {
+    for (const name of ["Proyek Berjalan & Progres", "Kesiapan Assessment", "Linimasa Saya"]) {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: /^Laporan$/ })).toHaveAttribute("href", "/reports");
@@ -208,7 +208,8 @@ describe("DashboardPage", () => {
 });
 
 describe("stageIndexForStatus", () => {
-  it("status 3-10 = tahap timeline; Draft/Planning belum kickoff", () => {
+  it("Scoping..Final Presentation = tahap timeline; Draft belum kickoff; Planning sudah tidak ada", () => {
+    expect(stageIndexForStatus("Draft")).toBe(-1);
     expect(stageIndexForStatus("Planning")).toBe(-1);
     expect(stageIndexForStatus("Scoping")).toBe(0);
     expect(stageIndexForStatus("Remediasi")).toBe(4);

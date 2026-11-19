@@ -1,9 +1,13 @@
 import { PROJECT_STATUSES } from "@/shared/api/schemas";
 
-// 8 tahap timeline VAPT = status ke-3 s/d ke-10 (Scoping..Final Presentation), sama dengan trx_project_stages.
-export const TIMELINE_STAGES = PROJECT_STATUSES.slice(2, 10);
+// 8 tahap timeline VAPT (Scoping..Final Presentation), sama dengan trx_project_stages. Dipotong berdasarkan nama,
+// bukan indeks, agar tidak bergeser bila master status berubah.
+export const TIMELINE_STAGES = PROJECT_STATUSES.slice(
+  PROJECT_STATUSES.indexOf("Scoping"),
+  PROJECT_STATUSES.indexOf("Final Presentation") + 1,
+);
 
-/** Indeks tahap timeline untuk status proyek. Draft/Planning = -1 (belum kickoff), Done = 8 (semua selesai). */
+/** Indeks tahap timeline untuk status proyek. Draft = -1 (belum diserahkan ke PM), Done = 8 (semua selesai). */
 export function stageIndexForStatus(status: string): number {
   if (status === "Done") return TIMELINE_STAGES.length;
   return TIMELINE_STAGES.indexOf(status as (typeof TIMELINE_STAGES)[number]);

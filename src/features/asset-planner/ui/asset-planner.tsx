@@ -249,11 +249,11 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
 
       {projected > 0 ? (
         <p className={cn("rounded-sm border px-3 py-2 text-body-sm tabular", overBudget ? "border-error text-error" : "border-border text-ink-secondary")} role={overBudget ? "alert" : undefined}>
-          Mandays proyeksi Tech Lead: <strong>{fmt(projected)} md</strong> · terpakai aset: <strong>{fmt(used)} md</strong> ·{" "}
+          Mandays proyeksi: <strong>{fmt(projected)} md</strong> · terpakai aset: <strong>{fmt(used)} md</strong> ·{" "}
           {overBudget ? `lebih ${fmt(used - projected)} md, kurangi mandays aset` : `sisa ${fmt(projected - used)} md`}
         </p>
       ) : (
-        <p className="text-caption text-ink-muted">Tech Lead belum menetapkan mandays proyeksi, jadi total mandays aset belum dibatasi.</p>
+        <p className="text-caption text-ink-muted">Mandays proyeksi belum ditetapkan, jadi total mandays aset belum dibatasi.</p>
       )}
 
       {stale ? (

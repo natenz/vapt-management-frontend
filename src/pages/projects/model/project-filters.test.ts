@@ -36,7 +36,7 @@ const today = new Date(2026, 10, 17);
 const projects = [
   make(1, "VAPT Internet Banking", "Bank Telkom", "Done", "2026-01-01", "2026-01-30"),
   make(2, "VAPT Mobile Banking", "Telkom Fin", "Retesting", "2026-11-01", "2026-11-30"),
-  make(3, "Audit Portal", "Bank Telkom", "Planning", "2026-12-01", "2026-12-20"),
+  make(3, "Audit Portal", "Bank Telkom", "Scoping", "2026-12-01", "2026-12-20"),
   make(4, "Draft Tanpa Jadwal", "Telkom Fin", "Draft", null, null),
 ];
 
@@ -56,7 +56,7 @@ describe("project-filters: pencocokan", () => {
   it("filter status & klien multi-pilih digabung dengan AND antar faset", () => {
     const f = {
       ...EMPTY_PROJECT_FILTERS,
-      statuses: ["Done", "Planning", "Retesting"],
+      statuses: ["Done", "Scoping", "Retesting"],
       clients: ["Bank Telkom"],
     };
     expect(ids(applyProjectFilters(projects, f, today))).toEqual([1, 3]);
@@ -92,10 +92,10 @@ describe("project-filters: opsi faset", () => {
     const options = getStatusOptions(projects);
     expect(options.slice(0, 2)).toEqual([
       { value: "Draft", count: 1 },
-      { value: "Planning", count: 1 },
+      { value: "Scoping", count: 1 },
     ]);
     expect(options.at(-1)).toEqual({ value: "Done", count: 1 });
-    expect(options).toHaveLength(11);
+    expect(options).toHaveLength(10);
   });
 
   it("klien unik diurutkan alfabetis", () => {
@@ -110,7 +110,7 @@ describe("project-filters: sinkronisasi URL", () => {
   it("menulis lalu membaca kembali filter tanpa kehilangan nilai", () => {
     const filters = {
       search: "bank",
-      statuses: ["Planning", "Done"],
+      statuses: ["Scoping", "Done"],
       clients: ["Bank Telkom"],
       schedule: "upcoming" as const,
     };

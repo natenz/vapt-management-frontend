@@ -69,7 +69,7 @@ describe("metrics: status and date validation", () => {
     const p = makeProject(1, "Proyek Tanpa Status Objek", "", "2026-11-01", "2026-11-30", 1);
     p.status = null;
 
-    const statusMap = new Map<number, string>([[1, "Draft"], [2, "Planning"]]);
+    const statusMap = new Map<number, string>([[1, "Draft"], [2, "Scoping"]]);
     expect(isProjectEligibleForSchedule(p, statusMap).valid).toBe(false);
 
     p.status_id = 2;
@@ -77,9 +77,9 @@ describe("metrics: status and date validation", () => {
   });
 
   it("mengecualikan proyek dengan tanggal hilang atau rentang tanggal tidak valid", () => {
-    expect(isProjectEligibleForSchedule(makeProject(1, "Tanpa Start", "Planning", null, "2026-11-30")).valid).toBe(false);
-    expect(isProjectEligibleForSchedule(makeProject(2, "Tanpa End", "Planning", "2026-11-01", null)).valid).toBe(false);
-    expect(isProjectEligibleForSchedule(makeProject(3, "Terbalik", "Planning", "2026-12-01", "2026-11-01")).valid).toBe(false);
+    expect(isProjectEligibleForSchedule(makeProject(1, "Tanpa Start", "Scoping", null, "2026-11-30")).valid).toBe(false);
+    expect(isProjectEligibleForSchedule(makeProject(2, "Tanpa End", "Scoping", "2026-11-01", null)).valid).toBe(false);
+    expect(isProjectEligibleForSchedule(makeProject(3, "Terbalik", "Scoping", "2026-12-01", "2026-11-01")).valid).toBe(false);
   });
 });
 
@@ -88,7 +88,7 @@ describe("metrics: core calculation logic with dynamic granularity and range", (
 
   const sampleProjects: Project[] = [
     makeProject(1, "Network", "Assessment", "2026-11-01", "2026-12-23"),
-    makeProject(2, "Website", "Planning", "2026-11-16", "2026-12-11"),
+    makeProject(2, "Website", "Scoping", "2026-11-16", "2026-12-11"),
     makeProject(3, "HRIS", "Remediasi", "2026-11-02", "2026-11-27"),
     makeProject(4, "Gateway", "Done", "2026-10-01", "2026-10-31"), // Done disertakan
     makeProject(5, "Draft Project", "Draft", "2026-11-01", "2026-11-30"), // Draft dikecualikan

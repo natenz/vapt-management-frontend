@@ -124,10 +124,12 @@ Breakpoints:
 
 ### Alur Siklus Proyek (Application Scope):
 ```text
-Draft ──► Planning ──► Pentest ──► Reporting ──► Remediation ──► Retest ──► Done
-                                                        ▲            │ (jika reopened)
-                                                        └────────────┘
+Draft ──► Scoping ──► Assessment ──► Analysis ──► Initial Report ──► Remediasi ──► Retesting ──► Final Report Drafting ──► Final Presentation ──► Done
+                                                                        ▲             │ (jika masih rentan)
+                                                                        └─────────────┘
 ```
+- Tidak ada status **Planning**. "Kickoff proyek" (Tech Lead/Superadmin, syarat ≥ 1 resource) memindahkan Draft langsung ke Scoping; PM mengisi aset & assign pentester selama Scoping.
+- Scoping → Assessment mensyaratkan setiap aset punya pentester; BE AutoAdvance tidak melompati syarat ini walau tanggal tahap lewat.
 
 ### Akun Demo Pengujian (Seeder Backend):
 | Role | Username | Password | Tanggung Jawab |

@@ -8,8 +8,8 @@ describe("mandaysState", () => {
   it("selesai tahap Pentest => done, walau mandays.status masih planned (kondisi nyata BE)", () => {
     for (const s of ["Initial Report", "Remediasi", "Retesting", "Done"]) expect(mandaysState(m("planned"), s, today)).toBe("done");
   });
-  it("Draft/Planning => todo", () => {
-    expect(mandaysState(m("planned"), "Planning", today)).toBe("todo");
+  it("Draft/Scoping => todo", () => {
+    expect(mandaysState(m("planned"), "Scoping", today)).toBe("todo");
     expect(mandaysState(m("planned"), "Draft", today)).toBe("todo");
   });
   it("Pentest: sudah mulai => current, belum mulai => todo", () => {
@@ -18,7 +18,7 @@ describe("mandaysState", () => {
   });
   it("status baris tetap dihormati", () => {
     expect(mandaysState(m("done"), "Assessment", today)).toBe("done");
-    expect(mandaysState(m("in_progress", "2026-12-01"), "Planning", today)).toBe("current");
+    expect(mandaysState(m("in_progress", "2026-12-01"), "Scoping", today)).toBe("current");
   });
 });
 

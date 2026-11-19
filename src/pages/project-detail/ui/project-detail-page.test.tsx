@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ProjectDetail } from "@/entities/project";
+import { useSession } from "@/entities/session";
 import { ProjectDetailPage } from "./project-detail-page";
 
 beforeAll(() => {
@@ -25,7 +26,8 @@ vi.mock("@svar-ui/react-gantt", () => ({
 }));
 vi.mock("@svar-ui/react-gantt/all.css", () => ({}));
 
-const mockProjectDetail: ProjectDetail = {
+let mockProjectDetail: ProjectDetail;
+const baseProjectDetail: ProjectDetail = {
   project_id: 7,
   project_name: "Audit Keamanan Portal",
   client_name: "Telkom Corporate",
@@ -40,7 +42,7 @@ const mockProjectDetail: ProjectDetail = {
     role: { role_name: "project_manager" },
     profile: { user_id: 3, full_name: "Andi Saputra" },
   },
-  status: { status_id: 2, status_name: "Planning" },
+  status: { status_process_id: 2, status_name: "Scoping" },
   resources: [
     {
       resource_id: 1,
@@ -84,27 +86,59 @@ vi.mock("@/entities/project", async (importOriginal) => {
     getProject: vi.fn().mockImplementation(async () => mockProjectDetail),
     listStatuses: vi.fn().mockResolvedValue([
       { status_process_id: 1, status_name: "Draft" },
-      { status_process_id: 2, status_name: "Planning" },
+      { status_process_id: 2, status_name: "Scoping" },
       { status_process_id: 3, status_name: "Assessment" },
     ]),
   };
 });
 
+function mount(role: string, sysUserId: number, project: Partial<ProjectDetail> = {}) {
+  mockProjectDetail = { ...baseProjectDetail, ...project } as ProjectDetail;
+  useSession.setState({
+    token: "t",
+    user: { sys_user_id: sysUserId, username: "u", email: "u@t", role_id: 1, role: { role_id: 1, role_name: role } },
+  });
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={["/projects/7"]}>
+        <Routes>
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+describe("ProjectDetailPage: alur 10 status (tanpa Planning)", () => {
+  it("Tech Lead: Draft langsung kickoff ke Scoping", async () => {
+    mount("tech_lead", 1, { status: { status_process_id: 1, status_name: "Draft" } });
+    const kickoff = await screen.findByRole("button", { name: /Kickoff proyek/ });
+    expect(kickoff).toBeEnabled();
+    expect(screen.queryByText(/Serahkan ke Project Manager/)).not.toBeInTheDocument();
+  });
+
+  it("PM: di Scoping mengelola aset, Mulai Assessment tertahan bila ada aset tanpa pentester", async () => {
+    mount("project_manager", 3, {
+      assets: [
+        ...baseProjectDetail.assets,
+        { assets_id: 11, asset_name: "API Mobile", asset_type: "API", mandays: 5 },
+      ] as ProjectDetail["assets"],
+    });
+    const start = await screen.findByRole("button", { name: /Mulai Assessment/ });
+    expect(start).toBeDisabled();
+    expect(screen.getByText(/Aset "API Mobile" belum di-assign pentester/)).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Aset" })).getByText("API Mobile")).toBeInTheDocument();
+  });
+
+  it("PM: semua aset punya pentester, Mulai Assessment aktif", async () => {
+    mount("project_manager", 3);
+    expect(await screen.findByRole("button", { name: /Mulai Assessment/ })).toBeEnabled();
+  });
+});
+
 describe("ProjectDetailPage", () => {
   it("merender halaman detail proyek dari status loading hingga selesai tanpa hook mismatch error", async () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/projects/7"]}>
-          <Routes>
-            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
+    mount("tech_lead", 1);
 
     // Memastikan transisi dari loading skeleton ke loaded UI berjalan tanpa crash
     await waitFor(() => {

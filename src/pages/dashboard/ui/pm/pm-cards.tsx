@@ -5,32 +5,34 @@ import { cn } from "@/shared/lib/cn";
 import { fmtDate } from "@/shared/lib/format";
 import { BentoCard } from "@/shared/ui/bento-grid";
 import { StackedBarChart } from "@/shared/ui/charts";
-import type { KickoffReadiness, RemediationRow } from "../../model/pm-metrics";
+import type { AssessmentReadiness, RemediationRow } from "../../model/pm-metrics";
 import { CardEmpty, CardSkeleton } from "../superadmin/card-states";
 
 const startText = (d: number | null) =>
   d === null ? "Tanggal mulai belum ada" : d > 0 ? `${d} hari lagi` : d === 0 ? "Hari ini" : `Lewat ${-d} hari`;
 
-export function KickoffCard({ rows, isLoading }: { rows: KickoffReadiness[]; isLoading: boolean }) {
+export function AssessmentReadinessCard({ rows, isLoading }: { rows: AssessmentReadiness[]; isLoading: boolean }) {
   const ready = rows.filter((r) => r.ready).length;
   return (
     <BentoCard
       colSpan={4}
       role="region"
-      aria-label="Kesiapan Kickoff"
-      title="Kesiapan Kickoff"
+      aria-label="Kesiapan Assessment"
+      title="Kesiapan Assessment"
       description={
-        rows.length ? `${ready} dari ${rows.length} proyek Planning siap kickoff.` : "Proyek Planning dan syarat kickoff-nya."
+        rows.length
+          ? `${ready} dari ${rows.length} proyek Scoping siap masuk Assessment.`
+          : "Proyek Scoping dan syarat masuk Assessment."
       }
       icon={<Rocket />}
     >
       {isLoading ? (
         <CardSkeleton rows={4} />
       ) : rows.length === 0 ? (
-        <CardEmpty>Tidak ada proyek di tahap Planning.</CardEmpty>
+        <CardEmpty>Tidak ada proyek di tahap Scoping.</CardEmpty>
       ) : (
         <ul className="flex flex-col gap-3">
-          {rows.map(({ project: p, startsIn, checklist, ready: ok }) => {
+          {rows.map(({ project: p, startDate, startsIn, checklist, ready: ok }) => {
             const done = checklist.filter((c) => c.done).length;
             return (
               <li key={p.project_id} className="rounded-md border border-border p-3">
@@ -40,13 +42,13 @@ export function KickoffCard({ rows, isLoading }: { rows: KickoffReadiness[]; isL
                 >
                   <span className="truncate text-title-sm font-normal text-ink">{p.project_name}</span>
                   <span className="text-caption text-ink-muted tabular">
-                    Kickoff {fmtDate(p.start_date)} ·{" "}
+                    Assessment {fmtDate(startDate)} ·{" "}
                     <span className={cn(!ok && startsIn !== null && startsIn <= 3 ? "text-warning" : undefined)}>
                       {startText(startsIn)}
                     </span>
                   </span>
                 </Link>
-                <ul className="mt-2 flex flex-col gap-1" aria-label={`Syarat kickoff ${done} dari ${checklist.length}`}>
+                <ul className="mt-2 flex flex-col gap-1" aria-label={`Syarat Assessment ${done} dari ${checklist.length}`}>
                   {checklist.map((c) => (
                     <li key={c.label} className="flex items-center gap-1.5 text-caption">
                       {c.done ? (

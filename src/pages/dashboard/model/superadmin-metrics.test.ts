@@ -56,7 +56,7 @@ describe("proyek & siklus", () => {
   const projects = [
     proj(1, "Assessment", "2026-11-01", "2026-11-10"), // terlambat 9 hari
     proj(2, "Remediasi", "2026-10-01", "2026-11-21"), // 2 hari lagi
-    proj(3, "Planning", "2026-12-01", "2026-12-30"),
+    proj(3, "Scoping", "2026-12-01", "2026-12-30"),
     proj(4, "Done", "2026-08-01", "2026-09-15"),
   ];
 
@@ -73,9 +73,10 @@ describe("proyek & siklus", () => {
     ]);
   });
 
-  it("funnel memakai urutan 11 tahap dan menghitung tiap status", () => {
+  it("funnel memakai urutan 10 tahap (tanpa Planning) dan menghitung tiap status", () => {
     const funnel = stageFunnel(projects);
-    expect(funnel).toHaveLength(11);
+    expect(funnel).toHaveLength(10);
+    expect(funnel.map((s) => s.name)).not.toContain("Planning");
     expect(funnel[0]).toEqual({ name: "Draft", count: 0 });
     expect(funnel.find((s) => s.name === "Assessment")?.count).toBe(1);
     expect(funnel.at(-1)).toEqual({ name: "Done", count: 1 });
@@ -154,10 +155,10 @@ describe("tim, katalog & aktivitas", () => {
 
   it("aktivitas digabung lintas proyek dan diurutkan dari yang terbaru", () => {
     const p1 = proj(1, "Assessment", null, null, "2026-11-10");
-    const p2 = proj(2, "Planning", null, null, "2026-11-18");
+    const p2 = proj(2, "Scoping", null, null, "2026-11-18");
     const logs = new Map([
       [1, [{ status_process_log_id: 1, status_name: "Assessment", status_create_at: "2026-11-10T08:00:00Z" }]],
-      [2, [{ status_process_log_id: 2, status_name: "Planning", status_create_at: "2026-11-18T08:00:00Z" }]],
+      [2, [{ status_process_log_id: 2, status_name: "Scoping", status_create_at: "2026-11-18T08:00:00Z" }]],
     ]);
     expect(recentActivity(logs, [p1, p2]).map((a) => a.project.project_id)).toEqual([2, 1]);
     expect(recentlyUpdated([p1, p2], 1).map((p) => p.project_id)).toEqual([2]);

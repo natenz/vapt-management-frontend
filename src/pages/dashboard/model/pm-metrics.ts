@@ -1,9 +1,11 @@
 /**
  * Agregasi dashboard Project Manager: proyek yang menunggu keputusan PM
- * (Planning, Remediasi, Retesting), kesiapan kickoff, progres remediasi klien,
+ * (Scoping, Remediasi, Retesting), kesiapan Assessment, progres remediasi klien,
  * dan linimasa tahap berjalan seluruh proyek PM.
  *
- * BE sudah menyaring proyek PM (pm_id = diri sendiri, Planning..Done).
+ * BE sudah menyaring proyek PM (pm_id = diri sendiri, Scoping..Done). Tidak ada
+ * lagi status Planning: proyek diserahkan Tech Lead langsung masuk Scoping, dan
+ * PM menyiapkan aset & pentester di tahap itu (syarat BE untuk masuk Assessment).
  */
 import type { ProjectReport } from "@/entities/finding";
 import type { Project, ProjectDetail } from "@/entities/project";
@@ -21,11 +23,10 @@ import {
 import { todayIso, workingDays } from "./techlead-metrics";
 
 /** Status yang menunggu tindakan PM. */
-export const PM_TURN = ["Planning", "Remediasi", "Retesting"] as const;
+export const PM_TURN = ["Scoping", "Remediasi", "Retesting"] as const;
 
 export const PM_NEXT_STEP: Record<string, string> = {
-  Planning: "Isi aset, assign tim, lalu kickoff",
-  Scoping: "Konfirmasi scope dengan klien",
+  Scoping: "Konfirmasi scope, isi aset, dan assign pentester",
   Assessment: "Pentester sedang menguji",
   Analysis: "Analisis dan validasi temuan",
   "Initial Report": "Tech Writer menyusun Initial Report",
@@ -68,8 +69,7 @@ export interface PmItem extends BaseWorkItem {
 
 /**
  * Semua proyek aktif PM. Giliran PM lebih dulu. Tanggal acuan = akhir tahap
- * yang sedang berjalan (siapa pun pemegangnya), karena PM memantau semuanya;
- * Planning memakai start_date proyek sebagai target kickoff.
+ * yang sedang berjalan (siapa pun pemegangnya), karena PM memantau semuanya.
  */
 export function pmQueue(
   projects: readonly Project[],
@@ -80,59 +80,58 @@ export function pmQueue(
   return projects
     .filter((p) => statusOf(p) !== "Done")
     .map((project) => {
-      const planning = statusOf(project) === "Planning";
-      const base = stageSchedule(
-        {
-          project,
-          detail: details.get(project.project_id),
-          myTurn: true,
-          turnEnd: planning ? project.start_date : undefined,
-        },
-        today,
-      );
+      const base = stageSchedule({ project, detail: details.get(project.project_id), myTurn: true }, today);
       const report = reports.get(project.project_id);
       return {
         ...base,
         myTurn: isPmTurn(project),
-        dateLabel: planning ? "Target kickoff" : base.dateLabel,
-        progress: planning ? null : base.progress,
         findings: report ? findingProgress(report.findings) : null,
       };
     })
     .sort(byPriority);
 }
 
-/* ---------- Kesiapan kickoff ---------- */
+/* ---------- Kesiapan Assessment ---------- */
 
-export interface KickoffReadiness {
+export interface AssessmentReadiness {
   project: Project;
+  /** Hari menuju mulai tahap Assessment (fallback akhir Scoping). */
   startsIn: number | null;
+  startDate: string | null;
   checklist: { label: string; done: boolean }[];
   ready: boolean;
 }
 
-/** Syarat kickoff proyek Planning: aset, tim, mandays sesuai jatah, dan jadwal tahap. */
-export function kickoffReadiness(
+/**
+ * Syarat proyek Scoping untuk masuk Assessment. Dua syarat pertama ditegakkan
+ * BE (aset ada, setiap aset punya pentester); tanpa itu Scoping tidak maju
+ * otomatis meski tanggalnya lewat. Sisanya kelengkapan perencanaan.
+ */
+export function assessmentReadiness(
   projects: readonly Project[],
   details: ReadonlyMap<number, ProjectDetail>,
   today = todayIso(),
-): KickoffReadiness[] {
+): AssessmentReadiness[] {
   return projects
-    .filter((p) => statusOf(p) === "Planning")
+    .filter((p) => statusOf(p) === "Scoping")
     .map((project) => {
       const d = details.get(project.project_id);
-      const assetMd = (d?.assets ?? []).reduce((s, a) => s + a.mandays, 0);
+      const assets = d?.assets ?? [];
+      const assigned = new Set((d?.mandays ?? []).map((m) => m.asset_id));
+      const assetMd = assets.reduce((s, a) => s + a.mandays, 0);
       const quota = project.projected_mandays ?? 0;
+      const startDate =
+        stageOf(d, "Assessment")?.start_date ?? stageOf(d, "Scoping")?.end_date ?? project.start_date ?? null;
       const checklist = [
-        { label: "Aset target terdaftar", done: (d?.assets.length ?? 0) > 0 },
-        { label: "Tim ditugaskan", done: (d?.resources.length ?? 0) > 0 },
-        { label: "Mandays pentester dialokasikan", done: (d?.mandays.length ?? 0) > 0 },
+        { label: "Aset target terdaftar", done: assets.length > 0 },
+        { label: "Setiap aset punya pentester", done: assets.length > 0 && assets.every((a) => assigned.has(a.assets_id)) },
         { label: "Mandays aset dalam jatah", done: assetMd > 0 && (quota === 0 || assetMd <= quota) },
         { label: "Jadwal tahap disusun", done: (d?.stages ?? []).some((s) => !!s.start_date) },
       ];
       return {
         project,
-        startsIn: project.start_date ? daysBetween(today, project.start_date) : null,
+        startDate,
+        startsIn: startDate ? daysBetween(today, startDate) : null,
         checklist,
         ready: checklist.every((c) => c.done),
       };

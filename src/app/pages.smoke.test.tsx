@@ -14,7 +14,7 @@ const mockProject = {
   start_date: "2026-11-01",
   end_date: "2026-11-30",
   status_id: 1,
-  status: { status_process_id: 1, status_name: "Planning" },
+  status: { status_process_id: 1, status_name: "Scoping" },
   pm: { sys_user_id: 1, username: "pm", email: "pm@test.com", role_id: 3 },
 };
 
@@ -24,7 +24,7 @@ vi.mock("@/entities/project", async (importOriginal) => {
     ...actual,
     listProjects: async () => ({ data: [mockProject], meta: { page: 1, limit: 10, total: 1 } }),
     getProject: async () => mockProject,
-    listStatuses: async () => [{ status_process_id: 1, status_name: "Planning" }],
+    listStatuses: async () => [{ status_process_id: 1, status_name: "Scoping" }],
     listStatusLogs: async () => [],
     listResources: async () => [],
     listAssets: async () => [],

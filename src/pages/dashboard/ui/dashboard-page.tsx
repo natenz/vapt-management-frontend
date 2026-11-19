@@ -59,7 +59,7 @@ const VIEWS: Record<string, RoleView> = {
   tech_lead: {
     turn: ["Draft"],
     turnHint: "Template yang perlu dilengkapi lalu diserahkan ke PM.",
-    next: { ...RUNNING, Draft: "Lengkapi template lalu serahkan ke PM", Planning: "PM menyiapkan aset dan tim" },
+    next: { ...RUNNING, Draft: "Lengkapi template lalu kickoff ke PM", Scoping: "PM menyiapkan aset dan pentester" },
   },
 };
 VIEWS.super_admin = VIEWS.tech_lead!;
@@ -174,7 +174,7 @@ export function DashboardPage() {
     enabled: isTechLead,
   });
 
-  const withFindings = isTlView || isPentester || isWriter || isPm ? [] : active.filter((p) => !["Draft", "Planning", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
+  const withFindings = isTlView || isPentester || isWriter || isPm ? [] : active.filter((p) => !["Draft", "Scoping"].includes(p.status?.status_name ?? "")).slice(0, 20);
   const findings = useQueries({
     queries: withFindings.map((p) => ({ queryKey: ["findings", p.project_id], queryFn: () => listFindings(p.project_id) })),
   });

@@ -58,13 +58,13 @@ describe("Native SVG Charts", () => {
 
   it("StackedBarChart: merender segmen proporsional beserta legend", () => {
     const items = [
-      { label: "Planning", count: 3, colorClass: "bg-sky-500" },
+      { label: "Scoping", count: 3, colorClass: "bg-sky-500" },
       { label: "Assessment", count: 7, colorClass: "bg-amber-500" },
     ];
 
     render(<StackedBarChart items={items} />);
 
-    expect(screen.getByText("Planning")).toBeInTheDocument();
+    expect(screen.getByText("Scoping")).toBeInTheDocument();
     expect(screen.getByText("Assessment")).toBeInTheDocument();
     expect(screen.getByText(/70%/)).toBeInTheDocument();
   });

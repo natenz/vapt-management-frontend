@@ -45,8 +45,8 @@ import { TeamSidebar } from "@/widgets/project-team-sidebar";
 const PM = ["project_manager", "super_admin"];
 const shortDate = (v: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(new Date(v));
 const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: boolean; back?: { to: string; label: string } }> = {
-  Draft: { to: "Planning", label: "Serahkan ke Project Manager", roles: ["tech_lead", "super_admin"] },
-  Planning: { to: "Scoping", label: "Kickoff proyek", roles: PM },
+  // Serah ke PM = kickoff: proyek langsung masuk Scoping, PM menyiapkan aset & pentester di tahap itu.
+  Draft: { to: "Scoping", label: "Kickoff proyek", roles: ["tech_lead", "super_admin"] },
   Scoping: { to: "Assessment", label: "Mulai Assessment", roles: PM, auto: true },
   Assessment: { to: "Analysis", label: "Selesai Assessment, mulai Analysis", roles: PM, auto: true },
   Analysis: { to: "Initial Report", label: "Mulai Initial Report", roles: PM, auto: true },
@@ -122,18 +122,15 @@ export function ProjectDetailPage() {
   // BE: PM hanya boleh mengelola proyek miliknya (pm_id); TL dan Superadmin untuk semua.
   const ownsAsPm = role !== "project_manager" || p.pm_id === sessionUser?.sys_user_id;
   const canAdvance = Boolean(next && nextStatus && next.roles.includes(role) && ownsAsPm);
-  // Tahap manual (Remediasi/Retesting) yang lewat tanggal selesai: tidak maju sendiri, jadi diberi peringatan.
-  const currentStage = p.stages?.find((s) => s.stage_name === current);
-  const late = next && !next.auto && currentStage?.end_date && currentStage.end_date.slice(0, 10) < new Date().toISOString().slice(0, 10) ? currentStage.end_date : null;
-
+  // Syarat transisi, cermin BE checkTransitionPreconditions.
   let advanceBlockReason: string | null = null;
-  if (current === "Draft" && next?.to === "Planning") {
+  if (current === "Draft") {
     if (p.resources.length === 0) {
       advanceBlockReason = "Proyek harus memiliki minimal 1 resource tim.";
     }
-  } else if (current === "Planning" && next?.to === "Scoping") {
+  } else if (current === "Scoping") {
     if (p.assets.length === 0) {
-      advanceBlockReason = "Tambahkan minimal 1 aset sebelum kickoff.";
+      advanceBlockReason = "Tambahkan minimal 1 aset sebelum Assessment.";
     } else {
       const allocatedAssetIds = new Set(p.mandays.map((m) => m.asset_id));
       const unallocated = p.assets.find((a) => !allocatedAssetIds.has(a.assets_id));
@@ -143,10 +140,16 @@ export function ProjectDetailPage() {
     }
   }
 
-  // BE: aset hanya bisa diubah saat Draft/Planning oleh PM pemilik (atau admin).
-  const canEditAssets = current === "Planning" && ownsAsPm && (role === "project_manager" || role === "super_admin");
+  // Tahap yang lewat tanggal selesai tapi tidak maju sendiri: tahap manual (Remediasi/Retesting), atau tahap
+  // otomatis yang tertahan syarat (BE AutoAdvance tidak melompati syarat, mis. Scoping tanpa pentester).
+  const currentStage = p.stages?.find((s) => s.stage_name === current);
+  const overdue = currentStage?.end_date && currentStage.end_date.slice(0, 10) < new Date().toISOString().slice(0, 10);
+  const late = next && overdue && (!next.auto || advanceBlockReason) ? currentStage!.end_date! : null;
+
+  // BE: aset hanya bisa diubah saat Draft/Scoping oleh PM pemilik (atau admin).
+  const canEditAssets = current === "Scoping" && ownsAsPm && (role === "project_manager" || role === "super_admin");
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
-  const canAssign = current === "Planning" && role === "project_manager" && ownsAsPm;
+  const canAssign = current === "Scoping" && role === "project_manager" && ownsAsPm;
 
   return (
     <div className="flex flex-col gap-8">
@@ -310,7 +313,10 @@ export function ProjectDetailPage() {
             />
             {late ? (
               <Alert tone="warning" title={`Tahap ${current} melewati jadwal`}>
-                Seharusnya selesai {fmtDate(late)}. Tahap ini menunggu tindakan manual, jadi tidak maju otomatis.
+                Seharusnya selesai {fmtDate(late)}.{" "}
+                {next?.auto && advanceBlockReason
+                  ? `Belum bisa maju otomatis: ${advanceBlockReason}`
+                  : "Tahap ini menunggu tindakan manual, jadi tidak maju otomatis."}
               </Alert>
             ) : null}
           </section>

@@ -5,7 +5,6 @@
  */
 const STATUS_BAR_CLASS: Record<string, string> = {
   Draft: "bg-slate-100 text-slate-800 border-slate-400 dark:bg-slate-400/20 dark:text-slate-200",
-  Planning: "bg-sky-100 text-sky-900 border-sky-500 dark:bg-sky-400/20 dark:text-sky-200",
   Scoping: "bg-cyan-100 text-cyan-900 border-cyan-500 dark:bg-cyan-400/20 dark:text-cyan-200",
   Assessment:
     "bg-amber-100 text-amber-900 border-amber-500 dark:bg-amber-400/20 dark:text-amber-200",

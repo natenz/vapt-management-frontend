@@ -28,7 +28,7 @@ describe("ResourceProjectsCell", () => {
   it("menampilkan hingga 2 proyek secara langsung sebagai chip link", () => {
     const projects: ResourceProject[] = [
       { id: 10, name: "Portal Satu Data", status: "Assessment", mandays: 4 },
-      { id: 11, name: "API Gateway", status: "Planning", mandays: 2 },
+      { id: 11, name: "API Gateway", status: "Scoping", mandays: 2 },
     ];
 
     render(
@@ -52,7 +52,7 @@ describe("ResourceProjectsCell", () => {
       { id: 1, name: "Proyek Alpha", status: "Assessment", mandays: 5 },
       { id: 2, name: "Proyek Beta", status: "Reporting", mandays: 3 },
       { id: 3, name: "Proyek Gamma", status: "Remediasi", mandays: 2 },
-      { id: 4, name: "Proyek Delta", status: "Planning", mandays: 1 },
+      { id: 4, name: "Proyek Delta", status: "Scoping", mandays: 1 },
     ];
 
     render(

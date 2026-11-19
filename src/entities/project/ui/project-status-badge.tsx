@@ -1,6 +1,5 @@
 import {
   FileEdit,
-  CalendarDays,
   Crosshair,
   ShieldAlert,
   LineChart,
@@ -29,10 +28,6 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
   Draft: {
     icon: FileEdit,
     className: "bg-slate-100 text-slate-700 dark:bg-slate-400/15 dark:text-slate-300",
-  },
-  Planning: {
-    icon: CalendarDays,
-    className: "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300",
   },
   Scoping: {
     icon: Crosshair,

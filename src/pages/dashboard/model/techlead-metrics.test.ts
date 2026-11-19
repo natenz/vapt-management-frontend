@@ -129,7 +129,7 @@ describe("proyek berjalan", () => {
     const rows = runningProjects(
       [
         proj(1, "Final Presentation", "2026-11-01", "2026-12-31"), // sesuai jadwal
-        proj(2, "Planning", "2026-11-01", "2026-11-25"), // waktu 75%, tahap 10% → berisiko
+        proj(2, "Scoping", "2026-11-01", "2026-11-25"), // waktu 75%, tahap 11% → berisiko
         proj(3, "Assessment", "2026-10-01", "2026-11-10"), // lewat tenggat
         proj(4, "Done", "2026-10-01", "2026-10-10"),
       ],

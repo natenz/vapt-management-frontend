@@ -14,10 +14,10 @@ export type RoleName = (typeof ROLES)[number];
 export const SEVERITIES = ["Critical", "High", "Medium", "Low", "Informational"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
-// Draft & Planning = sebelum kickoff; 8 berikutnya = tahap timeline VAPT (nama sama dengan trx_project_stages).
+// Draft = template Tech Lead; diserahkan ke PM langsung masuk Scoping (VAPT mulai). 8 status berikutnya
+// = tahap timeline VAPT (nama sama dengan trx_project_stages). Status "Planning" sudah dihapus di BE.
 export const PROJECT_STATUSES = [
   "Draft",
-  "Planning",
   "Scoping",
   "Assessment",
   "Analysis",

@@ -1,7 +1,7 @@
 /**
  * Dashboard Project Manager — bento box untuk memantau semua proyek PM dan
- * mengambil keputusan tepat waktu: proyek yang menunggu PM (Planning,
- * Remediasi, Retesting), kesehatan jadwal, kesiapan kickoff, progres
+ * mengambil keputusan tepat waktu: proyek yang menunggu PM (Scoping,
+ * Remediasi, Retesting), kesehatan jadwal, kesiapan Assessment, progres
  * remediasi klien, dan linimasa tahap berjalan.
  */
 import { Bug, CalendarClock, FolderKanban, Rocket } from "lucide-react";
@@ -10,7 +10,7 @@ import type { Project } from "@/entities/project";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { SummaryTile } from "@/shared/ui/summary-tile";
 import {
-  kickoffReadiness,
+  assessmentReadiness,
   PM_NEXT_STEP,
   pmQueue,
   pmTimeline,
@@ -21,7 +21,7 @@ import { runningProjects, todayIso } from "../model/techlead-metrics";
 import { useProjectReportData } from "../model/use-report-data";
 import { MyTimelineCard } from "./pentester/my-timeline-card";
 import { WorkPriorityCard } from "./pentester/priority-card";
-import { KickoffCard, RemediationCard } from "./pm/pm-cards";
+import { AssessmentReadinessCard, RemediationCard } from "./pm/pm-cards";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
 
 const FINDING_COLUMN = {
@@ -53,7 +53,7 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
 
   const queue = useMemo(() => pmQueue(data.active, details, reports, today), [data.active, details, reports, today]);
   const running = useMemo(() => runningProjects(data.active, today), [data.active, today]);
-  const kickoff = useMemo(() => kickoffReadiness(data.active, details, today), [data.active, details, today]);
+  const readiness = useMemo(() => assessmentReadiness(data.active, details, today), [data.active, details, today]);
   const remediation = useMemo(() => remediationProgress(data.active, reports), [data.active, reports]);
   const timeline = useMemo(() => pmTimeline(data.active, details, 6, today), [data.active, details, today]);
 
@@ -64,7 +64,7 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
   const risk = running.filter((r) => r.health === "at-risk").length;
   const openFindings = queue.reduce((s, r) => s + (r.findings?.open ?? 0), 0);
   const readyRetest = remediation.filter((r) => r.hint).length;
-  const kickoffReady = kickoff.filter((k) => k.ready).length;
+  const readyCount = readiness.filter((k) => k.ready).length;
 
   return (
     <div className="flex flex-col gap-5" data-slot="pm-dashboard">
@@ -98,12 +98,12 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
           note={readyRetest > 0 ? { value: readyRetest, text: "proyek siap keputusan Retesting" } : { text: "di seluruh proyek Anda" }}
         />
         <SummaryTile
-          label="Menunggu Kickoff"
-          value={detailsLoading ? null : kickoff.length}
+          label="Persiapan Assessment"
+          value={detailsLoading ? null : readiness.length}
           unit="Proyek"
           icon={<Rocket />}
           loading={detailsLoading}
-          note={{ value: kickoffReady, text: "sudah memenuhi syarat kickoff" }}
+          note={{ value: readyCount, text: "sudah memenuhi syarat Assessment" }}
         />
       </section>
 
@@ -118,7 +118,7 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
         />
 
         <RunningProjectsCard rows={running} isLoading={isLoading} />
-        <KickoffCard rows={kickoff} isLoading={detailsLoading} />
+        <AssessmentReadinessCard rows={readiness} isLoading={detailsLoading} />
 
         <MyTimelineCard
           data={timeline}

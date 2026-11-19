@@ -26,7 +26,7 @@ const projects: Project[] = [
   makeProject(1, "Assessment", "2026-01-10", "2026-02-05"),
   makeProject(2, "Done", "2026-11-01", "2026-11-30"),
   makeProject(3, "Draft", "2026-03-01", "2026-03-31"),
-  makeProject(4, "Planning", "2025-12-20", "2026-01-03"),
+  makeProject(4, "Scoping", "2025-12-20", "2026-01-03"),
 ];
 
 const year2026 = { start: new Date(2026, 0, 1), end: new Date(2026, 11, 31) };

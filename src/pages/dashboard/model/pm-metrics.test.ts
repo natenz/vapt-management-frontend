@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectReport } from "@/entities/finding";
 import type { Project, ProjectDetail } from "@/entities/project";
-import { kickoffReadiness, pmQueue, pmTimeline, remediationProgress } from "./pm-metrics";
+import { assessmentReadiness, pmQueue, pmTimeline, remediationProgress } from "./pm-metrics";
 
 const TODAY = "2026-11-19";
 
@@ -36,7 +36,7 @@ const f = (id: number, status: string) => ({ vulna_id: id, severity: "High", sta
 const report = (p: Project, findings: F[]) => ({ project: p, findings }) as unknown as ProjectReport;
 
 const projects = [
-  proj(1, "Planning", { start_date: "2026-11-23" }),
+  proj(1, "Scoping"),
   proj(2, "Remediasi"),
   proj(3, "Assessment"),
   proj(4, "Retesting"),
@@ -47,6 +47,7 @@ const details = new Map<number, ProjectDetail>([
     detail(projects[0]!, {
       assets: [{ assets_id: 1, asset_name: "Web", asset_type: "web", mandays: 12, project_id: 1 }],
       resources: [{ resource_id: 1, user_id: 1 }],
+      stages: [stage("Scoping", "2026-11-16", "2026-11-23")],
     }),
   ],
   [2, detail(projects[1]!, { stages: [stage("Remediasi", "2026-11-10", "2026-11-28")] })],
@@ -59,24 +60,25 @@ const reports = new Map<number, ProjectReport>([
 ]);
 
 describe("perlu tindakan PM", () => {
-  it("Planning/Remediasi/Retesting dulu; tanggal = akhir tahap berjalan, Planning = target kickoff", () => {
+  it("Scoping/Remediasi/Retesting dulu; tanggal = akhir tahap berjalan", () => {
     const rows = pmQueue(projects, details, reports, TODAY);
     expect(rows.map((r) => [r.project.project_id, r.myTurn, r.dateLabel, r.days])).toEqual([
       [4, true, "Tenggat Retesting", -1],
-      [1, true, "Target kickoff", 4],
+      [1, true, "Tenggat Scoping", 4],
       [2, true, "Tenggat Remediasi", 9],
       [3, false, "Tenggat Assessment", 1],
     ]);
     expect(rows[0]!.findings).toEqual({ total: 2, open: 1, remediated: 1, closed: 0 });
-    expect(rows[1]!.progress).toBeNull();
+    expect(rows[1]!.progress).toBe(43); // 3 dari 7 hari Scoping
   });
 });
 
-describe("kesiapan kickoff", () => {
-  it("menandai syarat yang belum terpenuhi, termasuk mandays aset melebihi jatah", () => {
-    const [k] = kickoffReadiness(projects, details, TODAY);
-    expect(k!.startsIn).toBe(4);
-    expect(k!.checklist.map((c) => c.done)).toEqual([true, true, false, false, false]);
+describe("kesiapan Assessment", () => {
+  it("menandai aset tanpa pentester dan mandays aset melebihi jatah", () => {
+    const [k] = assessmentReadiness(projects, details, TODAY);
+    expect(k!.project.project_id).toBe(1);
+    expect([k!.startDate, k!.startsIn]).toEqual(["2026-11-23", 4]); // fallback akhir Scoping
+    expect(k!.checklist.map((c) => c.done)).toEqual([true, false, false, true]);
     expect(k!.ready).toBe(false);
   });
 });
@@ -95,6 +97,7 @@ describe("remediasi & linimasa", () => {
     expect(t.bars.map((b) => [b.projectId, b.sub, b.overdue])).toEqual([
       [2, "Remediasi", false],
       [4, "Retesting", true],
+      [1, "Scoping", false],
       [3, "Assessment", false],
     ]);
   });

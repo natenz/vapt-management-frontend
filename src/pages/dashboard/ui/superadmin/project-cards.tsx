@@ -14,7 +14,6 @@ import { CardEmpty, CardSkeleton, ColumnLabel } from "./card-states";
 /* Rona batang funnel mengikuti chip status proyek (ProjectStatusBadge), versi pekat. */
 const STAGE_BAR: Record<string, string> = {
   Draft: "bg-slate-400",
-  Planning: "bg-sky-500",
   Scoping: "bg-cyan-500",
   Assessment: "bg-amber-500",
   Analysis: "bg-indigo-500",
@@ -86,7 +85,7 @@ export function StageFunnelCard({
       colSpan={5}
       role="region"
       aria-label="Siklus Tahap Proyek"
-      title="Siklus 11 Tahap"
+      title="Siklus 10 Tahap"
       description={`${total} proyek tersebar dari Draft hingga Done.`}
       icon={<GitBranch />}
     >

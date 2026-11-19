@@ -70,7 +70,7 @@ export interface FunnelStage {
   count: number;
 }
 
-/** Jumlah proyek per tahap, urut sesuai master status (fallback ke urutan bawaan 11 tahap). */
+/** Jumlah proyek per tahap, urut sesuai master status (fallback ke urutan bawaan 10 tahap). */
 export function stageFunnel(
   projects: readonly Project[],
   statuses?: readonly ProjectStatus[] | null,

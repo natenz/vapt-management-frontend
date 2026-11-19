@@ -53,7 +53,7 @@ const project = {
   pm_id: 4,
   start_date: "2026-11-16T00:00:00Z",
   end_date: "2026-12-11T00:00:00Z",
-  status: { status_process_id: 2, status_name: "Planning" },
+  status: { status_process_id: 2, status_name: "Scoping" },
   assets: [],
   mandays: [],
   resources: [

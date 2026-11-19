@@ -35,7 +35,7 @@ describe("aggregateLoad", () => {
     const r = aggregateLoad(
       [
         proj(1, "Assessment", [5, 8], [md(5, 10), md(5, 2.5)]),
-        proj(2, "Planning", [5, 6], [md(5, 4), md(6, 3)]),
+        proj(2, "Scoping", [5, 6], [md(5, 4), md(6, 3)]),
       ],
       NOV,
     );
@@ -43,7 +43,7 @@ describe("aggregateLoad", () => {
       mandays: 16.5,
       projects: [
         { id: 1, name: "P1", status: "Assessment", mandays: 12.5 },
-        { id: 2, name: "P2", status: "Planning", mandays: 4 },
+        { id: 2, name: "P2", status: "Scoping", mandays: 4 },
       ],
     });
     expect(r[6]!.mandays).toBe(3);

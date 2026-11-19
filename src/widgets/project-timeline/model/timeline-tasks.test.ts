@@ -64,8 +64,8 @@ describe("toScheduledProject", () => {
 describe("filter & urutan", () => {
   const { scheduled } = partitionScheduled([
     make(1, "Gamma", "2026-02-01", "2026-02-20", "Done", "Sari"),
-    make(2, "Alpha", "2026-01-05", "2026-03-01", "Planning", "Andi"),
-    make(3, "Beta", "2025-06-01", "2025-07-01", "Planning", "Andi"),
+    make(2, "Alpha", "2026-01-05", "2026-03-01", "Analysis", "Andi"),
+    make(3, "Beta", "2025-06-01", "2025-07-01", "Analysis", "Andi"),
     make(4, "Delta", "2025-12-15", "2026-01-10", "Scoping"),
   ]);
 
@@ -87,7 +87,7 @@ describe("filter & urutan", () => {
       ).map((i) => i.project.project_id);
     expect(f({ search: "alp" })).toEqual([2]);
     expect(f({ search: "klien 1" })).toEqual([1]);
-    expect(f({ statuses: ["Planning"] })).toEqual([2]);
+    expect(f({ statuses: ["Analysis"] })).toEqual([2]);
     expect(f({ pms: [NO_PM_LABEL] })).toEqual([4]);
   });
 
@@ -101,8 +101,8 @@ describe("filter & urutan", () => {
 
   it("opsi status mengikuti urutan siklus, PM alfabetis dengan Tanpa PM terakhir", () => {
     expect(getTimelineStatusOptions(scheduled).map((o) => o.value)).toEqual([
-      "Planning",
       "Scoping",
+      "Analysis",
       "Done",
     ]);
     expect(getTimelinePmOptions(scheduled)).toEqual([
@@ -132,8 +132,8 @@ describe("paginate", () => {
 describe("buildTimelineTasks", () => {
   const { scheduled } = partitionScheduled([
     make(1, "A", "2026-01-01", "2026-01-31", "Done", "Sari"),
-    make(2, "B", "2026-03-01", "2026-04-15", "Planning", "Andi"),
-    make(3, "C", "2026-02-01", "2026-05-10", "Planning", "Andi"),
+    make(2, "B", "2026-03-01", "2026-04-15", "Analysis", "Andi"),
+    make(3, "C", "2026-02-01", "2026-05-10", "Analysis", "Andi"),
   ]);
 
   it("tanpa grup: batang dengan tanggal akhir eksklusif", () => {
@@ -155,7 +155,7 @@ describe("buildTimelineTasks", () => {
   it("grup status: baris induk per status dengan rentang gabungan anak", () => {
     const tasks = buildTimelineTasks(scheduled, "status");
     expect(tasks.map((t) => t.id)).toEqual([
-      "group:status:Planning",
+      "group:status:Analysis",
       "project:2",
       "project:3",
       "group:status:Done",
@@ -169,7 +169,7 @@ describe("buildTimelineTasks", () => {
       start: new Date(2026, 1, 1),
       endInclusive: new Date(2026, 4, 10),
     });
-    expect(tasks[1]?.parent).toBe("group:status:Planning");
+    expect(tasks[1]?.parent).toBe("group:status:Analysis");
   });
 
   it("grup PM menghormati grup yang diciutkan", () => {

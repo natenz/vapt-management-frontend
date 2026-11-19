@@ -48,7 +48,7 @@ const mockProjects = [
     start_date: "2026-11-10",
     end_date: "2026-11-30",
     pm_id: 3,
-    status: { status_name: "Planning" },
+    status: { status_name: "Scoping" },
     mandays: [
       {
         mandays_id: 2,
