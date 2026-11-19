@@ -6,7 +6,7 @@
  * 2. Mengelola katalog kerentanan: meninjau dan meng-ACC usulan dari tim.
  * Angka dihitung di `model/techlead-metrics`.
  */
-import { BookCheck, Clock, FolderKanban, UserCheck } from "lucide-react";
+import { BookCheck, Clock, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
 import type { CatalogVulna } from "@/entities/catalog";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
@@ -54,7 +54,7 @@ export function TechLeadDashboard({
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
         aria-label="Ringkasan Operasional Tech Lead"
       >
         <SummaryTile
@@ -69,14 +69,6 @@ export function TechLeadDashboard({
               ? { value: `${late} terlambat`, text: `· ${atRisk} berisiko tertinggal` }
               : { text: `${projects.length} total proyek, semua sesuai jadwal` }
           }
-        />
-        <SummaryTile
-          label="Pentester Ditugaskan"
-          value={isLoading ? null : cap.assigned}
-          unit="Orang"
-          icon={<UserCheck />}
-          loading={isLoading}
-          note={{ text: `punya penugasan bulan ini, dari ${cap.pentesters} pentester` }}
         />
         <SummaryTile
           label="Mandays Tim"

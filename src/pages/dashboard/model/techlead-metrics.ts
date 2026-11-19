@@ -101,7 +101,20 @@ export function weeklyHeatmap(
 
 /* ---------- Proyek berjalan ---------- */
 
-const DONE = "Done";
+/** Status proyek berjalan: Scoping hingga Final Presentation (Draft dan Done tidak masuk). */
+export const RUNNING_STATUSES = new Set([
+  "Scoping",
+  "Assessment",
+  "Analysis",
+  "Initial Report",
+  "Remediasi",
+  "Retesting",
+  "Final Report Drafting",
+  "Final Presentation",
+]);
+
+export const isRunningStatus = (statusName?: string | null): boolean =>
+  Boolean(statusName && RUNNING_STATUSES.has(statusName));
 
 export function stageProgress(status?: string | null): number {
   const i = PROJECT_STATUSES.indexOf((status ?? "") as (typeof PROJECT_STATUSES)[number]);
@@ -128,13 +141,13 @@ export interface RunningProject {
 }
 
 /**
- * Proyek belum Done, urut dari yang paling bermasalah. "Terlambat" = lewat
- * tenggat; "Berisiko" = waktu terpakai melampaui progres tahap > 25 poin.
+ * Proyek berstatus Scoping s.d. Final Presentation (Draft dan Done dikecualikan),
+ * urut dari yang paling bermasalah. "Terlambat" = lewat tenggat; "Berisiko" = waktu terpakai melampaui progres tahap > 25 poin.
  */
 export function runningProjects(projects: readonly Project[], today = todayIso()): RunningProject[] {
   const rank: Record<Health, number> = { late: 0, "at-risk": 1, "on-track": 2 };
   return projects
-    .filter((p) => p.status?.status_name !== DONE)
+    .filter((p) => isRunningStatus(p.status?.status_name))
     .map((project) => {
       const stage = stageProgress(project.status?.status_name);
       const time = timeProgress(project.start_date, project.end_date, today);

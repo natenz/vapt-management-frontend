@@ -61,6 +61,17 @@ const mockProjects: Project[] = [
     start_date: "2026-09-01",
     end_date: "2026-10-01",
   },
+  {
+    project_id: 104,
+    project_name: "Template Proyek Baru",
+    client_name: "Internal",
+    total_mandays: 5,
+    projected_mandays: 5,
+    pm_id: 1,
+    status: { status_process_id: 1, status_name: "Draft" },
+    start_date: "2026-11-01",
+    end_date: "2026-11-30",
+  },
 ];
 
 const mockUsers: User[] = [
@@ -165,18 +176,17 @@ describe("TechLeadDashboard", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("merender 4 SummaryTile operasional eksekutif dengan kalkulasi yang akurat", () => {
+  it("merender 3 SummaryTile operasional eksekutif dengan kalkulasi yang akurat", () => {
     renderDashboard();
 
     const summarySection = screen.getByRole("region", { name: "Ringkasan Operasional Tech Lead" });
 
-    // Proyek Aktif: 2 proyek (difmt menjadi "02")
+    // Proyek Aktif: 2 proyek (difmt menjadi "02") — Draft dan Done tidak masuk
     expect(within(summarySection).getByText("Proyek Berjalan")).toBeInTheDocument();
     expect(within(summarySection).getByText("02")).toBeInTheDocument();
 
-    // Pentester ditugaskan: ketiganya punya MD bulan ini ("03"); tidak ada tile ketersediaan/batas
-    expect(within(summarySection).getByText("Pentester Ditugaskan")).toBeInTheDocument();
-    expect(within(summarySection).getByText("03")).toBeInTheDocument();
+    // Pentester Ditugaskan sudah dihapus dari SummaryTile
+    expect(within(summarySection).queryByText("Pentester Ditugaskan")).not.toBeInTheDocument();
     expect(within(summarySection).queryByText("Ketersediaan Pentester")).not.toBeInTheDocument();
 
     // Total mandays tim: 8 + 16 + 24 = 48 MD
@@ -199,8 +209,9 @@ describe("TechLeadDashboard", () => {
     expect(within(projectSec).getByText("Aplikasi Mobile MyTelkom")).toBeInTheDocument();
     expect(within(projectSec).getAllByText("Remediasi").length).toBeGreaterThanOrEqual(1);
 
-    // Proyek dengan status Done tidak ditampilkan di proyek aktif
+    // Proyek dengan status Done dan Draft tidak ditampilkan di proyek aktif berjalan
     expect(within(projectSec).queryByText("Audit API Gateway Legacy")).not.toBeInTheDocument();
+    expect(within(projectSec).queryByText("Template Proyek Baru")).not.toBeInTheDocument();
   });
 
   it("penugasan mingguan menampilkan MD terjadwal tanpa persen kapasitas dan menautkan linimasa", () => {
