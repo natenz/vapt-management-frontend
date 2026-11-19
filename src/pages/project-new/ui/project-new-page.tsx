@@ -16,7 +16,7 @@ import { TeamPicker } from "@/features/assign-project-team";
 const schema = z
   .object({
     project_name: z.string().trim().min(1, "Nama proyek wajib diisi"),
-    client_name: z.string().trim().min(1, "Nama unit/klien wajib diisi"),
+    client_name: z.string().trim().min(1, "Nama klien wajib diisi"),
     start_date: z.string().min(1, "Tanggal mulai wajib diisi"),
     end_date: z.string().min(1, "Tanggal selesai wajib diisi"),
     pm_id: z.string().min(1, "Pilih Project Manager"),
@@ -97,7 +97,7 @@ export function ProjectNewPage() {
         <h2 id="info" className="text-title-md text-ink">Informasi proyek</h2>
         <FieldGroup>
           <Field label="Nama proyek" error={errors.project_name?.message}>{(f) => <Input {...f} {...register("project_name")} />}</Field>
-          <Field label="Unit / klien internal" error={errors.client_name?.message}>{(f) => <Input {...f} {...register("client_name")} />}</Field>
+          <Field label="Nama klien" error={errors.client_name?.message}>{(f) => <Input {...f} {...register("client_name")} />}</Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Tanggal mulai" error={errors.start_date?.message}>{(f) => <Input type="date" {...f} {...register("start_date")} />}</Field>
             <Field label="Tanggal selesai" error={errors.end_date?.message}>{(f) => <Input type="date" {...f} {...register("end_date")} />}</Field>
