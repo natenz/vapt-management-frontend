@@ -64,47 +64,47 @@ export function humanizeErrorMessage(rawMessage: string, rawErrors?: unknown): s
       rawErrors && typeof rawErrors === "object"
         ? Object.entries(rawErrors).map(([field, rule]) => describeField(field, String(rule)))
         : [];
-    return lines.length > 0 ? lines.join(" ") : "Data yang dikirim tidak lengkap atau formatnya tidak sesuai. Periksa kembali isian Anda.";
+    return lines.length > 0 ? lines.join(" ") : "Ada isian yang belum lengkap atau formatnya belum pas. Coba cek lagi isiannya.";
   }
 
   // 2. Pemetaan pesan error bisnis spesifik dari backend (apperror)
   const translations: Record<string, string> = {
-    "project template must have at least one asset": "Proyek harus memiliki minimal 1 assets sebelum diserahkan ke PM.",
-    "project template must have at least one resource": "Proyek harus memiliki minimal 1 anggota tim sebelum diserahkan ke PM.",
-    "project must have at least one asset before pentest": "Tambahkan minimal 1 assets sebelum proyek dapat masuk stage Pentest.",
+    "project template must have at least one asset": "Proyek harus punya minimal 1 asset sebelum diserahkan ke PM.",
+    "project template must have at least one resource": "Proyek harus punya minimal 1 anggota tim sebelum diserahkan ke PM.",
+    "project must have at least one asset before pentest": "Tambahkan minimal 1 asset dulu sebelum proyek masuk tahap Assessment.",
     "asset does not belong to this project": "Asset yang dipilih bukan milik proyek ini.",
-    "pentester not found": "Pentester yang dipilih tidak ditemukan dalam sistem.",
-    "pentester_id must be a user with role pentester": "User yang dipilih harus memiliki role Pentester.",
-    "pentester is not assigned as a resource of this project": "Pentester ini belum ditugaskan sebagai anggota tim di proyek ini.",
-    "mandays dates must be within the project date range": "Tanggal jadwal pengujian harus berada di dalam rentang tanggal proyek.",
+    "pentester not found": "Pentester yang dipilih tidak ketemu.",
+    "pentester_id must be a user with role pentester": "User yang dipilih harus berperan sebagai Pentester.",
+    "pentester is not assigned as a resource of this project": "Pentester ini belum jadi anggota tim proyek ini.",
+    "mandays dates must be within the project date range": "Tanggal pengujian harus ada di dalam tanggal proyek.",
     "end_date must be on or after start_date": "Tanggal selesai tidak boleh sebelum tanggal mulai.",
-    "allocated mandays exceed the asset's mandays": "Mandays yang dialokasikan melebihi batas kuota mandays asset.",
-    "asset mandays cannot be lower than mandays already allocated": "Mandays asset tidak boleh lebih kecil dari mandays yang sudah dialokasikan ke pentester.",
+    "allocated mandays exceed the asset's mandays": "Mandays yang dibagikan lebih besar dari mandays asset.",
+    "asset mandays cannot be lower than mandays already allocated": "Mandays asset tidak boleh lebih kecil dari mandays yang sudah dibagikan ke pentester.",
     "invalid username/email or password": "Username, email, atau password salah.",
     "old password is incorrect": "Password lama tidak sesuai.",
-    "username or email already used": "Username atau email tersebut sudah terdaftar.",
-    "you cannot delete your own account": "Anda tidak dapat menghapus akun Anda sendiri.",
+    "username or email already used": "Username atau email itu sudah dipakai.",
+    "you cannot delete your own account": "Kamu tidak bisa menghapus akunmu sendiri.",
     "user not found": "Pengguna tidak ditemukan.",
     "role not found": "Role yang dipilih tidak ditemukan.",
     "user is referenced by projects, mandays, findings or evidence and cannot be deleted": "Pengguna masih terkait dengan proyek, jadwal, findings, atau bukti pengujian sehingga tidak dapat dihapus.",
-    "only the tech lead can reassign the pm": "Hanya Tech Lead yang memiliki izin mengganti Project Manager.",
-    "only the tech lead can submit the project template to the pm": "Hanya Tech Lead yang dapat menyerahkan proyek ke Project Manager.",
-    "only the tech lead or super admin can delete projects": "Hanya Tech Lead atau Super Admin yang dapat menghapus proyek.",
-    "only the tech lead or the project's pm can manage this project": "Hanya Tech Lead atau PM pemilik proyek yang berhak mengelola proyek ini.",
-    "only pentesters can record findings": "Hanya role Pentester yang dapat mencatat findings.",
-    "only pentesters can upload evidence": "Hanya role Pentester yang dapat mengunggah bukti pengujian (evidence).",
-    "only pentesters can verify remediation": "Hanya role Pentester yang dapat memverifikasi hasil perbaikan (retest).",
+    "only the tech lead can reassign the pm": "Cuma Tech Lead yang bisa mengganti Project Manager.",
+    "only the tech lead can submit the project template to the pm": "Cuma Tech Lead yang bisa menyerahkan proyek ke Project Manager.",
+    "only the tech lead or super admin can delete projects": "Cuma Tech Lead atau Super Admin yang bisa menghapus proyek.",
+    "only the tech lead or the project's pm can manage this project": "Cuma Tech Lead atau PM pemilik proyek yang bisa mengatur proyek ini.",
+    "only pentesters can record findings": "Cuma Pentester yang bisa mencatat finding.",
+    "only pentesters can upload evidence": "Cuma Pentester yang bisa mengunggah bukti (evidence).",
+    "only pentesters can verify remediation": "Cuma Pentester yang bisa mengecek ulang hasil perbaikan.",
     "custom_title is required when catalog_vulna_id is not set": "Judul finding wajib diisi jika tidak memilih dari vulnerability catalog.",
     "severity is required when catalog_vulna_id is not set": "Tingkat keparahan (severity) wajib dipilih jika tidak memilih dari catalog.",
     "finding not found": "Finding tidak ditemukan.",
     "evidence not found": "File bukti (evidence) tidak ditemukan.",
     "project not found": "Proyek tidak ditemukan.",
     "resource not found": "Anggota tim tidak ditemukan.",
-    "you cannot edit this finding": "Anda tidak memiliki hak akses untuk mengedit finding ini.",
-    "you cannot delete this finding": "Anda tidak memiliki hak akses untuk menghapus finding ini.",
-    "you cannot delete this evidence": "Anda tidak memiliki hak akses untuk menghapus file bukti ini.",
-    "unauthorized": "Sesi Anda telah berakhir. Silakan login kembali.",
-    "forbidden": "Anda tidak memiliki hak akses untuk melakukan aksi ini.",
+    "you cannot edit this finding": "Kamu tidak bisa mengedit finding ini.",
+    "you cannot delete this finding": "Kamu tidak bisa menghapus finding ini.",
+    "you cannot delete this evidence": "Kamu tidak bisa menghapus file bukti ini.",
+    "unauthorized": "Sesimu sudah habis. Silakan login lagi.",
+    "forbidden": "Kamu tidak punya akses untuk aksi ini.",
   };
 
   const lookup = translations[msg.toLowerCase()];
@@ -115,17 +115,17 @@ export function humanizeErrorMessage(rawMessage: string, rawErrors?: unknown): s
   // 3. Pola dinamis regex
   const unassignedAssetMatch = msg.match(/^asset ['"]([^'"]+)['"] has no pentester assigned in the timeline$/i);
   if (unassignedAssetMatch) {
-    return `Asset "${unassignedAssetMatch[1]}" belum ditugaskan ke pentester di timeline jadwal.`;
+    return `Asset "${unassignedAssetMatch[1]}" belum dibagikan ke pentester di jadwal.`;
   }
 
   const statusChangeMatch = msg.match(/^cannot change status from (.+) to (.+)$/i);
   if (statusChangeMatch) {
-    return `Status proyek tidak dapat diubah dari ${statusChangeMatch[1]} langsung ke ${statusChangeMatch[2]}.`;
+    return `Status proyek tidak bisa loncat dari ${statusChangeMatch[1]} langsung ke ${statusChangeMatch[2]}.`;
   }
 
   const statusActionMatch = msg.match(/^action not allowed while project status is (.+)$/i);
   if (statusActionMatch) {
-    return `Aksi ini tidak diizinkan selama proyek berstatus ${statusActionMatch[1]}.`;
+    return `Aksi ini belum bisa dilakukan saat proyek masih di tahap ${statusActionMatch[1]}.`;
   }
 
   return msg;

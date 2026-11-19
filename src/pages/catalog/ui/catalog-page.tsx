@@ -336,7 +336,7 @@ export function CatalogPage() {
                 <EmptyState
                   icon={<BookCheck />}
                   title="Tidak ada pengajuan menunggu ACC"
-                  description="Pengajuan baru dari pentester akan muncul di sini untuk ditinjau."
+                  description="Pengajuan baru dari pentester akan muncul di sini untuk kamu cek."
                 />
               )
             }
@@ -394,7 +394,7 @@ export function CatalogPage() {
                 <EmptyState
                   icon={<BookCheck />}
                   title="Belum ada vulnerability disetujui"
-                  description="Vulnerability yang telah disetujui akan muncul di sini."
+                  description="Vulnerability yang sudah di-ACC akan muncul di sini."
                 />
               )
             }

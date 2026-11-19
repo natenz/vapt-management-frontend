@@ -165,7 +165,7 @@ export function ProjectsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Proyek"
-        description="Daftar Proyek"
+        description="Proyek-proyek yang bisa kamu buka."
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
@@ -238,7 +238,7 @@ export function ProjectsPage() {
                 <EmptyState
                   icon={<FolderKanban />}
                   title="Belum ada proyek"
-                  description="Proyek yang dapat Anda akses akan tampil di sini."
+                  description="Proyek yang bisa kamu buka akan muncul di sini."
                 />
               )
             }

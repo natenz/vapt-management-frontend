@@ -9,7 +9,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import {
   changeProjectStatus,
   getProject,
@@ -48,18 +48,17 @@ const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: 
   Scoping: { to: "Assessment", label: "Mulai Assessment", roles: PM, auto: true },
   Assessment: { to: "Analysis", label: "Selesai Assessment, mulai Analysis", roles: PM, auto: true },
   Analysis: { to: "Initial Report", label: "Mulai Initial Report", roles: PM, auto: true },
-  "Initial Report": { to: "Remediasi", label: "Serahkan Initial Report untuk Remediasi", roles: ["technical_writer", ...PM], auto: true },
-  Remediasi: { to: "Retesting", label: "Klien selesai, mulai Retesting", roles: PM },
-  Retesting: { to: "Final Report Drafting", label: "Selesai Retesting, susun Final Report", roles: PM, back: { to: "Remediasi", label: "Masih ada yang rentan, kembali ke Remediasi" } },
-  "Final Report Drafting": { to: "Final Presentation", label: "Final Report siap, mulai Final Presentation", roles: PM, auto: true },
-  "Final Presentation": { to: "Done", label: "Presentasi selesai, tutup proyek", roles: ["technical_writer", ...PM], auto: true },
+  "Initial Report": { to: "Remediasi", label: "Kirim Initial Report ke klien, mulai Remediasi", roles: ["technical_writer", ...PM], auto: true },
+  Remediasi: { to: "Retesting", label: "Klien sudah memperbaiki, mulai Retesting", roles: PM },
+  Retesting: { to: "Final Report Drafting", label: "Retesting selesai, mulai susun Final Report", roles: PM, back: { to: "Remediasi", label: "Masih ada yang belum beres, balik ke Remediasi" } },
+  "Final Report Drafting": { to: "Final Presentation", label: "Final Report sudah jadi, lanjut ke Final Presentation", roles: PM, auto: true },
+  "Final Presentation": { to: "Done", label: "Presentasi sudah selesai, tutup proyek", roles: ["technical_writer", ...PM], auto: true },
 };
 
 export function ProjectDetailPage() {
   const { projectId } = useParams();
   const id = Number(projectId);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const sessionUser = useSession((s) => s.user);
   const role = sessionUser?.role?.role_name ?? "";
   const project = useQuery({ queryKey: ["project", id], queryFn: () => getProject(id), enabled: Number.isFinite(id) });
@@ -70,11 +69,6 @@ export function ProjectDetailPage() {
     onSuccess: (p) => {
       void queryClient.invalidateQueries({ queryKey: ["projects"] });
       notify.success("Status diperbarui", { description: `Sekarang: ${p.status?.status_name ?? "-"}` });
-      // Tech Writer tidak lagi melihat proyek Done (batas di BE), jadi kembali ke dashboard.
-      if (role === "technical_writer" && p.status?.status_name === "Done") {
-        void navigate("/dashboard");
-        return;
-      }
       void queryClient.invalidateQueries({ queryKey: ["project", id] });
     },
   });
@@ -111,7 +105,7 @@ export function ProjectDetailPage() {
   const current = p.status?.status_name ?? "Draft";
   // PM baru melihat proyek setelah Tech Lead menyerahkannya (keluar dari Draft).
   if (role === "project_manager" && current === "Draft") {
-    return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih Draft di Tech Lead.</Alert>;
+    return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih disiapkan Tech Lead, jadi belum bisa dibuka.</Alert>;
   }
   const statusIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
   const next = NEXT[current];

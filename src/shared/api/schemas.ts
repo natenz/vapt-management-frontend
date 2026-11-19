@@ -30,8 +30,8 @@ export const PROJECT_STATUSES = [
 ] as const;
 export type ProjectStatusName = (typeof PROJECT_STATUSES)[number];
 
-// Temuan cuma terbuka atau ditutup; alasan kalau klien belum/tidak memperbaiki ditulis di status_note.
-export const FINDING_STATUSES = ["open", "closed"] as const;
+// Terbuka, ditutup (sudah diperbaiki), atau ditutup dengan catatan (tidak diperbaiki, alasannya wajib ditulis di status_note).
+export const FINDING_STATUSES = ["open", "closed", "closed_with_note"] as const;
 export type FindingStatus = (typeof FINDING_STATUSES)[number];
 
 const roleSchema = z.object({ role_id: z.number(), role_name: z.string() });

@@ -228,7 +228,7 @@ export function ReportPage() {
       <PageHeader
         title={`Report: ${data.project.project_name}`}
         description={`${fmtRange(data.project.start_date, data.project.end_date)} · dibuat ${fmtDate(data.generated_at)}`}
-        action={<Button disabled leadingIcon={<Download />} title="Ekspor PDF/DOCX belum tersedia di backend">Unduh report</Button>}
+        action={<Button disabled leadingIcon={<Download />} title="Unduh PDF/DOCX belum tersedia">Unduh report</Button>}
       />
       <section className="flex flex-wrap gap-2" aria-label="Ringkasan severity">
         {SEVERITIES.map((s) => (

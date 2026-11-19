@@ -156,7 +156,7 @@ export function AccountPage() {
       }),
     onSuccess: () => {
       notify.success("Password berhasil diperbarui", {
-        description: "Gunakan password baru Anda untuk sesi login berikutnya.",
+        description: "Pakai password baru kamu saat login berikutnya.",
       });
       resetPassword();
       setShowOldPassword(false);
@@ -178,7 +178,7 @@ export function AccountPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Akun Saya"
-        description="Kelola informasi profil akun Anda dan perbarui password keamanan secara mandiri."
+        description="Atur profil dan ganti password kamu sendiri."
       />
 
       <div className="grid gap-6 lg:grid-cols-12">

@@ -42,25 +42,22 @@ const editSchema = z.object({
   severity: z.enum(SEVERITIES),
   cvss_score: z.string().refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 10), "CVSS 0 sampai 10"),
   endpoint: z.string(),
-  status: z.enum(FINDING_STATUSES),
 });
 type EditValues = z.infer<typeof editSchema>;
 
-const STATUS_LABEL: Record<string, string> = { open: "Terbuka", closed: "Ditutup" };
+const STATUS_LABEL: Record<string, string> = { open: "Terbuka", closed: "Ditutup", closed_with_note: "Ditutup dengan catatan" };
 
-export function allowedFindingStatuses(
-  f: Finding,
-  projectStatus: string,
-  role: string,
-  canManage: boolean,
-): FindingStatus[] {
-  if (EDITABLE_STATUSES.includes(projectStatus) && (canManage || role === "pentester")) {
+// BE: hanya pentester dan technical writer yang mengubah status temuan; PM dan Tech Lead cuma melihat.
+const STATUS_ROLES = ["pentester", "technical_writer"];
+
+export function allowedFindingStatuses(f: Finding, projectStatus: string, role: string): FindingStatus[] {
+  if (EDITABLE_STATUSES.includes(projectStatus) && STATUS_ROLES.includes(role)) {
     return [...FINDING_STATUSES];
   }
   return FINDING_STATUSES.includes(f.status as FindingStatus) ? [f.status as FindingStatus] : ["open"];
 }
 
-function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) {
+function StatusSelect({ f, options, onNeedNote }: { f: Finding; options: FindingStatus[]; onNeedNote: () => void }) {
   const qc = useQueryClient();
   const m = useMutation({
     mutationFn: (to: FindingStatus) => changeFindingStatus(f.vulna_id, to),
@@ -81,7 +78,10 @@ function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) 
       disabled={m.isPending}
       onChange={(e) => {
         const next = e.target.value as FindingStatus;
-        if (next !== f.status) m.mutate(next);
+        if (next === f.status) return;
+        // "Ditutup dengan catatan" butuh alasan dulu, jadi buka form catatan, bukan langsung simpan.
+        if (next === "closed_with_note") onNeedNote();
+        else m.mutate(next);
       }}
     >
       {options.map((st) => (
@@ -91,47 +91,39 @@ function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) 
   );
 }
 
-/** Catatan status: alasan temuan masih terbuka (mis. klien tidak mau memperbaiki). */
+/** Form "Ditutup dengan catatan": alasan wajib diisi (BE juga menolak kalau kosong). */
 function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
   const qc = useQueryClient();
   const [text, setText] = useState(f.status_note ?? "");
+  const empty = text.trim() === "";
   const save = useMutation({
-    mutationFn: () => changeFindingStatus(f.vulna_id, f.status as FindingStatus, text.trim()),
+    mutationFn: () => changeFindingStatus(f.vulna_id, "closed_with_note", text.trim()),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["findings", f.project_id] });
-      notify.success("Catatan finding tersimpan");
-      onDone();
+      notify.success("Finding ditutup dengan catatan");      onDone();
     },
-    onError: (e) => notify.info("Catatan belum bisa disimpan", { description: e.message }),
+    onError: (e) => notify.info("Belum bisa disimpan", { description: e.message }),
   });
   return (
     <form
       className="mt-3 flex w-full flex-col gap-2 rounded-sm border border-border p-4"
       onSubmit={(e) => {
         e.preventDefault();
-        save.mutate();
+        if (!empty) save.mutate();
       }}
     >
-      <Field label="Catatan status" helper="Contoh: klien tidak mau memperbaiki, atau memang harus tetap terbuka. Maksimal 500 karakter.">
+      <Field label="Kenapa finding ini ditutup tanpa diperbaiki?" helper="Wajib diisi. Contoh: klien menerima risikonya, atau perbaikannya belum bisa dilakukan. Maksimal 500 karakter.">
         {(x) => <Textarea rows={3} maxLength={500} {...x} value={text} onChange={(e) => setText(e.target.value)} />}
       </Field>
       <div className="flex gap-2">
-        <Button type="submit" variant="solid" loading={save.isPending}>Simpan catatan</Button>
+        <Button type="submit" variant="solid" loading={save.isPending} disabled={empty}>Simpan</Button>
         <Button type="button" onClick={onDone}>Batal</Button>
       </div>
     </form>
   );
 }
 
-function EditFinding({
-  f,
-  statusOptions,
-  onDone,
-}: {
-  f: Finding;
-  statusOptions: FindingStatus[];
-  onDone: () => void;
-}) {
+function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
   const qc = useQueryClient();
   const { register, handleSubmit, formState: { errors } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
@@ -141,7 +133,6 @@ function EditFinding({
       severity: f.severity as EditValues["severity"],
       cvss_score: f.cvss_score != null ? String(f.cvss_score) : "",
       endpoint: f.endpoint ?? "",
-      status: (FINDING_STATUSES.includes(f.status as FindingStatus) ? f.status : "open") as FindingStatus,
     },
   });
   const save = useMutation({
@@ -153,9 +144,6 @@ function EditFinding({
         cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score),
         endpoint: v.endpoint,
       });
-      if (v.status !== f.status) {
-        await changeFindingStatus(f.vulna_id, v.status);
-      }
     },
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["findings", f.project_id] }); notify.success("Finding diperbarui"); onDone(); },
   });
@@ -166,18 +154,9 @@ function EditFinding({
         <Field label="Kode finding" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
         <Field label="Judul finding" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
         <Field label="CVSS score" error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
-        <Field label="Status finding">
-          {(x) => (
-            <select className={selectClass} disabled={statusOptions.length <= 1} {...x} {...register("status")}>
-              {statusOptions.map((st) => (
-                <option key={st} value={st}>{STATUS_LABEL[st] ?? st}</option>
-              ))}
-            </select>
-          )}
-        </Field>
       </div>
       <Field label="Endpoint">{(x) => <Input {...x} {...register("endpoint")} />}</Field>
       <div className="flex gap-2">
@@ -199,15 +178,12 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const statusOpen = EDITABLE_STATUSES.includes(project.status?.status_name ?? "");
   // Sama dengan BE (vulna_service Create): sebelum Remediasi dan lagi dari Retesting sampai Final Report Drafting.
   const canRecord = statusOpen && ["pentester", "super_admin"].includes(role);
-  // BE canManage: admin/TL atau PM pemilik proyek.
-  const canManage = ["super_admin", "tech_lead"].includes(role) || (role === "project_manager" && project.pm_id === user?.sys_user_id);
   const projectStatus = project.status?.status_name ?? "";
   const isOwner = (f: Finding) => f.pentester_id === user?.sys_user_id;
   const canEdit = (f: Finding) =>
     statusOpen && (["super_admin", "tech_lead", "technical_writer"].includes(role) || (role === "pentester" && isOwner(f)));
-  // BE: catatan ikut jalur ubah status; saat Remediasi hanya PM pemilik/admin.
-  const canNote = (f: Finding) =>
-    allowedFindingStatuses(f, projectStatus, role, canManage).length > 1 || (projectStatus === "Remediasi" && canManage);
+  // Catatan hanya ada di status "Ditutup dengan catatan"; yang boleh mengubah status juga boleh mengubah catatannya.
+  const canNote = (f: Finding) => f.status === "closed_with_note" && allowedFindingStatuses(f, projectStatus, role).length > 1;
   const canDelete = (f: Finding) =>
     ["Assessment", "Retesting"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner(f)));
   const remove = useMutation({
@@ -272,9 +248,9 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               </span>
               <span className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={toSeverityKey(f.severity)} />
-                <StatusSelect f={f} options={allowedFindingStatuses(f, projectStatus, role, canManage)} />
+                <StatusSelect f={f} options={allowedFindingStatuses(f, projectStatus, role)} onNeedNote={() => setNotingId(f.vulna_id)} />
                 {canNote(f) && notingId !== f.vulna_id ? (
-                  <Button type="button" onClick={() => setNotingId(f.vulna_id)}>{f.status_note ? "Ubah catatan" : "Catatan"}</Button>
+                  <Button type="button" onClick={() => setNotingId(f.vulna_id)}>Ubah catatan</Button>
                 ) : null}
                 {canEdit(f) && editingId !== f.vulna_id ? <Button type="button" onClick={() => setEditingId(f.vulna_id)}>Edit</Button> : null}
                 {canDelete(f) && (
@@ -312,11 +288,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               ) : null}
               {notingId === f.vulna_id ? <NoteEditor f={f} onDone={() => setNotingId(null)} /> : null}
               {editingId === f.vulna_id ? (
-                <EditFinding
-                  f={f}
-                  statusOptions={allowedFindingStatuses(f, projectStatus, role, canManage)}
-                  onDone={() => setEditingId(null)}
-                />
+                <EditFinding f={f} onDone={() => setEditingId(null)} />
               ) : null}
             </li>
           ))}

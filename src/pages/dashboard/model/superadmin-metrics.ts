@@ -160,7 +160,9 @@ export function findingTotals(reports: readonly Pick<ProjectReport, "findings">[
       total++;
       const sev = normalizeSeverity(f.severity);
       bySeverity[sev]++;
-      const st = f.status.toLowerCase() as FindingStatusKey;
+      // "Ditutup dengan catatan" tetap dihitung sebagai ditutup.
+      const raw = f.status.toLowerCase();
+      const st = (raw === "closed_with_note" ? "closed" : raw) as FindingStatusKey;
       if (st in byStatus) byStatus[st]++;
       if (OPEN_FINDING.has(st)) {
         open++;

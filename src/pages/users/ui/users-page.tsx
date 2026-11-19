@@ -64,11 +64,11 @@ import {
 import { UsersFilterBar } from "./users-filter-bar";
 
 const DEFAULT_ROLES: RoleDetail[] = [
-  { role_id: 1, role_name: "super_admin", description: "Hak akses penuh kelola sistem & user" },
-  { role_id: 2, role_name: "tech_lead", description: "Template proyek, alokasi mandays, approval" },
-  { role_id: 3, role_name: "project_manager", description: "Detail jadwal, tracking eksekusi & remedi" },
-  { role_id: 4, role_name: "pentester", description: "Findings celah keamanan & retest" },
-  { role_id: 5, role_name: "technical_writer", description: "Review QA narasi finding & kompilasi report" },
+  { role_id: 1, role_name: "super_admin", description: "Bisa mengatur semua hal di sistem, termasuk pengguna" },
+  { role_id: 2, role_name: "tech_lead", description: "Membuat template proyek, menentukan batas mandays, dan meng-ACC catalog" },
+  { role_id: 3, role_name: "project_manager", description: "Mengisi asset dan jadwal, lalu memantau proyek sampai klien selesai memperbaiki" },
+  { role_id: 4, role_name: "pentester", description: "Mencatat finding celah keamanan dan mengujinya ulang setelah diperbaiki" },
+  { role_id: 5, role_name: "technical_writer", description: "Merapikan tulisan finding dan menyusun report" },
 ];
 
 const createUserSchema = z.object({
@@ -199,7 +199,7 @@ export function UsersPage() {
     onSuccess: (newUser) => {
       void queryClient.invalidateQueries({ queryKey: ["users"] });
       notify.success("Pengguna baru berhasil ditambahkan", {
-        description: `Akun @${newUser.username} telah aktif di sistem.`,
+        description: `Akun @${newUser.username} sudah dibuat dan bisa dipakai untuk login.`,
       });
       resetCreate();
       setCreateOpen(false);
@@ -246,7 +246,7 @@ export function UsersPage() {
     onSuccess: (updated) => {
       void queryClient.invalidateQueries({ queryKey: ["users"] });
       notify.success("Data pengguna berhasil diperbarui", {
-        description: `Perubahan akun @${updated.username} telah disimpan.`,
+        description: `Perubahan akun @${updated.username} sudah disimpan.`,
       });
       setEditUser(null);
     },
@@ -257,7 +257,7 @@ export function UsersPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["users"] });
       notify.success("Pengguna berhasil dihapus", {
-        description: "Akun dan profil telah dihapus dari sistem.",
+        description: "Akun dan profilnya sudah dihapus.",
       });
       setDeleteUserTarget(null);
     },
@@ -401,7 +401,7 @@ export function UsersPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Kelola User"
-        description="Kelola akun kredensial dan hak akses role pengguna sistem VAPT Command Center."
+        description="Atur akun dan role pengguna VAPT Command Center."
         action={
           <Button variant="solid" leadingIcon={<Plus />} onClick={() => setCreateOpen(true)}>
             Tambah User
@@ -452,7 +452,7 @@ export function UsersPage() {
               <EmptyState
                 icon={<Users />}
                 title="Belum ada pengguna"
-                description="Pengguna yang terdaftar di sistem akan muncul di sini."
+                description="Pengguna yang sudah dibuat akan muncul di sini."
               />
             )
           }
@@ -759,7 +759,7 @@ export function RolesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Hak Akses Role"
-        description="Daftar role sistem dan deskripsi izin (ms_roles). Penegakan hak akses dilakukan secara terpusat di backend service."
+        description="Daftar role dan apa saja yang boleh dilakukan masing-masing. Aturan aksesnya dijaga di server."
       />
       {error ? <Alert tone="error" title="Gagal memuat role">{error.message}</Alert> : null}
       {isLoading ? (

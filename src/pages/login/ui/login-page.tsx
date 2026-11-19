@@ -92,7 +92,7 @@ export function LoginPage() {
               {hasLoginError ? (
                 <Alert
                   tone="error"
-                  title="Username atau password tidak valid"
+                  title="Username atau password salah"
                   compact
                   className="animate-form-feedback-in"
                   onDismiss={() => setIsLoginAlertClosing(true)}

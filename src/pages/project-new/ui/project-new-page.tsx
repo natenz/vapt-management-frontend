@@ -83,7 +83,7 @@ export function ProjectNewPage() {
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="flex flex-col gap-8">
       <PageHeader
         title="Buat Template Proyek"
-        description="Tentukan proyek, rentang tanggal, mandays proyeksi, PM, dan anggota tim. Asset yang diuji dan penugasan Pentester per asset diisi Project Manager, dalam batas mandays proyeksi."
+        description="Isi nama proyek, tanggal, mandays proyeksi, PM, dan anggota tim. Asset yang diuji dan pembagian pentester per asset diisi PM nanti, sesuai batas mandays proyeksi."
         action={<Button type="submit" variant="solid" loading={mutation.isPending}>Simpan sebagai Draft</Button>}
       />
 
@@ -104,7 +104,7 @@ export function ProjectNewPage() {
           </div>
           <Field
             label="Mandays proyeksi"
-            helper="Jatah total mandays untuk proyek ini. PM tidak bisa mengisi total mandays asset melebihi angka ini. Kosongkan bila belum ditentukan."
+            helper="Batas total mandays proyek ini. PM tidak boleh mengisi mandays asset lebih dari angka ini. Boleh dikosongkan dulu, PM bisa mengisinya nanti."
             error={errors.projected_mandays?.message}
           >
             {(f) => <Input type="number" inputMode="decimal" min="0" step="0.5" placeholder="Contoh: 20" {...f} {...register("projected_mandays")} />}

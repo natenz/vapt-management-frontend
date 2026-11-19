@@ -161,14 +161,14 @@ const SHORTCUTS: { to: string; title: string; text: string; icon: ReactNode; ton
   {
     to: "/projects/new",
     title: "Buat Proyek",
-    text: "Inisiasi template proyek VAPT baru.",
+    text: "Bikin template proyek VAPT baru.",
     icon: <FolderPlus />,
     tone: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
   },
   {
     to: "/catalog",
     title: "Vulnerability Catalog",
-    text: "Standarisasi celah & ACC pengajuan.",
+    text: "Kelola daftar vulnerability dan ACC pengajuan.",
     icon: <BookCheck />,
     tone: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
   },
@@ -188,7 +188,7 @@ export function ShortcutsCard() {
       role="region"
       aria-label="Pintasan Administrasi"
       title="Pintasan Tata Kelola"
-      description="Akses cepat ke modul administrasi."
+      description="Jalan pintas ke menu admin."
       icon={<ArrowRight />}
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

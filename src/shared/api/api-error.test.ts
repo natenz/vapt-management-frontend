@@ -30,19 +30,19 @@ describe("humanizeErrorMessage", () => {
 
   it("menerjemahkan pesan bisnis transisi status", () => {
     expect(humanizeErrorMessage("project must have at least one asset before pentest")).toBe(
-      "Tambahkan minimal 1 assets sebelum proyek dapat masuk stage Pentest.",
+      "Tambahkan minimal 1 asset dulu sebelum proyek masuk tahap Assessment.",
     );
     expect(humanizeErrorMessage("project template must have at least one resource")).toBe(
-      "Proyek harus memiliki minimal 1 anggota tim sebelum diserahkan ke PM.",
+      "Proyek harus punya minimal 1 anggota tim sebelum diserahkan ke PM.",
     );
     expect(humanizeErrorMessage("allocated mandays exceed the asset's mandays")).toBe(
-      "Mandays yang dialokasikan melebihi batas kuota mandays asset.",
+      "Mandays yang dibagikan lebih besar dari mandays asset.",
     );
   });
 
   it("menerjemahkan pola regex dinamis asset tanpa pentester", () => {
     const res = humanizeErrorMessage("asset 'Portal Web' has no pentester assigned in the timeline");
-    expect(res).toBe('Asset "Portal Web" belum ditugaskan ke pentester di timeline jadwal.');
+    expect(res).toBe('Asset "Portal Web" belum dibagikan ke pentester di jadwal.');
   });
 
   it("400 validasi: message sudah Indonesia dan details kosong (tidak ada 'failed on')", async () => {

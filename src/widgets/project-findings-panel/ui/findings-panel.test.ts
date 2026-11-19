@@ -3,19 +3,25 @@ import type { Finding } from "@/entities/finding";
 import { allowedFindingStatuses } from "./findings-panel";
 
 const f = (status: string) => ({ status }) as Finding;
+const ALL = ["open", "closed", "closed_with_note"];
 
-// Mirror BE: status temuan cuma open/closed. Bisa diubah pentester atau PM pemilik saat tahap temuan terbuka, terkunci saat Remediasi.
+// Mirror BE: hanya pentester dan technical writer yang boleh mengubah status temuan, dan hanya di tahap yang terbuka.
 describe("allowedFindingStatuses", () => {
-  it("pentester dan PM pemilik bisa pilih Terbuka atau Ditutup saat Assessment/Retesting", () => {
-    expect(allowedFindingStatuses(f("open"), "Assessment", "pentester", false)).toEqual(["open", "closed"]);
-    expect(allowedFindingStatuses(f("open"), "Retesting", "project_manager", true)).toEqual(["open", "closed"]);
+  it("pentester dan technical writer bisa pilih ketiga status saat tahap terbuka", () => {
+    expect(allowedFindingStatuses(f("open"), "Assessment", "pentester")).toEqual(ALL);
+    expect(allowedFindingStatuses(f("open"), "Retesting", "pentester")).toEqual(ALL);
+    expect(allowedFindingStatuses(f("open"), "Initial Report", "technical_writer")).toEqual(ALL);
+    expect(allowedFindingStatuses(f("open"), "Final Report Drafting", "technical_writer")).toEqual(ALL);
   });
-  it("terkunci saat Remediasi", () => {
-    expect(allowedFindingStatuses(f("open"), "Remediasi", "pentester", false)).toEqual(["open"]);
-    expect(allowedFindingStatuses(f("open"), "Remediasi", "project_manager", true)).toEqual(["open"]);
+  it("PM, Tech Lead, dan superadmin hanya melihat, tidak bisa mengubah", () => {
+    for (const role of ["project_manager", "tech_lead", "super_admin"]) {
+      expect(allowedFindingStatuses(f("open"), "Retesting", role)).toEqual(["open"]);
+    }
   });
-  it("tech writer atau status Done hanya melihat status saat ini", () => {
-    expect(allowedFindingStatuses(f("open"), "Initial Report", "technical_writer", false)).toEqual(["open"]);
-    expect(allowedFindingStatuses(f("closed"), "Done", "pentester", false)).toEqual(["closed"]);
+  it("terkunci saat Remediasi, Final Presentation, dan Done", () => {
+    for (const st of ["Remediasi", "Final Presentation", "Done"]) {
+      expect(allowedFindingStatuses(f("closed"), st, "pentester")).toEqual(["closed"]);
+      expect(allowedFindingStatuses(f("open"), st, "technical_writer")).toEqual(["open"]);
+    }
   });
 });

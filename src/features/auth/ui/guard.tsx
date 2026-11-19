@@ -15,7 +15,7 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
   if (roles && !(isRole(role) && roles.includes(role))) {
     return (
       <div className="p-6">
-        <Alert tone="warning" title="Halaman tidak tersedia untuk peran ini">
+        <Alert tone="warning" title="Kamu tidak punya akses ke halaman ini">
           Akun Anda tidak memiliki akses ke halaman ini.
         </Alert>
       </div>

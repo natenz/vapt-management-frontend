@@ -43,7 +43,7 @@ export function findingProgress(findings: readonly Finding[]): FindingProgress {
   for (const f of findings) {
     const s = f.status.toLowerCase();
     if (OPEN.has(s)) out.open++;
-    else if (s === "closed") out.closed++;
+    else if (s === "closed" || s === "closed_with_note") out.closed++;
   }
   return out;
 }
