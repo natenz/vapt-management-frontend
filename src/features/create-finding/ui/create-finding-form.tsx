@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { listCatalog } from "@/entities/catalog";
@@ -11,6 +11,8 @@ import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field, FieldGroup, Input } from "@/shared/ui/input";
 import { notify } from "@/shared/ui/toast";
+
+import { EvidenceUploader } from "./evidence-uploader";
 
 const schema = z
   .object({
@@ -48,14 +50,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
   const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
   const [photos, setPhotos] = useState<File[]>([]);
-  const [photoError, setPhotoError] = useState("");
   const [savedFinding, setSavedFinding] = useState<Finding | null>(null);
-  const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
-  useEffect(() => {
-    const next = photos.map((file) => ({ file, url: URL.createObjectURL(file) }));
-    setPreviews(next);
-    return () => next.forEach(({ url }) => URL.revokeObjectURL(url));
-  }, [photos]);
   const sessionUser = useSession((s) => s.user);
   // Pentester hanya boleh mencatat temuan di aset yang ditugaskan ke dia (baris mandays).
   const isPentester = sessionUser?.role?.role_name === "pentester";
@@ -139,25 +134,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
           <Field label="Endpoint" helper="Contoh: POST /api/v1/login">{(f) => <Input {...f} {...register("endpoint")} />}</Field>
         </FieldGroup>
       </fieldset>
-      <Field label="Foto evidence" error={photoError || undefined} helper="Opsional. Maksimal 5 foto PNG/JPEG, masing-masing 5 MB. Foto disimpan bersama temuan.">
-        {(field) => <Input {...field} type="file" accept="image/png,image/jpeg" multiple disabled={mutation.isPending} onChange={(event) => {
-          const selected = Array.from(event.target.files ?? []);
-          event.target.value = "";
-          if (photos.length + selected.length > 5) { setPhotoError("Maksimal 5 foto evidence"); return; }
-          if (selected.some((file) => !["image/png", "image/jpeg"].includes(file.type) || file.size > 5 * 1024 * 1024)) {
-            setPhotoError("Gunakan foto PNG/JPEG maksimal 5 MB per foto"); return;
-          }
-          setPhotoError("");
-          setPhotos((current) => [...current, ...selected]);
-        }} />}
-      </Field>
-      {previews.length > 0 ? <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label="Foto yang akan diunggah">
-        {previews.map(({ file, url }, index) => <li key={`${file.name}-${index}`} className="min-w-0 rounded-sm border border-border p-2">
-          <img src={url} alt={`Pratinjau ${file.name}`} className="h-24 w-full rounded-xs object-contain" />
-          <p className="truncate text-caption text-ink-secondary">{file.name}</p>
-          <Button type="button" disabled={mutation.isPending} aria-label={`Hapus foto ${file.name}`} onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}>Hapus</Button>
-        </li>)}
-      </ul> : null}
+      <EvidenceUploader files={photos} onChange={setPhotos} disabled={mutation.isPending} />
       <div className="flex flex-wrap justify-end gap-3">
         <Button type="button" onClick={onCancel} disabled={mutation.isPending}>Batal</Button>
         <Button type="submit" variant="solid" loading={mutation.isPending}>{savedFinding ? "Coba unggah lagi" : "Simpan temuan"}</Button>
