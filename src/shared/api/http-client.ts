@@ -77,16 +77,20 @@ export async function apiRequest<T>(
 }
 
 /** Unduh foto melalui autentikasi yang sama dengan permintaan API lainnya. */
-export async function apiBlobRequest(path: string): Promise<Blob> {
-  const headers = new Headers({ Accept: "image/png, image/jpeg" });
+export async function apiBlobRequest(
+  path: string,
+  options: { query?: Query; accept?: string; errorMessage?: string } = {},
+): Promise<Blob> {
+  const { query, accept = "image/png, image/jpeg", errorMessage = "Foto evidence tidak dapat dimuat" } = options;
+  const headers = new Headers({ Accept: accept });
   const token = adapter?.getToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   let response: Response;
-  try { response = await fetch(buildUrl(path), { headers }); }
+  try { response = await fetch(buildUrl(path, query), { headers }); }
   catch { throw new ApiError("Tidak dapat terhubung ke server."); }
   if (!response.ok) {
     if (response.status === 401) adapter?.onUnauthorized();
-    throw new ApiError("Foto evidence tidak dapat dimuat", response.status);
+    throw new ApiError(errorMessage, response.status);
   }
   return response.blob();
 }

@@ -8,11 +8,11 @@ import {
   FolderKanban,
   ShieldAlert,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
-import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
+import { downloadReportDocx, getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge, statusBetween, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
@@ -220,6 +220,28 @@ export function ReportPage() {
   const { projectId } = useParams();
   const id = Number(projectId);
   const { data, isLoading, error } = useQuery({ queryKey: ["report", id], queryFn: () => getReport(id) });
+  const [downloadingAssetId, setDownloadingAssetId] = useState<number | null | undefined>(undefined);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const downloadDocx = async (assetId?: number) => {
+    setDownloadingAssetId(assetId ?? null);
+    setDownloadError(null);
+    try {
+      const blob = await downloadReportDocx(id, assetId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = assetId ? `initial-report-asset-${assetId}.docx` : `initial-report-project-${id}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (cause) {
+      setDownloadError(cause instanceof Error ? cause.message : "Report DOCX tidak dapat diunduh");
+    } finally {
+      setDownloadingAssetId(undefined);
+    }
+  };
 
   if (isLoading) return <Skeleton className="h-96" />;
   if (error || !data) return <Alert tone="error" title="Report tidak tersedia">{error?.message}</Alert>;
@@ -230,8 +252,13 @@ export function ReportPage() {
       <PageHeader
         title={`Report: ${data.project.project_name}`}
         description={`${fmtRange(data.project.start_date, data.project.end_date)} · dibuat ${fmtDate(data.generated_at)}`}
-        action={<Button disabled leadingIcon={<Download />} title="Unduh PDF/DOCX belum tersedia">Unduh report</Button>}
+        action={
+          <Button onClick={() => void downloadDocx()} disabled={downloadingAssetId !== undefined} leadingIcon={<Download />}>
+            {downloadingAssetId === null ? "Menyiapkan DOCX..." : "Unduh DOCX"}
+          </Button>
+        }
       />
+      {downloadError ? <Alert tone="error" title="Unduh report gagal">{downloadError}</Alert> : null}
       <section className="flex flex-wrap gap-2" aria-label="Ringkasan severity">
         {SEVERITIES.map((s) => (
           <SeverityBadge key={s} severity={toSeverityKey(s)} count={data.summary.by_severity?.[s] ?? 0} />
@@ -264,6 +291,15 @@ export function ReportPage() {
                   {SEVERITIES.map((s) => (<SeverityBadge key={s} severity={toSeverityKey(s)} count={bySeverity[s] ?? 0} />))}
                 </span>
               </header>
+              <Button
+                variant="outline"
+                className="self-start"
+                onClick={() => void downloadDocx(asset.assets_id)}
+                disabled={downloadingAssetId !== undefined}
+                leadingIcon={<Download />}
+              >
+                {downloadingAssetId === asset.assets_id ? "Menyiapkan DOCX..." : "Unduh DOCX asset"}
+              </Button>
               <ul className="flex flex-col gap-3">
                 {findings.length === 0 ? <li className="text-body-sm text-ink-muted">Tidak ada findings pada asset ini.</li> : null}
                 {findings.map((f) => (<FindingItem key={f.vulna_id} f={f} showAsset={false} />))}
