@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Bug,
   CalendarRange,
   Clock,
   FileText,
@@ -380,9 +379,6 @@ export function ProjectDetailPage() {
           {statusBetween(current, "Assessment", "Done") ? <FindingsPanel project={p} /> : null}
 
           <footer className="flex flex-wrap gap-3">
-            {(role === "pentester" || role === "super_admin") && ["Assessment", "Retesting"].includes(current) ? (
-              <Button asChild leadingIcon={<Bug />}><Link to={`/projects/${id}/findings/new`}>Tambah temuan</Link></Button>
-            ) : null}
             {statusBetween(current, "Initial Report", "Done") ? (
               <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
             ) : null}

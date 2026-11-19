@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router";
 import { z } from "zod";
 import {
   changeFindingStatus,
@@ -193,6 +194,8 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const role = user?.role?.role_name ?? "";
   const statusOpen = EDITABLE_STATUSES.includes(project.status?.status_name ?? "");
+  // Sama dengan BE (vulna_service Create): sebelum Remediasi dan lagi dari Retesting sampai Final Report Drafting.
+  const canRecord = statusOpen && ["pentester", "super_admin"].includes(role);
   // BE canManage: admin/TL atau PM pemilik proyek.
   const canManage = ["super_admin", "tech_lead"].includes(role) || (role === "project_manager" && project.pm_id === user?.sys_user_id);
   const projectStatus = project.status?.status_name ?? "";
@@ -220,7 +223,12 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
 
   return (
     <section className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6" aria-labelledby="findings">
-      <h2 id="findings" className="text-title-md text-ink">Temuan <span className="text-body-sm text-ink-muted">({data?.length ?? 0})</span></h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="findings" className="text-title-md text-ink">Temuan <span className="text-body-sm text-ink-muted">({data?.length ?? 0})</span></h2>
+        {canRecord ? (
+          <Button asChild variant="solid" leadingIcon={<Plus />}><Link to={`/projects/${project.project_id}/findings/new`}>Tambah temuan</Link></Button>
+        ) : null}
+      </div>
       {(data ?? []).length > 0 ? (
         <div className="flex flex-wrap gap-2" aria-label="Ringkasan severity">
           {SEVERITIES.map((s) => {
