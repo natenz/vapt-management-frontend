@@ -107,6 +107,10 @@ describe("DashboardPage", () => {
     expect(within(projectsSec).getByText("Proyek Uji")).toBeInTheDocument();
     expect(within(projectsSec).getByText("Proyek Remediasi")).toBeInTheDocument();
 
+    const completedSec = screen.getByRole("region", { name: "Projects Selesai" });
+    expect(within(completedSec).getByText("Belum ada projects yang selesai.")).toBeInTheDocument();
+    expect(within(completedSec).getByRole("link", { name: "Buka semua projects" })).toHaveAttribute("href", "/projects");
+
     expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Persetujuan Usulan Vulnerability Catalog" })).not.toBeInTheDocument();

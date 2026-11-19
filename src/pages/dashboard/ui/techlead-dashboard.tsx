@@ -12,7 +12,8 @@ import type { User } from "@/entities/user";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { Button } from "@/shared/ui/button";
 import { SummaryTile } from "@/shared/ui/summary-tile";
-import { runningProjects } from "../model/techlead-metrics";
+import { completedProjects, runningProjects } from "../model/techlead-metrics";
+import { CompletedProjectsCard } from "./techlead/completed-projects-card";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
 
 export interface TechLeadDashboardProps {
@@ -35,6 +36,7 @@ export function TechLeadDashboard({
   isLoading,
 }: TechLeadDashboardProps) {
   const running = useMemo(() => runningProjects(projects), [projects]);
+  const completed = useMemo(() => completedProjects(projects), [projects]);
 
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
@@ -74,6 +76,7 @@ export function TechLeadDashboard({
       <BentoGrid aria-label="Bento dashboard Tech Lead">
         {/* Pemantauan */}
         <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} />
+        <CompletedProjectsCard projects={completed} isLoading={isLoading} />
       </BentoGrid>
     </div>
   );

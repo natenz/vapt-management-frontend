@@ -166,6 +166,13 @@ export function runningProjects(projects: readonly Project[], today = todayIso()
     );
 }
 
+/** Projects yang sudah selesai, terbaru berdasarkan tanggal selesai terjadwal. */
+export function completedProjects(projects: readonly Project[]): Project[] {
+  return [...projects]
+    .filter((project) => project.status?.status_name === "Done")
+    .sort((a, b) => (b.end_date ?? "").localeCompare(a.end_date ?? ""));
+}
+
 /* ---------- Katalog ---------- */
 
 export function severityCounts(items: readonly CatalogVulna[]) {
