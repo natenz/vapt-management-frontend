@@ -31,7 +31,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { notify } from "@/shared/ui/toast";
 import { cn } from "@/shared/lib/cn";
-import { AssetDialog } from "./asset-dialog";
+import { AssetDialog, type PentesterPerson } from "./asset-dialog";
 
 const sel = "h-9 w-full rounded-sm border border-border-control bg-surface px-2 text-input text-ink focus-ring";
 const fmt = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100) : "-");
@@ -99,15 +99,60 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
     enabled: canAssign,
   });
 
+  const pentesters = useQuery({
+    queryKey: ["users", "pentester"],
+    queryFn: () => listUsers({ role: "pentester", limit: 100 }),
+    enabled: canAssign,
+  });
+
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [failure, setFailure] = useState<string | null>(null);
 
-  const people = project.resources
-    .map((r) => r.user?.sys_user)
-    .filter((u): u is NonNullable<typeof u> => Boolean(u) && u?.role?.role_name === "pentester");
+  const people = useMemo<PentesterPerson[]>(() => {
+    const map = new Map<number, PentesterPerson>();
+
+    // 1. Masukkan semua pentester dari katalog sistem (listUsers)
+    for (const u of pentesters.data ?? []) {
+      if (u.sys_user_id) {
+        const fullName = u.profile?.full_name?.trim();
+        map.set(u.sys_user_id, {
+          sys_user_id: u.sys_user_id,
+          userId: u.profile?.user_id,
+          name: fullName || u.username || `Pentester ${u.sys_user_id}`,
+        });
+      }
+    }
+
+    // 2. Gabungkan atau lengkapi dengan yang ada di project.resources
+    for (const r of project.resources) {
+      const isPentester =
+        r.user?.sys_user?.role?.role_name === "pentester" ||
+        map.has(r.user?.sys_user?.sys_user_id ?? 0) ||
+        map.has(r.user?.sys_user_id ?? 0);
+
+      const sysId = r.user?.sys_user?.sys_user_id ?? r.user?.sys_user_id;
+      if (isPentester && sysId) {
+        const existing = map.get(sysId);
+        const name =
+          r.user?.full_name?.trim() ||
+          r.user?.sys_user?.profile?.full_name?.trim() ||
+          r.user?.sys_user?.username ||
+          existing?.name ||
+          `User ${r.user_id}`;
+
+        map.set(sysId, {
+          sys_user_id: sysId,
+          userId: r.user_id ?? r.user?.user_id ?? existing?.userId,
+          name,
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "id"));
+  }, [pentesters.data, project.resources]);
   const nameOf = (id: number | null) => {
     const u = people.find((x) => x.sys_user_id === id);
-    return u?.profile?.full_name ?? u?.username ?? "";
+    return u?.name ?? "";
   };
   const twCatalog = (writers.data ?? []).filter((u) => u.profile?.user_id != null);
   const twNameOf = (userId: number) => {
@@ -153,6 +198,38 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       const bad = validate(drafts, { start: project.start_date, end: project.end_date }, base, project.projected_mandays);
       setErrors(bad);
       if (Object.keys(bad).length > 0) throw new Error("__validasi__");
+
+      // Cek pentester yang di-assign namun belum ada di project.resources
+      const assignedSysUserIds = new Set<number>();
+      for (const asset of drafts) {
+        if (asset.removed) continue;
+        for (const p of asset.pentesters) {
+          if (p.pentesterId) {
+            assignedSysUserIds.add(p.pentesterId);
+          }
+        }
+      }
+
+      const existingResourceSysIds = new Set<number>();
+      for (const r of project.resources) {
+        const sid = r.user?.sys_user?.sys_user_id ?? r.user?.sys_user_id;
+        if (sid) existingResourceSysIds.add(sid);
+      }
+
+      const pentesterUserIdsToAdd: number[] = [];
+      for (const sysId of assignedSysUserIds) {
+        if (!existingResourceSysIds.has(sysId)) {
+          const person = people.find((p) => p.sys_user_id === sysId);
+          if (person?.userId) {
+            pentesterUserIdsToAdd.push(person.userId);
+          }
+        }
+      }
+
+      if (pentesterUserIdsToAdd.length > 0) {
+        await addResources(project.project_id, pentesterUserIdsToAdd);
+      }
+
       const ops = buildOps(base, drafts);
       await runOps(ops, {
         createAsset: (b) => createAsset(project.project_id, b),
@@ -171,7 +248,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       for (const t of toRemove) {
         await removeResource(project.project_id, t.resourceId);
       }
-      return ops.length + toAdd.length + toRemove.length;
+      return ops.length + pentesterUserIdsToAdd.length + toAdd.length + toRemove.length;
     },
     onSuccess: (n) => {
       justSaved.current = true;

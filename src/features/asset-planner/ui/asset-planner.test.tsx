@@ -80,16 +80,41 @@ beforeEach(() => {
   api.createMandays.mockResolvedValue({});
   api.addResources.mockResolvedValue([]);
   api.removeResource.mockResolvedValue({});
-  userApi.listUsers.mockResolvedValue([
-    {
-      sys_user_id: 8,
-      username: "writer.eka",
-      email: "",
-      role_id: 5,
-      role: { role_id: 5, role_name: "technical_writer" },
-      profile: { user_id: 8, full_name: "Eka Putri" },
-    },
-  ]);
+  userApi.listUsers.mockImplementation(async (q?: { role?: string }) => {
+    if (q?.role === "technical_writer") {
+      return [
+        {
+          sys_user_id: 8,
+          username: "writer.eka",
+          email: "",
+          role_id: 5,
+          role: { role_id: 5, role_name: "technical_writer" },
+          profile: { user_id: 8, full_name: "Eka Putri" },
+        },
+      ];
+    }
+    if (q?.role === "pentester") {
+      return [
+        {
+          sys_user_id: 5,
+          username: "pentester.budi",
+          email: "",
+          role_id: 4,
+          role: { role_id: 4, role_name: "pentester" },
+          profile: { user_id: 5, full_name: "Budi" },
+        },
+        {
+          sys_user_id: 7,
+          username: "pentester.dimas",
+          email: "",
+          role_id: 4,
+          role: { role_id: 4, role_name: "pentester" },
+          profile: { user_id: 7, full_name: "Dimas" },
+        },
+      ];
+    }
+    return [];
+  });
 });
 
 describe("AssetPlanner", () => {
@@ -101,15 +126,13 @@ describe("AssetPlanner", () => {
     await u.selectOptions(screen.getByLabelText("Tipe aset"), "mobile");
     await u.type(screen.getByLabelText("Mandays aset"), "20");
 
-    await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
+    const selectAdd = await screen.findByLabelText("Tambah pentester");
+    await u.selectOptions(selectAdd, "5");
     expect(screen.getByLabelText("Mandays pentester 1")).toHaveAttribute("placeholder", "20");
-    await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
+    await u.selectOptions(selectAdd, "7");
     expect(screen.getByLabelText("Mandays pentester 1")).toHaveAttribute("placeholder", "10");
     expect(screen.getByLabelText("Mandays pentester 2")).toHaveAttribute("placeholder", "10");
     expect(screen.getByLabelText("Mandays pentester 1")).toHaveValue(null);
-
-    await u.selectOptions(screen.getByLabelText(/Pentester 1 untuk/), "Budi");
-    await u.selectOptions(screen.getByLabelText(/Pentester 2 untuk/), "Dimas");
     expect(api.createAsset).not.toHaveBeenCalled();
 
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
@@ -146,11 +169,10 @@ describe("AssetPlanner", () => {
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
     await u.type(screen.getByLabelText("Nama aset"), "Web Portal");
     await u.type(screen.getByLabelText("Mandays aset"), "11");
-    await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
-    await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
+    const selectAdd = await screen.findByLabelText("Tambah pentester");
+    await u.selectOptions(selectAdd, "5");
+    await u.selectOptions(selectAdd, "7");
     expect(screen.getByLabelText("Mandays pentester 1")).toHaveAttribute("placeholder", "5.5");
-    await u.selectOptions(screen.getByLabelText(/Pentester 1 untuk/), "Budi");
-    await u.selectOptions(screen.getByLabelText(/Pentester 2 untuk/), "Dimas");
 
     await u.type(screen.getByLabelText("Mandays pentester 1"), "5");
     await u.type(screen.getByLabelText("Mandays pentester 2"), "7");
@@ -205,7 +227,7 @@ describe("AssetPlanner", () => {
     const u = userEvent.setup();
     await mount(project, false);
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    expect(screen.queryByRole("button", { name: /Tambah pentester/ })).toBeNull();
+    expect(screen.queryByLabelText("Tambah pentester")).toBeNull();
   });
 
   it("aset tersimpan dihapus: ditandai dulu, baru dihapus di BE saat Simpan", async () => {
@@ -302,5 +324,34 @@ describe("AssetPlanner", () => {
 
     expect(screen.getByText("Web Portal V2")).toBeInTheDocument();
     expect(screen.queryByText("Web Portal")).toBeNull();
+  });
+
+  it("pentester baru di luar project.resources otomatis didaftarkan via addResources sebelum createMandays saat Simpan", async () => {
+    const u = userEvent.setup();
+    const projectTanpaResource = {
+      ...project,
+      resources: [],
+      assets: [],
+      mandays: [],
+    } as unknown as ProjectDetail;
+    await mount(projectTanpaResource);
+
+    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
+    await u.type(screen.getByLabelText("Nama aset"), "API Gateway");
+    await u.type(screen.getByLabelText("Mandays aset"), "5");
+
+    const selectAdd = await screen.findByLabelText("Tambah pentester");
+    await waitFor(() => expect(within(selectAdd).getByRole("option", { name: "Budi" })).toBeInTheDocument());
+    await u.selectOptions(selectAdd, "5");
+
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
+    expect(screen.getByText("API Gateway")).toBeInTheDocument();
+
+    await u.click(screen.getByRole("button", { name: "Simpan" }));
+    await waitFor(() => expect(api.addResources).toHaveBeenCalledWith(10, [5]));
+    expect(api.createMandays).toHaveBeenCalledWith(
+      10,
+      expect.objectContaining({ asset_id: 99, pentester_id: 5, allocated_mandays: 5 }),
+    );
   });
 });
