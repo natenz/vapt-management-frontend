@@ -228,7 +228,7 @@ export function DashboardPage() {
                 <Link to="/resources?tampilan=timeline">Linimasa Tim</Link>
               </Button>
               <Button asChild variant="solid" leadingIcon={<Plus />}>
-                <Link to="/projects/new">Buat Project Template</Link>
+                <Link to="/projects/new">Buat Template Proyek</Link>
               </Button>
             </div>
           ) : isPentester || isWriter || isPm ? (

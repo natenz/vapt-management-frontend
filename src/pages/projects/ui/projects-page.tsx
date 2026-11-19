@@ -169,7 +169,7 @@ export function ProjectsPage() {
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
-              <Link to="/projects/new">Buat Project Template</Link>
+              <Link to="/projects/new">Buat Template Proyek</Link>
             </Button>
           ) : undefined
         }

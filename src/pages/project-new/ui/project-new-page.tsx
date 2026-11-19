@@ -74,7 +74,7 @@ export function ProjectNewPage() {
       }),
     onSuccess: (p) => {
       void queryClient.invalidateQueries({ queryKey: ["projects"] });
-      notify.success("Project template dibuat", { description: "Status Draft. Serahkan ke PM dari halaman detail." });
+      notify.success("Template proyek dibuat", { description: "Status Draft. Serahkan ke PM dari halaman detail." });
       navigate(`/projects/${p.project_id}`);
     },
   });
@@ -82,7 +82,7 @@ export function ProjectNewPage() {
   return (
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="flex flex-col gap-8">
       <PageHeader
-        title="Buat Project Template"
+        title="Buat Template Proyek"
         description="Tentukan proyek, rentang tanggal, mandays proyeksi, PM, dan anggota tim. Aset yang diuji dan penugasan Pentester per aset diisi Project Manager, dalam batas mandays proyeksi."
         action={<Button type="submit" variant="solid" loading={mutation.isPending}>Simpan sebagai Draft</Button>}
       />
