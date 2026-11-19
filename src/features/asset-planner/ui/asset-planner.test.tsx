@@ -101,9 +101,6 @@ describe("AssetPlanner", () => {
     await u.selectOptions(screen.getByLabelText("Tipe aset"), "mobile");
     await u.type(screen.getByLabelText("Mandays aset"), "20");
 
-    expect(screen.getByText("draf")).toBeInTheDocument();
-    expect(screen.getByText(/Ada perubahan yang belum disimpan/)).toBeInTheDocument();
-
     await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
     expect(screen.getByLabelText("Mandays pentester 1")).toHaveAttribute("placeholder", "20");
     await u.click(screen.getByRole("button", { name: /Tambah pentester/ }));
@@ -114,6 +111,14 @@ describe("AssetPlanner", () => {
     await u.selectOptions(screen.getByLabelText(/Pentester 1 untuk/), "Budi");
     await u.selectOptions(screen.getByLabelText(/Pentester 2 untuk/), "Dimas");
     expect(api.createAsset).not.toHaveBeenCalled();
+
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
+
+    expect(screen.getByText("draf")).toBeInTheDocument();
+    expect(screen.getByText(/Ada perubahan yang belum disimpan/)).toBeInTheDocument();
+    expect(screen.getByText("Mobile App")).toBeInTheDocument();
+    expect(screen.getByText("Budi")).toBeInTheDocument();
+    expect(screen.getByText("Dimas")).toBeInTheDocument();
 
     await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.createMandays).toHaveBeenCalledTimes(2));
@@ -150,13 +155,18 @@ describe("AssetPlanner", () => {
     await u.type(screen.getByLabelText("Mandays pentester 1"), "5");
     await u.type(screen.getByLabelText("Mandays pentester 2"), "7");
     expect(screen.getByText(/Dialokasikan 12 dari 11 md · lebih 1 md/)).toBeInTheDocument();
-    await u.click(screen.getByRole("button", { name: "Simpan" }));
+
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     expect(await screen.findByText(/Total mandays pentester \(12 md\) melebihi mandays aset \(11 md\)/)).toBeInTheDocument();
     expect(api.createAsset).not.toHaveBeenCalled();
 
     await u.clear(screen.getByLabelText("Mandays pentester 2"));
     await u.type(screen.getByLabelText("Mandays pentester 2"), "6");
     expect(screen.getByText(/Dialokasikan 11 dari 11 md/)).toBeInTheDocument();
+
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
+    expect(screen.getByText("Web Portal")).toBeInTheDocument();
+
     await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.createMandays).toHaveBeenCalledTimes(2));
     expect(api.createMandays).toHaveBeenNthCalledWith(1, 10, expect.objectContaining({ pentester_id: 5, allocated_mandays: 5 }));
@@ -168,7 +178,7 @@ describe("AssetPlanner", () => {
     await mount();
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
     await u.type(screen.getByLabelText("IP address"), "2121");
-    await u.click(screen.getByRole("button", { name: "Simpan" }));
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     const alert = await screen.findByText("Periksa isian berikut");
     const box = alert.closest("[role=alert]") ?? alert.parentElement!;
     expect(within(box as HTMLElement).getByText(/Nama aset wajib diisi/)).toBeInTheDocument();
@@ -181,8 +191,13 @@ describe("AssetPlanner", () => {
     const u = userEvent.setup();
     await mount();
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
+    await u.type(screen.getByLabelText("Nama aset"), "Aset Baru");
+    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
+    expect(screen.getByText("Aset Baru")).toBeInTheDocument();
+
     await u.click(screen.getByRole("button", { name: "Batalkan perubahan" }));
-    expect(screen.queryByLabelText("Nama aset")).toBeNull();
+    expect(screen.queryByText("Aset Baru")).toBeNull();
     expect(Object.values(api).every((f) => f.mock.calls.length === 0)).toBe(true);
   });
 
@@ -218,19 +233,23 @@ describe("AssetPlanner", () => {
       }) as unknown as ProjectDetail;
 
     m.update(withAsset("Dari Server"));
-    expect(await screen.findByDisplayValue("Dari Server")).toBeInTheDocument();
+    expect(await screen.findByText("Dari Server")).toBeInTheDocument();
 
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getAllByLabelText("Nama aset")[1]!, "Draf Saya");
+    await u.type(screen.getByLabelText("Nama aset"), "Draf Saya");
+    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
+    expect(screen.getByText("Draf Saya")).toBeInTheDocument();
+
     m.update(withAsset("Diubah Orang Lain"));
     expect(await screen.findByText(/Data proyek di server berubah/)).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Draf Saya")).toBeInTheDocument();
-    expect(screen.queryByDisplayValue("Diubah Orang Lain")).toBeNull();
+    expect(screen.getByText("Draf Saya")).toBeInTheDocument();
+    expect(screen.queryByText("Diubah Orang Lain")).toBeNull();
     expect(screen.getByRole("button", { name: "Simpan" })).toBeDisabled();
 
     await u.click(screen.getByRole("button", { name: /Buang draf dan muat ulang/ }));
-    expect(await screen.findByDisplayValue("Diubah Orang Lain")).toBeInTheDocument();
-    expect(screen.queryByDisplayValue("Draf Saya")).toBeNull();
+    expect(await screen.findByText("Diubah Orang Lain")).toBeInTheDocument();
+    expect(screen.queryByText("Draf Saya")).toBeNull();
   });
 
   it("ada draf belum disimpan => beforeunload aktif; tanpa draf => tidak", async () => {
@@ -239,6 +258,9 @@ describe("AssetPlanner", () => {
     await mount();
     expect(add.mock.calls.filter((c) => c[0] === "beforeunload")).toHaveLength(0);
     await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
+    await u.type(screen.getByLabelText("Nama aset"), "Aset Baru");
+    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     expect(add.mock.calls.filter((c) => c[0] === "beforeunload")).toHaveLength(1);
     add.mockRestore();
   });
@@ -256,5 +278,29 @@ describe("AssetPlanner", () => {
 
     await u.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(api.addResources).toHaveBeenCalledWith(10, [8]));
+  });
+
+  it("dapat mengubah aset yang ada lewat modal Ubah aset", async () => {
+    const u = userEvent.setup();
+    const p = {
+      ...project,
+      assets: [{ assets_id: 1, asset_name: "Web Portal", asset_type: "web", mandays: 5, project_id: 10 }],
+      mandays: [],
+    } as unknown as ProjectDetail;
+    await mount(p);
+
+    expect(screen.getByText("Web Portal")).toBeInTheDocument();
+    await u.click(screen.getByRole("button", { name: "Ubah aset Web Portal" }));
+
+    expect(screen.getByRole("heading", { name: "Ubah aset Web Portal" })).toBeInTheDocument();
+    const nameInput = screen.getByLabelText("Nama aset");
+    expect(nameInput).toHaveValue("Web Portal");
+
+    await u.clear(nameInput);
+    await u.type(nameInput, "Web Portal V2");
+    await u.click(screen.getByRole("button", { name: "Terapkan perubahan" }));
+
+    expect(screen.getByText("Web Portal V2")).toBeInTheDocument();
+    expect(screen.queryByText("Web Portal")).toBeNull();
   });
 });

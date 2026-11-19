@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Undo2, UserPlus, X } from "lucide-react";
+import { CalendarRange, Pencil, Plus, Trash2, Undo2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   addResources,
@@ -15,7 +15,6 @@ import {
 import { listUsers } from "@/entities/user";
 import {
   allocate,
-  ASSET_TYPES,
   budgetError,
   buildOps,
   CommitError,
@@ -26,21 +25,24 @@ import {
   totalAssetMandays,
   validate,
   type DraftAsset,
-  type DraftPentester,
 } from "../model/asset-plan";
 import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { notify } from "@/shared/ui/toast";
 import { cn } from "@/shared/lib/cn";
+import { AssetDialog } from "./asset-dialog";
 
 const sel = "h-9 w-full rounded-sm border border-border-control bg-surface px-2 text-input text-ink focus-ring";
 const fmt = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100) : "-");
 
+const shortDate = (iso: string) =>
+  iso ? new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(new Date(`${iso}T00:00:00`)) : "?";
+
 /**
- * Perencanaan aset + assign pentester sebagai tabel yang bisa diedit. Semua perubahan hanya ada di state
- * (draft) sampai tombol "Simpan ke server" ditekan. Mandays tiap pentester = mandays aset dibagi jumlah pentester.
+ * Perencanaan aset + assign pentester. Aset diisi/diubah lewat modal (`AssetDialog`); hasilnya tampil
+ * sebagai kartu ringkasan di daftar. Semua perubahan hanya ada di state (draf) sampai tombol "Simpan"
+ * ditekan. Mandays tiap pentester = mandays aset dibagi jumlah pentester (bisa diisi manual).
  */
 export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; canAssign: boolean }) {
   const qc = useQueryClient();
@@ -120,29 +122,29 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
   const dirty = useMemo(() => buildOps(base, drafts).length > 0 || twDirty, [base, drafts, twDirty]);
   const patch = (key: string, p: Partial<DraftAsset>) =>
     setDrafts((d) => d.map((a) => (a.key === key ? { ...a, ...p } : a)));
-  const patchRow = (key: string, rk: string, p: Partial<DraftPentester>) =>
-    setDrafts((d) =>
-      d.map((a) =>
-        a.key === key
-          ? { ...a, pentesters: a.pentesters.map((r) => (r.key === rk ? { ...r, ...p } : r)) }
-          : a,
-      ),
-    );
+  // Modal isian aset: null = tertutup. Salinan draf diedit di modal, baru masuk daftar saat diterapkan.
+  const [editing, setEditing] = useState<{ draft: DraftAsset; isNew: boolean } | null>(null);
+  const range = { start: project.start_date?.slice(0, 10) ?? "", end: project.end_date?.slice(0, 10) ?? "" };
   const addAsset = () =>
-    setDrafts((d) => [...d, { key: newKey(), name: "", type: "web", domain: "", ip: "", mandays: "", pentesters: [] }]);
-  const addPentester = (a: DraftAsset) =>
-    patch(a.key, {
-      pentesters: [
-        ...a.pentesters,
-        {
-          key: newKey(),
-          pentesterId: null,
-          start: project.start_date?.slice(0, 10) ?? "",
-          end: project.end_date?.slice(0, 10) ?? "",
-          md: "",
-        },
-      ],
+    setEditing({ draft: { key: newKey(), name: "", type: "web", domain: "", ip: "", mandays: "", pentesters: [] }, isNew: true });
+  const editAsset = (a: DraftAsset) =>
+    setEditing({ draft: { ...a, pentesters: a.pentesters.map((r) => ({ ...r })) }, isNew: false });
+  const withDraft = (d: DraftAsset) =>
+    drafts.some((x) => x.key === d.key) ? drafts.map((x) => (x.key === d.key ? d : x)) : [...drafts, d];
+  const checkDraft = (d: DraftAsset) => {
+    const own = validate([d], { start: project.start_date, end: project.end_date }, base)[d.key] ?? [];
+    const over = budgetError(withDraft(d), project.projected_mandays);
+    return over ? [...own, over] : own;
+  };
+  const applyDraft = (d: DraftAsset) => {
+    setDrafts(withDraft(d));
+    setErrors((e) => {
+      const rest = { ...e };
+      delete rest[d.key];
+      return rest;
     });
+    setEditing(null);
+  };
   const removeAsset = (a: DraftAsset) =>
     a.id != null ? patch(a.key, { removed: true }) : setDrafts((d) => d.filter((x) => x.key !== a.key));
 
@@ -302,189 +304,82 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       {shown.length === 0 ? (
         <p className="text-body-sm text-ink-muted">Belum ada aset. Tekan "Tambah aset".</p>
       ) : (
-        <div className="flex flex-col gap-4" aria-label="Aset yang diuji">
+        <ul className="flex flex-col gap-3" aria-label="Aset yang diuji">
           {shown.map((a, idx) => {
             const md = num(a.mandays);
             const alloc = allocate(md > 0 ? md : 0, a.pentesters);
-            const shares = alloc.shares;
-            const isNew = a.id == null;
+            const label = a.name.trim() || `Aset ${idx + 1}`;
             return (
-              <div
+              <li
                 key={a.key}
                 className={cn(
-                  "overflow-hidden rounded-md border border-border bg-surface",
+                  "flex flex-col gap-3 rounded-md border border-border bg-surface p-4",
                   errors[a.key] && "border-error bg-error-bg",
                 )}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-                  <span className="flex items-center gap-2">
-                    <span className="text-title-sm text-ink">{a.name.trim() || `Aset ${idx + 1}`}</span>
-                    {isNew ? <Badge variant="tag">draf</Badge> : null}
-                    <span className="text-caption text-ink-muted tabular">
-                      · {a.pentesters.length} pentester
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <span className="flex min-w-0 flex-col">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-title-sm text-ink">{label}</span>
+                      {a.id == null ? <Badge variant="tag">draf</Badge> : null}
+                    </span>
+                    <span className="text-body-sm text-ink-muted">
+                      {a.type} · {[a.domain, a.ip].filter(Boolean).join(" · ") || "-"}
                     </span>
                   </span>
-                  <Button
-                    type="button"
-                    variant="quiet"
-                    aria-label={`Hapus aset ${a.name || "baru"}`}
-                    onClick={() => removeAsset(a)}
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
-
-                <div className="grid gap-3 p-4 sm:grid-cols-12">
-                  <label className="flex flex-col gap-1 sm:col-span-6">
-                    <span className="text-caption text-ink-muted">Nama aset</span>
-                    <Input
-                      aria-label="Nama aset"
-                      value={a.name}
-                      placeholder="Mobile App"
-                      onChange={(e) => patch(a.key, { name: e.target.value })}
-                      className="h-9"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 sm:col-span-3">
-                    <span className="text-caption text-ink-muted">Tipe</span>
-                    <select
-                      aria-label="Tipe aset"
-                      className={sel}
-                      value={a.type}
-                      onChange={(e) => patch(a.key, { type: e.target.value })}
+                  <span className="flex items-center gap-1">
+                    <span className="mr-2 text-body-sm text-ink-secondary tabular">{fmt(md)} md</span>
+                    <Button type="button" variant="quiet" aria-label={`Ubah aset ${label}`} onClick={() => editAsset(a)}>
+                      <Pencil />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="quiet"
+                      aria-label={`Hapus aset ${a.name || "baru"}`}
+                      onClick={() => removeAsset(a)}
                     >
-                      {ASSET_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1 sm:col-span-3">
-                    <span className="text-caption text-ink-muted">Mandays</span>
-                    <Input
-                      aria-label="Mandays aset"
-                      type="number"
-                      min={0.5}
-                      step="0.5"
-                      value={a.mandays}
-                      placeholder="20"
-                      onChange={(e) => patch(a.key, { mandays: e.target.value })}
-                      className="h-9 text-right"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 sm:col-span-7">
-                    <span className="text-caption text-ink-muted">Domain</span>
-                    <Input
-                      aria-label="Domain"
-                      value={a.domain}
-                      placeholder="portal.contoh.co.id"
-                      onChange={(e) => patch(a.key, { domain: e.target.value })}
-                      className="h-9"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 sm:col-span-5">
-                    <span className="text-caption text-ink-muted">IP address</span>
-                    <Input
-                      aria-label="IP address"
-                      value={a.ip}
-                      placeholder="10.0.0.1"
-                      onChange={(e) => patch(a.key, { ip: e.target.value })}
-                      className="h-9"
-                    />
-                  </label>
+                      <Trash2 />
+                    </Button>
+                  </span>
                 </div>
-
                 {canAssign ? (
-                  <div className="flex flex-col gap-2 border-t border-border bg-surface-subtle p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-overline text-ink-muted uppercase">Assign pentester</span>
-                      <span className="flex flex-wrap items-center gap-3 text-caption text-ink-muted">
-                        {a.pentesters.length === 0 || !(md > 0) ? (
-                          "Belum ada pentester"
-                        ) : (
-                          <span className={cn(alloc.remaining < 0 && "font-medium text-error")}>
-                            {`Dialokasikan ${fmt(md - alloc.remaining)} dari ${fmt(md)} md`}
-                            {alloc.remaining > 0
-                              ? ` · sisa ${fmt(alloc.remaining)} md`
-                              : alloc.remaining < 0
-                                ? ` · lebih ${fmt(-alloc.remaining)} md`
-                                : ""}
+                  a.pentesters.length === 0 ? (
+                    <p className="text-caption text-warning">Belum ada pentester.</p>
+                  ) : (
+                    <ul className="flex flex-col gap-1.5 border-t border-border pt-3" aria-label={`Pentester ${label}`}>
+                      {a.pentesters.map((r, i) => (
+                        <li key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-body-sm">
+                          <span className="text-ink">{nameOf(r.pentesterId) || "Pentester belum dipilih"}</span>
+                          <span className="flex items-center gap-3 text-caption text-ink-muted tabular">
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarRange className="size-3.5" aria-hidden />
+                              {shortDate(r.start)} – {shortDate(r.end)}
+                            </span>
+                            <span className="text-ink-secondary">
+                              {fmt(r.md.trim() ? num(r.md) : (alloc.shares[i] ?? NaN))} md
+                            </span>
                           </span>
-                        )}
-                        <Button type="button" leadingIcon={<UserPlus />} onClick={() => addPentester(a)}>
-                          Tambah pentester
-                        </Button>
-                      </span>
-                    </div>
-                    {a.pentesters.map((r, i) => (
-                      <div
-                        key={r.key}
-                        className="grid items-center gap-2 md:grid-cols-[minmax(0,1.5fr)_8.75rem_8.75rem_6rem_auto]"
-                      >
-                        <select
-                          aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
-                          className={sel}
-                          value={r.pentesterId ?? ""}
-                          onChange={(e) =>
-                            patchRow(a.key, r.key, {
-                              pentesterId: e.target.value ? Number(e.target.value) : null,
-                            })
-                          }
-                        >
-                          <option value="">Pilih pentester</option>
-                          {people.map((u) => (
-                            <option key={u.sys_user_id} value={u.sys_user_id}>
-                              {nameOf(u.sys_user_id)}
-                            </option>
-                          ))}
-                        </select>
-                        <Input
-                          aria-label={`Mulai pentester ${i + 1}`}
-                          type="date"
-                          value={r.start}
-                          onChange={(e) => patchRow(a.key, r.key, { start: e.target.value })}
-                          className="h-9"
-                        />
-                        <Input
-                          aria-label={`Selesai pentester ${i + 1}`}
-                          type="date"
-                          value={r.end}
-                          onChange={(e) => patchRow(a.key, r.key, { end: e.target.value })}
-                          className="h-9"
-                        />
-                        <Input
-                          aria-label={`Mandays pentester ${i + 1}`}
-                          type="number"
-                          min={0.5}
-                          step="0.5"
-                          value={r.md}
-                          placeholder={md > 0 ? fmt(shares[i]!) : "otomatis"}
-                          title="Kosongkan untuk dibagi otomatis"
-                          onChange={(e) => patchRow(a.key, r.key, { md: e.target.value })}
-                          className="h-9 text-right"
-                        />
-                        <Button
-                          type="button"
-                          variant="quiet"
-                          aria-label={`Hapus pentester ${i + 1}`}
-                          onClick={() =>
-                            patch(a.key, {
-                              pentesters: a.pentesters.filter((x) => x.key !== r.key),
-                            })
-                          }
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 ) : null}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
+
+      <AssetDialog
+        initial={editing?.draft ?? null}
+        isNew={editing?.isNew ?? true}
+        canAssign={canAssign}
+        people={people}
+        defaultRange={range}
+        check={checkDraft}
+        onApply={applyDraft}
+        onClose={() => setEditing(null)}
+      />
 
       {removed.length > 0 ? (
         <ul className="flex flex-col gap-1 text-body-sm text-ink-muted" aria-label="Aset yang akan dihapus">

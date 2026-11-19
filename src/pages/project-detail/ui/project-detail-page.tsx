@@ -321,6 +321,9 @@ export function ProjectDetailPage() {
             ) : null}
           </section>
 
+          {/* PM mengisi aset & pentester tepat di bawah tahap, sebelum jadwal Gantt. */}
+          {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
+
           <section aria-label="Aset">
             <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
               <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
@@ -377,8 +380,6 @@ export function ProjectDetailPage() {
               (role === "super_admin" || role === "tech_lead" || (role === "project_manager" && ownsAsPm))
             }
           />
-
-          {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 
           {statusBetween(current, "Assessment", "Done") ? <FindingsPanel project={p} /> : null}
 
