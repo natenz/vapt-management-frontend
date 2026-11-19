@@ -91,20 +91,19 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
-  it("tech lead: menampilkan ringkasan operasional dengan CTA katalog, proyek berjalan & progres, dan penugasan pentester", async () => {
+  it("tech lead: menampilkan ringkasan operasional (KPI Proyek Berjalan & Usulan Katalog) serta tabel proyek berjalan", async () => {
     await mount("tech_lead");
     const summarySec = await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" });
     expect(summarySec).toBeInTheDocument();
     expect(within(summarySec).getByRole("link", { name: /Tinjau/ })).toHaveAttribute("href", "/catalog?status=pending");
+    expect(within(summarySec).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
     const projectsSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
     expect(within(projectsSec).getByText("Proyek Uji")).toBeInTheDocument();
     expect(within(projectsSec).getByText("Proyek Remediasi")).toBeInTheDocument();
 
-    const resourceSec = screen.getByRole("region", { name: "Penugasan Pentester Mingguan" });
-    expect(await within(resourceSec).findByText("Budi Santoso")).toBeInTheDocument();
-    expect(within(resourceSec).getByRole("link", { name: /Cek Benturan Jadwal di Linimasa/ })).toHaveAttribute("href", "/resources?tampilan=timeline");
-
+    expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();

@@ -170,7 +170,7 @@ describe("TechLeadDashboard", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("merender 3 SummaryTile operasional eksekutif dengan kalkulasi yang akurat dan CTA katalog", () => {
+  it("merender 2 SummaryTile operasional eksekutif dengan kalkulasi yang akurat dan CTA katalog", () => {
     renderDashboard();
 
     const summarySection = screen.getByRole("region", { name: "Ringkasan Operasional Tech Lead" });
@@ -179,13 +179,10 @@ describe("TechLeadDashboard", () => {
     expect(within(summarySection).getByText("Proyek Berjalan")).toBeInTheDocument();
     expect(within(summarySection).getByText("02")).toBeInTheDocument();
 
-    // Pentester Ditugaskan sudah dihapus dari SummaryTile
+    // Pentester Ditugaskan dan Mandays Tim sudah dihapus dari SummaryTile
     expect(within(summarySection).queryByText("Pentester Ditugaskan")).not.toBeInTheDocument();
     expect(within(summarySection).queryByText("Ketersediaan Pentester")).not.toBeInTheDocument();
-
-    // Total mandays tim: 8 + 16 + 24 = 48 MD
-    expect(within(summarySection).getByText("Mandays Tim")).toBeInTheDocument();
-    expect(within(summarySection).getByText("48")).toBeInTheDocument();
+    expect(within(summarySection).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
     // Usulan Katalog dengan Call To Action menuju /catalog?status=pending
     expect(within(summarySection).getByText("Usulan Katalog")).toBeInTheDocument();
@@ -210,26 +207,11 @@ describe("TechLeadDashboard", () => {
     expect(within(projectSec).queryByText("Template Proyek Baru")).not.toBeInTheDocument();
   });
 
-  it("penugasan mingguan menampilkan MD terjadwal tanpa persen kapasitas dan menautkan linimasa", () => {
+  it("kartu penugasan pentester mingguan dan mandays pentester tidak lagi ada di bento dashboard Tech Lead", () => {
     renderDashboard();
-
-    const heatmap = screen.getByRole("region", { name: "Penugasan Pentester Mingguan" });
-    const citra = within(heatmap).getByRole("rowheader", { name: "Citra Lestari" }).closest("tr")!;
-    // 20 MD / 14 hari kalender → 5 hari kerja = 7,1 MD per minggu
-    expect(within(citra).getAllByText("7.1")).toHaveLength(2);
-    expect(within(heatmap).queryByText(/%/)).not.toBeInTheDocument();
-    expect(within(heatmap).getByRole("rowheader", { name: "Budi Santoso" })).toBeInTheDocument();
-
-    const timelineLink = within(heatmap).getByRole("link", { name: "Cek Benturan Jadwal di Linimasa" });
-    expect(timelineLink).toHaveAttribute("href", "/resources?tampilan=timeline");
-  });
-
-  it("tidak ada perencana slot maupun kartu kapasitas berbatas", () => {
-    renderDashboard();
+    expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
-    const md = screen.getByRole("region", { name: "Mandays Pentester" });
-    expect(within(md).getByText("24 MD")).toBeInTheDocument();
-    expect(within(md).queryByText(/batas/)).not.toBeInTheDocument();
   });
 
   it("kartu persetujuan usulan katalog kerentanan tidak lagi ada di bento dashboard Tech Lead", () => {

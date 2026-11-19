@@ -1,12 +1,9 @@
 /**
- * Dashboard Tech Lead — bento box untuk dua pekerjaan utama:
- * 1. Memantau proyek dan penugasan tim: progres proyek berjalan, MD terjadwal
- *    pentester per minggu dan per bulan. Belum ada aturan resmi batas beban per
- *    orang, jadi dashboard tidak menilai "tersedia/penuh"; Tech Lead yang memutuskan.
- * 2. Mengelola katalog kerentanan: meninjau dan meng-ACC usulan dari tim.
- * Angka dihitung di `model/techlead-metrics`.
+ * Dashboard Tech Lead — ringkasan eksekutif dan pemantauan proyek:
+ * 1. Ringkasan KPI: Proyek Berjalan dan Usulan Katalog (dengan CTA peninjauan).
+ * 2. Pemantauan proyek berjalan dan progres tahapannya.
  */
-import { ArrowRight, BookCheck, Clock, FolderKanban } from "lucide-react";
+import { ArrowRight, BookCheck, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import type { CatalogVulna } from "@/entities/catalog";
@@ -15,17 +12,14 @@ import type { User } from "@/entities/user";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { Button } from "@/shared/ui/button";
 import { SummaryTile } from "@/shared/ui/summary-tile";
-import { teamMandays } from "../model/superadmin-metrics";
-import { pentestersOf, runningProjects } from "../model/techlead-metrics";
-import { PentesterMandaysCard } from "./superadmin/team-cards";
+import { runningProjects } from "../model/techlead-metrics";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
-import { WorkloadHeatmapCard } from "./techlead/workload-heatmap-card";
 
 export interface TechLeadDashboardProps {
   projects: readonly Project[];
-  users: readonly User[];
+  users?: readonly User[];
   catalogQueue: readonly CatalogVulna[];
-  loadMap: Readonly<Record<number, ResourceLoad>>;
+  loadMap?: Readonly<Record<number, ResourceLoad>>;
   isLoading: boolean;
   /** Detail proyek (penugasan mandays) untuk tabel penugasan mingguan. */
   details?: readonly ProjectDetail[];
@@ -37,24 +31,17 @@ export interface TechLeadDashboardProps {
 
 export function TechLeadDashboard({
   projects,
-  users,
   catalogQueue,
-  loadMap,
   isLoading,
-  details = [],
-  detailsLoading = false,
-  detailsError = null,
 }: TechLeadDashboardProps) {
-  const pentesters = useMemo(() => pentestersOf(users), [users]);
   const running = useMemo(() => runningProjects(projects), [projects]);
-  const cap = useMemo(() => teamMandays(users, loadMap), [users, loadMap]);
   const late = running.filter((r) => r.health === "late").length;
   const atRisk = running.filter((r) => r.health === "at-risk").length;
 
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2"
         aria-label="Ringkasan Operasional Tech Lead"
       >
         <SummaryTile
@@ -69,14 +56,6 @@ export function TechLeadDashboard({
               ? { value: `${late} terlambat`, text: `· ${atRisk} berisiko tertinggal` }
               : { text: `${projects.length} total proyek, semua sesuai jadwal` }
           }
-        />
-        <SummaryTile
-          label="Mandays Tim"
-          value={isLoading ? null : Math.round(cap.used)}
-          unit="MD"
-          icon={<Clock />}
-          loading={isLoading}
-          note={{ text: "ditugaskan ke pentester bulan ini" }}
         />
         <SummaryTile
           label="Usulan Katalog"
@@ -103,15 +82,6 @@ export function TechLeadDashboard({
       </section>
 
       <BentoGrid aria-label="Bento dashboard Tech Lead">
-        {/* Penugasan tim */}
-        <WorkloadHeatmapCard
-          pentesters={pentesters}
-          details={details}
-          isLoading={isLoading || detailsLoading}
-          error={detailsError}
-        />
-        <PentesterMandaysCard data={cap} isLoading={isLoading} error={null} />
-
         {/* Pemantauan */}
         <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} />
       </BentoGrid>
