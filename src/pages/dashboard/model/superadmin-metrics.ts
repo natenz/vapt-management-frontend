@@ -12,8 +12,8 @@ import type { User } from "@/entities/user";
 import { PROJECT_STATUSES, SEVERITIES } from "@/shared/api/schemas";
 
 const DONE = "Done";
-const OPEN_FINDING = new Set(["open", "reopened"]);
-export const FINDING_STATUS_ORDER = ["open", "reopened", "remediated", "closed"] as const;
+const OPEN_FINDING = new Set(["open"]);
+export const FINDING_STATUS_ORDER = ["open", "closed"] as const;
 export type FindingStatusKey = (typeof FINDING_STATUS_ORDER)[number];
 
 const statusOf = (p: Project) => p.status?.status_name ?? "";
@@ -133,7 +133,7 @@ export interface FindingTotals {
   total: number;
   open: number;
   bySeverity: Record<SeverityName, number>;
-  /** Severity untuk temuan yang masih terbuka (open/reopened). */
+  /** Severity untuk temuan yang masih terbuka (open). */
   openBySeverity: Record<SeverityName, number>;
   byStatus: Record<FindingStatusKey, number>;
 }

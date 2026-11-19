@@ -101,24 +101,24 @@ describe("temuan & risiko", () => {
   const a = proj(1, "Assessment", null, null);
   const b = proj(2, "Remediasi", null, null);
   const reports = [
-    report(a, [finding("High", "open"), finding("High", "closed"), finding("Low", "remediated")]),
-    report(b, [finding("Critical", "reopened"), finding("Medium", "open")]),
+    report(a, [finding("High", "open"), finding("High", "closed"), finding("Low", "open")]),
+    report(b, [finding("Critical", "open"), finding("Medium", "open")]),
   ];
 
   it("menjumlahkan severity dan status, serta severity khusus temuan terbuka", () => {
     const t = findingTotals(reports);
     expect(t.total).toBe(5);
-    expect(t.open).toBe(3);
+    expect(t.open).toBe(4);
     expect(t.bySeverity.High).toBe(2);
-    expect(t.openBySeverity).toMatchObject({ Critical: 1, High: 1, Medium: 1, Low: 0 });
-    expect(t.byStatus).toEqual({ open: 2, reopened: 1, remediated: 1, closed: 1 });
+    expect(t.openBySeverity).toMatchObject({ Critical: 1, High: 1, Medium: 1, Low: 1 });
+    expect(t.byStatus).toEqual({ open: 4, closed: 1 });
   });
 
   it("proyek berisiko diurutkan Critical lalu High, hanya dari temuan terbuka", () => {
     const rows = riskiestProjects(reports);
     expect(rows.map((r) => [r.project.project_id, r.critical, r.high, r.open])).toEqual([
       [2, 1, 0, 2],
-      [1, 0, 1, 1],
+      [1, 0, 1, 2],
     ]);
   });
 });

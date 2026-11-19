@@ -19,7 +19,7 @@ export const PM_NEXT_STEP: Record<string, string> = {
   Assessment: "Pentester sedang menguji",
   Analysis: "Analisis dan validasi temuan",
   "Initial Report": "Tech Writer menyusun Initial Report",
-  Remediasi: "Mulai Retesting setelah klien selesai",
+  Remediasi: "Mulai Retesting setelah klien selesai memperbaiki",
   Retesting: "Tutup Retesting atau kembalikan ke Remediasi",
   "Final Report Drafting": "Tech Writer menyusun Final Report",
   "Final Presentation": "Presentasi hasil ke klien",
@@ -28,23 +28,21 @@ export const PM_NEXT_STEP: Record<string, string> = {
 export const isPmTurn = (p: Project) => (PM_TURN as readonly string[]).includes(statusOf(p));
 
 type Finding = ProjectReport["findings"][number];
-const OPEN = new Set(["open", "reopened"]);
+const OPEN = new Set(["open"]);
 
 /* ---------- Penanganan temuan ---------- */
 
 export interface FindingProgress {
   total: number;
   open: number;
-  remediated: number;
   closed: number;
 }
 
 export function findingProgress(findings: readonly Finding[]): FindingProgress {
-  const out = { total: findings.length, open: 0, remediated: 0, closed: 0 };
+  const out = { total: findings.length, open: 0, closed: 0 };
   for (const f of findings) {
     const s = f.status.toLowerCase();
     if (OPEN.has(s)) out.open++;
-    else if (s === "remediated") out.remediated++;
     else if (s === "closed") out.closed++;
   }
   return out;

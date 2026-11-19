@@ -1,1 +1,1 @@
-export { FindingsPanel, statusActions, type StatusAction } from "./ui/findings-panel";
+export { FindingsPanel } from "./ui/findings-panel";

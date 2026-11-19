@@ -30,7 +30,8 @@ export const PROJECT_STATUSES = [
 ] as const;
 export type ProjectStatusName = (typeof PROJECT_STATUSES)[number];
 
-export const FINDING_STATUSES = ["open", "remediated", "closed", "reopened"] as const;
+// Temuan cuma terbuka atau ditutup; alasan kalau klien belum/tidak memperbaiki ditulis di status_note.
+export const FINDING_STATUSES = ["open", "closed"] as const;
 export type FindingStatus = (typeof FINDING_STATUSES)[number];
 
 const roleSchema = z.object({ role_id: z.number(), role_name: z.string() });
@@ -168,6 +169,7 @@ export const findingSchema = z.object({
   cvss_score: z.number().optional().nullable(),
   endpoint: z.string().optional().nullable(),
   status: z.string(),
+  status_note: z.string().optional().default(""),
   pentester_id: z.number(),
   project_id: z.number(),
   asset_id: z.number(),

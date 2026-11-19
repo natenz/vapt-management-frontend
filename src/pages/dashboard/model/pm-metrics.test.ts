@@ -55,8 +55,8 @@ const details = new Map<number, ProjectDetail>([
   [4, detail(projects[3]!, { stages: [stage("Retesting", "2026-11-12", "2026-11-18")] })],
 ]);
 const reports = new Map<number, ProjectReport>([
-  [2, report(projects[1]!, [f(1, "remediated"), f(2, "closed")])],
-  [4, report(projects[3]!, [f(3, "open"), f(4, "remediated")])],
+  [2, report(projects[1]!, [f(1, "open"), f(2, "closed")])],
+  [4, report(projects[3]!, [f(3, "open"), f(4, "closed")])],
 ]);
 
 describe("perlu tindakan PM", () => {
@@ -68,7 +68,7 @@ describe("perlu tindakan PM", () => {
       [2, true, "Tenggat Remediasi", 9],
       [3, false, "Tenggat Assessment", 1],
     ]);
-    expect(rows[0]!.findings).toEqual({ total: 2, open: 1, remediated: 1, closed: 0 });
+    expect(rows[0]!.findings).toEqual({ total: 2, open: 1, closed: 1 });
     expect(rows[1]!.progress).toBe(43); // 3 dari 7 hari Scoping
   });
 });

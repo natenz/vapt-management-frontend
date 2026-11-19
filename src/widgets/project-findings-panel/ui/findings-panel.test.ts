@@ -1,43 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Finding } from "@/entities/finding";
-import { allowedFindingStatuses, statusActions } from "./findings-panel";
+import { allowedFindingStatuses } from "./findings-panel";
 
 const f = (status: string) => ({ status }) as Finding;
-const to = (a: { to: string }[]) => a.map((x) => x.to);
 
-// Cermin hasil tes ke BE: remediated oleh PM/TL/admin (Remediation/Retest), closed/reopened oleh pentester saat Retest.
-describe("statusActions", () => {
-  it("PM pemilik: bisa tandai diperbaiki saat Remediation, tidak bisa verifikasi", () => {
-    expect(to(statusActions(f("open"), "Remediasi", "project_manager", true))).toEqual(["remediated"]);
-  });
-  it("pentester: lolos/masih rentan hanya saat Retest dan setelah diperbaiki", () => {
-    expect(to(statusActions(f("remediated"), "Retesting", "pentester", false))).toEqual(["closed", "reopened"]);
-    expect(statusActions(f("remediated"), "Remediasi", "pentester", false)).toEqual([]);
-    expect(statusActions(f("open"), "Retesting", "pentester", false)).toEqual([]);
-  });
-  it("tech writer dan temuan closed: tanpa aksi", () => {
-    expect(statusActions(f("open"), "Retesting", "technical_writer", false)).toEqual([]);
-    expect(statusActions(f("closed"), "Retesting", "project_manager", true)).toEqual([]);
-  });
-  it("di luar Remediation/Retest: tanpa aksi", () => {
-    expect(statusActions(f("open"), "Assessment", "super_admin", true)).toEqual([]);
-  });
-});
-
+// Mirror BE: status temuan cuma open/closed. Bisa diubah pentester atau PM pemilik saat tahap temuan terbuka, terkunci saat Remediasi.
 describe("allowedFindingStatuses", () => {
-  it("pentester dan PM pemilik bisa ubah ke semua status saat Pentest atau Retest, tetapi terkunci saat Remediation", () => {
-    expect(allowedFindingStatuses(f("open"), "Assessment", "pentester", false)).toEqual([
-      "open",
-      "remediated",
-      "closed",
-      "reopened",
-    ]);
-    expect(allowedFindingStatuses(f("open"), "Retesting", "project_manager", true)).toEqual([
-      "open",
-      "remediated",
-      "closed",
-      "reopened",
-    ]);
+  it("pentester dan PM pemilik bisa pilih Terbuka atau Ditutup saat Assessment/Retesting", () => {
+    expect(allowedFindingStatuses(f("open"), "Assessment", "pentester", false)).toEqual(["open", "closed"]);
+    expect(allowedFindingStatuses(f("open"), "Retesting", "project_manager", true)).toEqual(["open", "closed"]);
+  });
+  it("terkunci saat Remediasi", () => {
     expect(allowedFindingStatuses(f("open"), "Remediasi", "pentester", false)).toEqual(["open"]);
     expect(allowedFindingStatuses(f("open"), "Remediasi", "project_manager", true)).toEqual(["open"]);
   });

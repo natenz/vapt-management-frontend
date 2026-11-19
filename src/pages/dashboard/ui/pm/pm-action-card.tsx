@@ -59,7 +59,7 @@ export function PmActionCard({ rows, isLoading }: { rows: PmItem[]; isLoading: b
                     </span>
                     {r.findings ? (
                       <span className="text-caption text-ink-muted tabular-nums">
-                        {r.findings.total} temuan · {r.findings.open} terbuka · {r.findings.remediated} diperbaiki
+                        {r.findings.total} temuan · {r.findings.open} terbuka · {r.findings.closed} ditutup
                       </span>
                     ) : null}
                   </span>

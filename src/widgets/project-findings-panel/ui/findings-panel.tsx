@@ -19,6 +19,7 @@ import { useSession } from "@/entities/session";
 import type { ProjectDetail } from "@/entities/project";
 import { Button } from "@/shared/ui/button";
 import { Field, Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import { notify } from "@/shared/ui/toast";
 import { toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
@@ -42,7 +43,7 @@ const editSchema = z.object({
 });
 type EditValues = z.infer<typeof editSchema>;
 
-const STATUS_LABEL: Record<string, string> = { open: "Terbuka", remediated: "Sudah diperbaiki", closed: "Selesai (lolos retest)", reopened: "Masih rentan" };
+const STATUS_LABEL: Record<string, string> = { open: "Terbuka", closed: "Ditutup" };
 
 export function allowedFindingStatuses(
   f: Finding,
@@ -54,21 +55,6 @@ export function allowedFindingStatuses(
     return [...FINDING_STATUSES];
   }
   return FINDING_STATUSES.includes(f.status as FindingStatus) ? [f.status as FindingStatus] : ["open"];
-}
-
-export type StatusAction = { to: FindingStatus; label: string };
-
-/** Aksi cepat di baris temuan (selain dropdown status langsung untuk PM / Pentester). */
-export function statusActions(f: Finding, projectStatus: string, role: string, canManage: boolean): StatusAction[] {
-  const out: StatusAction[] = [];
-  const verifier = ["pentester", "tech_lead", "super_admin"].includes(role);
-  if (canManage && ["Remediasi", "Retesting"].includes(projectStatus) && f.status !== "remediated" && f.status !== "closed") {
-    out.push({ to: "remediated", label: "Tandai sudah diperbaiki" });
-  }
-  if (verifier && projectStatus === "Retesting" && f.status === "remediated") {
-    out.push({ to: "closed", label: "Lolos retest" }, { to: "reopened", label: "Masih rentan" });
-  }
-  return out;
 }
 
 function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) {
@@ -102,19 +88,35 @@ function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) 
   );
 }
 
-function StatusActions({ f, actions }: { f: Finding; actions: StatusAction[] }) {
+/** Catatan status: alasan temuan masih terbuka (mis. klien tidak mau memperbaiki). */
+function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
   const qc = useQueryClient();
-  const m = useMutation({
-    mutationFn: (to: FindingStatus) => changeFindingStatus(f.vulna_id, to),
-    onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["findings", f.project_id] }); notify.success("Status temuan diperbarui", { description: STATUS_LABEL[r.status] ?? r.status }); },
-    onError: (e) => notify.info("Status belum bisa diubah", { description: e.message }),
+  const [text, setText] = useState(f.status_note ?? "");
+  const save = useMutation({
+    mutationFn: () => changeFindingStatus(f.vulna_id, f.status as FindingStatus, text.trim()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["findings", f.project_id] });
+      notify.success("Catatan temuan tersimpan");
+      onDone();
+    },
+    onError: (e) => notify.info("Catatan belum bisa disimpan", { description: e.message }),
   });
   return (
-    <>
-      {actions.map((a) => (
-        <Button key={a.to} type="button" loading={m.isPending && m.variables === a.to} disabled={m.isPending} onClick={() => m.mutate(a.to)}>{a.label}</Button>
-      ))}
-    </>
+    <form
+      className="mt-3 flex w-full flex-col gap-2 rounded-sm border border-border p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate();
+      }}
+    >
+      <Field label="Catatan status" helper="Contoh: klien tidak mau memperbaiki, atau memang harus tetap terbuka. Maksimal 500 karakter.">
+        {(x) => <Textarea rows={3} maxLength={500} {...x} value={text} onChange={(e) => setText(e.target.value)} />}
+      </Field>
+      <div className="flex gap-2">
+        <Button type="submit" variant="solid" loading={save.isPending}>Simpan catatan</Button>
+        <Button type="button" onClick={onDone}>Batal</Button>
+      </div>
+    </form>
   );
 }
 
@@ -187,6 +189,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const qc = useQueryClient();
   const user = useSession((u) => u.user);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [notingId, setNotingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const role = user?.role?.role_name ?? "";
   const statusOpen = EDITABLE_STATUSES.includes(project.status?.status_name ?? "");
@@ -196,6 +199,9 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const isOwner = (f: Finding) => f.pentester_id === user?.sys_user_id;
   const canEdit = (f: Finding) =>
     statusOpen && (["super_admin", "tech_lead", "technical_writer"].includes(role) || (role === "pentester" && isOwner(f)));
+  // BE: catatan ikut jalur ubah status; saat Remediasi hanya PM pemilik/admin.
+  const canNote = (f: Finding) =>
+    allowedFindingStatuses(f, projectStatus, role, canManage).length > 1 || (projectStatus === "Remediasi" && canManage);
   const canDelete = (f: Finding) =>
     ["Assessment", "Retesting"].includes(projectStatus) && (["super_admin", "tech_lead"].includes(role) || (role === "pentester" && isOwner(f)));
   const remove = useMutation({
@@ -238,11 +244,14 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                 <span className="text-body-sm text-ink-muted">
                   {f.asset?.asset_name ?? `Aset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
                 </span>
+                {f.status_note ? <span className="mt-1 text-body-sm text-ink-secondary">Catatan: {f.status_note}</span> : null}
               </span>
               <span className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={toSeverityKey(f.severity)} />
                 <StatusSelect f={f} options={allowedFindingStatuses(f, projectStatus, role, canManage)} />
-                <StatusActions f={f} actions={statusActions(f, projectStatus, role, canManage)} />
+                {canNote(f) && notingId !== f.vulna_id ? (
+                  <Button type="button" onClick={() => setNotingId(f.vulna_id)}>{f.status_note ? "Ubah catatan" : "Catatan"}</Button>
+                ) : null}
                 {canEdit(f) && editingId !== f.vulna_id ? <Button type="button" onClick={() => setEditingId(f.vulna_id)}>Edit</Button> : null}
                 {canDelete(f) && (
                   confirmDeleteId === f.vulna_id ? (
@@ -272,6 +281,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   )
                 )}
               </span>
+              {notingId === f.vulna_id ? <NoteEditor f={f} onDone={() => setNotingId(null)} /> : null}
               {editingId === f.vulna_id ? (
                 <EditFinding
                   f={f}

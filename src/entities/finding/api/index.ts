@@ -23,8 +23,9 @@ export const createFinding = async (projectId: number, body: FindingInput) =>
 export const updateFinding = async (id: number, body: Partial<FindingInput>) =>
   (await apiRequest(`/vulnas/${id}`, { method: "PUT", body }, findingSchema)).data;
 
-export const changeFindingStatus = async (id: number, status: FindingStatus) =>
-  (await apiRequest(`/vulnas/${id}/status`, { method: "PATCH", body: { status } }, findingSchema)).data;
+/** Ubah status temuan; `note` opsional (tidak dikirim = catatan lama tetap, "" = hapus catatan). */
+export const changeFindingStatus = async (id: number, status: FindingStatus, note?: string) =>
+  (await apiRequest(`/vulnas/${id}/status`, { method: "PATCH", body: { status, note } }, findingSchema)).data;
 
 export const deleteFinding = async (id: number) =>
   (await apiRequest(`/vulnas/${id}`, { method: "DELETE" }, z.unknown())).data;

@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleDot, FolderKanban, RotateCcw, ShieldAlert, Wrench } from "lucide-react";
+import { CheckCircle2, CircleDot, FolderKanban, ShieldAlert, Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { SeverityChip } from "@/entities/finding";
@@ -29,8 +29,6 @@ const STATUS_META: Record<
   { label: string; tone: "error" | "warning" | "info" | "success"; bar: string; icon: ReactNode }
 > = {
   open: { label: "Open", tone: "error", bar: "bg-error", icon: <CircleDot /> },
-  reopened: { label: "Reopened", tone: "warning", bar: "bg-warning", icon: <RotateCcw /> },
-  remediated: { label: "Remediated", tone: "info", bar: "bg-info", icon: <Wrench /> },
   closed: { label: "Closed", tone: "success", bar: "bg-success", icon: <CheckCircle2 /> },
 };
 
@@ -63,7 +61,7 @@ export function SeverityCard({
       role="region"
       aria-label="Severity Temuan Terbuka"
       title="Severity Temuan Terbuka"
-      description="Seluruh proyek, temuan berstatus Open atau Reopened."
+      description="Seluruh proyek, temuan yang masih Open."
       icon={<ShieldAlert />}
     >
       {isLoading ? (
@@ -104,7 +102,7 @@ export function FindingStatusCard({
       role="region"
       aria-label="Status Penanganan Temuan"
       title="Status Penanganan"
-      description="Siklus temuan dari Open sampai Closed."
+      description="Berapa temuan yang sudah Closed."
       icon={<Wrench />}
       action={
         <Link to="/reports" className="rounded-xs text-xs text-brand focus-ring hover:underline">

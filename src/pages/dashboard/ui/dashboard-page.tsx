@@ -64,7 +64,7 @@ const VIEWS: Record<string, RoleView> = {
 };
 VIEWS.super_admin = VIEWS.tech_lead!;
 
-const OPEN = ["open", "reopened"];
+const OPEN = ["open"];
 
 function deadline(end?: string | null, today = new Date()) {
   if (!end) return { text: "-", tone: "" };

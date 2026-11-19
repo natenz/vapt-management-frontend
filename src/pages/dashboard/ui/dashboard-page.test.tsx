@@ -148,7 +148,7 @@ describe("DashboardPage", () => {
       project: projectsResponse.data.find((x) => x.project_id === id)!,
       assets: [],
       summary: { total_findings: 1 },
-      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "remediated" }],
+      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "open" }],
     }));
     await mount("project_manager");
     const summary = await screen.findByRole("region", { name: "Ringkasan Proyek Project Manager" });
@@ -163,7 +163,7 @@ describe("DashboardPage", () => {
     // Hanya giliran PM: Remediasi tampil, Assessment/Initial Report (role lain) tidak
     const link = await within(action).findByRole("link", { name: /Proyek Remediasi/ });
     expect(link).toHaveAttribute("href", "/projects/4");
-    expect(within(action).getByText("Mulai Retesting setelah klien selesai")).toBeInTheDocument();
+    expect(within(action).getByText("Mulai Retesting setelah klien selesai memperbaiki")).toBeInTheDocument();
     expect(within(action).queryByText("Proyek Uji")).not.toBeInTheDocument();
 
     for (const name of ["Kesiapan Assessment", "Progres Remediasi", "Linimasa Saya"]) {
