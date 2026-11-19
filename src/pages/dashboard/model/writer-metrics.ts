@@ -34,11 +34,11 @@ const NEXT_STAGE: Record<string, string> = {
 };
 
 export const WRITER_NEXT_STEP: Record<string, string> = {
-  Scoping: "Pelajari scope dan aset klien",
-  Assessment: "Pantau temuan yang mulai masuk",
-  Analysis: "Tinjau temuan yang sudah divalidasi",
-  "Initial Report": "Koreksi temuan dan susun Initial Report",
-  Remediasi: "Klien memperbaiki temuan",
+  Scoping: "Pelajari scope dan asset klien",
+  Assessment: "Pantau findings yang mulai masuk",
+  Analysis: "Tinjau findings yang sudah divalidasi",
+  "Initial Report": "Koreksi findings dan susun Initial Report",
+  Remediasi: "Klien memperbaiki findings",
   Retesting: "Pentester menguji ulang",
   "Final Report Drafting": "Susun Final Report",
   "Final Presentation": "Presentasikan hasil ke klien",

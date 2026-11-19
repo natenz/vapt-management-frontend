@@ -14,7 +14,7 @@ export function FindingFormPage() {
   const back = () => navigate(`/projects/${id}`);
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <PageHeader title="Tambah Temuan" description={project.data?.project_name ?? "Catat kerentanan yang ditemukan pada aset."} />
+      <PageHeader title="Tambah Finding" description={project.data?.project_name ?? "Catat vulnerability yang ditemukan pada asset."} />
       {project.error ? <Alert tone="error" title="Gagal memuat proyek">{project.error.message}</Alert> : null}
       {project.isLoading ? <Skeleton className="h-64" /> : null}
       {project.data ? <CreateFindingForm project={project.data} onSuccess={back} onCancel={back} /> : null}

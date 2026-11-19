@@ -44,7 +44,7 @@ export function WorkloadHeatmapCard({
       icon={<CalendarRange />}
       action={
         <Button asChild variant="link" trailingIcon={<ArrowRight />} className="h-auto p-0 text-xs">
-          <Link to="/resources?tampilan=timeline">Cek Benturan Jadwal di Linimasa</Link>
+          <Link to="/resources?tampilan=timeline">Cek Benturan Jadwal di Timeline</Link>
         </Button>
       }
     >

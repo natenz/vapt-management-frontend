@@ -16,7 +16,7 @@ export function teamRows(p: ProjectDetail): TeamRow[] {
       name: r.user?.full_name ?? `User ${r.user_id}`,
       role: isRole(role) ? ROLE_LABEL[role] : (role ?? ""),
       total: mine.reduce((n, m) => n + m.allocated_mandays, 0),
-      assets: mine.map((m) => ({ name: m.asset?.asset_name ?? `Aset ${m.asset_id}`, md: m.allocated_mandays })),
+      assets: mine.map((m) => ({ name: m.asset?.asset_name ?? `Asset ${m.asset_id}`, md: m.allocated_mandays })),
     };
   });
 }

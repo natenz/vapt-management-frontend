@@ -17,7 +17,7 @@ const p = (id: number, name: string, status: string) => ({
 
 // BE sudah menyaring proyek per role (access.go roleStatuses); mock mewakili jawaban BE.
 const projectsResponse = {
-  data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Laporan", "Initial Report")],
+  data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Report", "Initial Report")],
   meta: { page: 1, limit: 100, total: 3 },
 };
 const api = vi.hoisted(() => ({ getReport: vi.fn() }));
@@ -59,6 +59,13 @@ vi.mock("@/entities/catalog", async (importOriginal) => ({
   ],
 }));
 
+// SVAR Gantt butuh layout & ResizeObserver yang tidak ada di jsdom; widget diganti stub ringan
+vi.mock("@/widgets/project-timeline", () => ({
+  ProjectTimeline: ({ projects }: { projects: { project_id: number }[] }) => (
+    <div data-testid="project-timeline">{projects.length} proyek</div>
+  ),
+}));
+
 vi.mock("@/entities/finding", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/finding")>()),
   listFindings: async () => [],
@@ -76,22 +83,20 @@ async function mount(role: string) {
 }
 
 describe("DashboardPage", () => {
-  it("pentester: bento prioritas kerja, Assessment di atas, Remediasi/Initial Report menunggu role lain", async () => {
+  it("pentester: proyek berjalan milik akun, timeline proyek, tanpa Prioritas Kerja", async () => {
     await mount("pentester");
     expect(await screen.findByRole("region", { name: "Ringkasan Kerja Pentester" })).toBeInTheDocument();
-    const priority = screen.getByRole("region", { name: "Prioritas Kerja" });
-    const rows = await within(priority).findAllByRole("row");
-    // baris 0 = header; giliran pentester (Assessment) paling atas
-    expect(within(rows[1]!).getByText("Proyek Uji")).toBeInTheDocument();
-    expect(within(rows[1]!).getByText("Uji aset dan catat temuan")).toBeInTheDocument();
-    expect(within(priority).getAllByText("Menunggu role lain")).toHaveLength(2);
-    for (const name of ["Linimasa Saya", "Proyek Baru", "Siap Diuji Ulang", "Temuan Saya"]) {
+    const running = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
+    expect(await within(running).findByText("Proyek Uji")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Prioritas Kerja" })).not.toBeInTheDocument();
+    for (const name of ["Timeline Proyek Saya", "Proyek Baru", "Siap Diuji Ulang", "Findings Saya"]) {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
     }
+    expect(screen.queryByRole("region", { name: "Timeline Saya" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
-  it("tech lead: menampilkan ringkasan operasional (KPI Proyek Berjalan & Usulan Katalog) serta tabel proyek berjalan", async () => {
+  it("tech lead: menampilkan ringkasan operasional (KPI Proyek Berjalan & Usulan Catalog) serta tabel proyek berjalan", async () => {
     await mount("tech_lead");
     const summarySec = await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" });
     expect(summarySec).toBeInTheDocument();
@@ -104,7 +109,7 @@ describe("DashboardPage", () => {
 
     expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Vulnerability Catalog" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
 
@@ -115,66 +120,66 @@ describe("DashboardPage", () => {
 
   it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {
     await mount("pentester");
-    await screen.findByRole("region", { name: "Prioritas Kerja" });
+    await screen.findByRole("region", { name: "Ringkasan Kerja Pentester" });
     expect(screen.queryByRole("region", { name: "Ringkasan Operasional Tech Lead" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Vulnerability Catalog" })).not.toBeInTheDocument();
   });
 
-  it("tech writer: Initial Report di atas antrean laporan dan membuka halaman report", async () => {
+  it("tech writer: Initial Report di atas pembuatan report dan membuka halaman report", async () => {
     api.getReport.mockReset();
     api.getReport.mockImplementation(async (id: number) => ({
       generated_at: "",
       project: projectsResponse.data.find((x) => x.project_id === id)!,
       assets: [],
       summary: { total_findings: 1 },
-      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "open", evidences: [] }],
+      findings: [{ vulna_id: id, custom_title: `Findings ${id}`, severity: "High", status: "open", evidences: [] }],
     }));
     await mount("technical_writer");
     expect(await screen.findByRole("region", { name: "Ringkasan Kerja Technical Writer" })).toBeInTheDocument();
-    const queue = screen.getByRole("region", { name: "Antrean Laporan" });
+    const queue = screen.getByRole("region", { name: "Pembuatan Report" });
     const rows = await within(queue).findAllByRole("row");
-    expect(within(rows[1]!).getByRole("link", { name: /Proyek Laporan/ })).toHaveAttribute("href", "/projects/2/report");
-    expect(within(rows[1]!).getByText("Koreksi temuan dan susun Initial Report")).toBeInTheDocument();
+    expect(within(rows[1]!).getByRole("link", { name: /Proyek Report/ })).toHaveAttribute("href", "/projects/2/report");
+    expect(within(rows[1]!).getByText("Koreksi findings dan susun Initial Report")).toBeInTheDocument();
     expect(within(queue).getAllByText("Menunggu role lain")).toHaveLength(2);
-    const quality = screen.getByRole("region", { name: "Kelengkapan Temuan" });
-    expect(await within(quality).findByText("Temuan 2")).toBeInTheDocument();
-    for (const name of ["Linimasa Saya", "Volume Temuan"]) {
-      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Timeline Saya" })).toBeInTheDocument();
+    const summary = screen.getByRole("region", { name: "Ringkasan Kerja Technical Writer" });
+    expect(within(summary).getByText("Total Findings")).toBeInTheDocument();
+    for (const label of ["Tenggat Terdekat", "Findings Dilaporkan", "Findings Belum Lengkap"]) {
+      expect(within(summary).queryByText(label)).not.toBeInTheDocument();
+    }
+    for (const name of ["Volume Findings", "Kelengkapan Findings"]) {
+      expect(screen.queryByRole("region", { name })).not.toBeInTheDocument();
     }
   });
 
-  it("project manager: 3 KPI, Proyek Berjalan berdampingan dengan Perlu Tindakan Anda, kartu lain tidak ada", async () => {
+  it("project manager: 3 KPI, Proyek Berjalan selebar penuh tanpa Perlu Tindakan Anda, kartu lain tidak ada", async () => {
     api.getReport.mockReset();
     api.getReport.mockImplementation(async (id: number) => ({
       generated_at: "",
       project: projectsResponse.data.find((x) => x.project_id === id)!,
       assets: [],
       summary: { total_findings: 1 },
-      findings: [{ vulna_id: id, custom_title: `Temuan ${id}`, severity: "High", status: "open" }],
+      findings: [{ vulna_id: id, custom_title: `Findings ${id}`, severity: "High", status: "open" }],
     }));
     await mount("project_manager");
     const summary = await screen.findByRole("region", { name: "Ringkasan Proyek Project Manager" });
-    for (const label of ["Proyek Saya", "Jadwal Bermasalah", "Total Temuan"]) {
+    for (const label of ["Proyek Saya", "Jadwal Bermasalah", "Total Findings"]) {
       expect(within(summary).getByText(label)).toBeInTheDocument();
     }
-    expect(within(summary).queryByText("Temuan Terbuka")).not.toBeInTheDocument();
+    expect(within(summary).queryByText("Findings Terbuka")).not.toBeInTheDocument();
     expect(within(summary).queryByText("Persiapan Assessment")).not.toBeInTheDocument();
 
     expect(screen.getByRole("region", { name: "Proyek Berjalan & Progres" })).toBeInTheDocument();
-    const action = screen.getByRole("region", { name: "Perlu Tindakan Anda" });
-    // Hanya giliran PM: Remediasi tampil, Assessment/Initial Report (role lain) tidak
-    const link = await within(action).findByRole("link", { name: /Proyek Remediasi/ });
-    expect(link).toHaveAttribute("href", "/projects/4");
-    expect(within(action).getByText("Mulai Retesting setelah klien selesai memperbaiki")).toBeInTheDocument();
-    expect(within(action).queryByText("Proyek Uji")).not.toBeInTheDocument();
+    // Tabel "Perlu Tindakan Anda" sudah dihapus dari dashboard PM
+    expect(screen.queryByRole("region", { name: "Perlu Tindakan Anda" })).not.toBeInTheDocument();
 
-    for (const name of ["Kesiapan Assessment", "Progres Remediasi", "Linimasa Saya"]) {
+    for (const name of ["Kesiapan Assessment", "Progres Remediasi", "Timeline Saya"]) {
       expect(screen.queryByRole("region", { name })).not.toBeInTheDocument();
     }
-    expect(screen.getByRole("link", { name: /^Laporan$/ })).toHaveAttribute("href", "/reports");
+    expect(screen.getByRole("link", { name: /^Report$/ })).toHaveAttribute("href", "/reports");
   });
 
-  it("super admin: bento lintas modul (proyek, temuan, tim, katalog, aktivitas)", async () => {
+  it("super admin: bento lintas modul (proyek, findings, tim, catalog, aktivitas)", async () => {
     api.getReport.mockReset();
     api.getReport.mockImplementation(async (id: number) => {
       // Satu report gagal tidak boleh menjatuhkan kartu lain
@@ -192,15 +197,15 @@ describe("DashboardPage", () => {
     expect(await screen.findByRole("region", { name: "Ringkasan Eksekutif Sistem" })).toBeInTheDocument();
     for (const name of [
       "Tren Proyek",
-      "Severity Temuan Terbuka",
-      "Siklus Tahap Proyek",
+      "Severity Findings Terbuka",
+      "Siklus Stage Proyek",
       "Proyek Paling Berisiko",
       "Mandays Pentester",
       "Komposisi Pengguna",
-      "Status Penanganan Temuan",
+      "Status Penanganan Findings",
       "Tenggat Terdekat",
       "Aktivitas Terbaru",
-      "Katalog Kerentanan",
+      "Vulnerability Catalog",
       "Pintasan Administrasi",
     ]) {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
@@ -218,7 +223,7 @@ describe("DashboardPage", () => {
 });
 
 describe("stageIndexForStatus", () => {
-  it("Scoping..Final Presentation = tahap timeline; Draft belum kickoff; Planning sudah tidak ada", () => {
+  it("Scoping..Final Presentation = stage timeline; Draft belum kickoff; Planning sudah tidak ada", () => {
     expect(stageIndexForStatus("Draft")).toBe(-1);
     expect(stageIndexForStatus("Planning")).toBe(-1);
     expect(stageIndexForStatus("Scoping")).toBe(0);

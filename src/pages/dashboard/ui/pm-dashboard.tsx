@@ -1,7 +1,6 @@
 /**
  * Dashboard Project Manager — ringkas: tiga angka utama, lalu daftar proyek
- * berjalan (kesehatan jadwal) berdampingan dengan proyek yang menunggu
- * keputusan PM (Scoping, Remediasi, Retesting).
+ * berjalan beserta progresnya selebar penuh.
  */
 import { Bug, CalendarClock, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
@@ -12,7 +11,6 @@ import { SummaryTile } from "@/shared/ui/summary-tile";
 import { pmQueue } from "../model/pm-metrics";
 import { runningProjects, todayIso } from "../model/techlead-metrics";
 import { useProjectReportData } from "../model/use-report-data";
-import { PmActionCard } from "./pm/pm-action-card";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
 
 interface PmDashboardProps {
@@ -25,19 +23,16 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
   const details = data.details.map;
   const reports = data.reports.map;
   const today = todayIso();
-  // Kedua kartu mengisi sisa satu layar di bawah KPI (desktop); bawahnya = padding main (py-8).
+  // Kartu proyek berjalan mengisi sisa satu layar di bawah KPI (desktop); bawahnya = padding main (py-8).
   const fill = useFillHeight<HTMLDivElement>({ bottomGap: 32 });
 
   const queue = useMemo(() => pmQueue(data.active, details, reports, today), [data.active, details, reports, today]);
   const running = useMemo(() => runningProjects(data.active, today), [data.active, today]);
 
-  const detailsLoading = isLoading || data.details.isLoading;
   const reportsLoading = isLoading || data.reports.isLoading;
-  const turn = queue.filter((r) => r.myTurn).length;
   const late = running.filter((r) => r.health === "late").length;
   const risk = running.filter((r) => r.health === "at-risk").length;
   const totalFindings = queue.reduce((s, r) => s + (r.findings?.total ?? 0), 0);
-  const openFindings = queue.reduce((s, r) => s + (r.findings?.open ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-5" data-slot="pm-dashboard">
@@ -52,7 +47,6 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
           icon={<FolderKanban />}
           fill="brand"
           loading={isLoading}
-          note={{ value: turn, text: "menunggu keputusan Anda" }}
         />
         <SummaryTile
           label="Jadwal Bermasalah"
@@ -60,19 +54,13 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
           unit="Proyek"
           icon={<CalendarClock />}
           loading={isLoading}
-          note={
-            late + risk > 0
-              ? { value: late, text: `terlambat · ${risk} berisiko tertinggal` }
-              : { text: "Semua proyek sesuai jadwal" }
-          }
         />
         <SummaryTile
-          label="Total Temuan"
+          label="Total Findings"
           value={reportsLoading ? null : totalFindings}
-          unit="Temuan"
+          unit="Findings"
           icon={<Bug />}
           loading={reportsLoading}
-          note={{ value: openFindings, text: "masih terbuka di proyek Anda" }}
         />
       </section>
 
@@ -82,8 +70,7 @@ export function PmDashboard({ projects, isLoading }: PmDashboardProps) {
         className="lg:grid-rows-[minmax(0,1fr)]"
         aria-label="Bento dashboard Project Manager"
       >
-        <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={7} scrollable />
-        <PmActionCard rows={queue} isLoading={detailsLoading} />
+        <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} scrollable />
       </BentoGrid>
     </div>
   );

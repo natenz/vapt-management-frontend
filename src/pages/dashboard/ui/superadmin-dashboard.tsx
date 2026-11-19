@@ -73,25 +73,13 @@ export function SuperAdminDashboard({ projects, isLoading }: SuperAdminDashboard
           icon={<FolderKanban />}
           fill="brand"
           loading={isLoading}
-          note={
-            kpis.overdue > 0
-              ? { value: `${kpis.overdue} terlambat`, text: `· ${kpis.dueSoon} tenggat ≤ 3 hari` }
-              : { text: `${kpis.done} selesai dari ${kpis.total} proyek` }
-          }
         />
         <SummaryTile
-          label="Temuan Terbuka"
+          label="Findings Terbuka"
           value={reportsLoading ? null : totals.open}
-          unit="Temuan"
+          unit="Findings"
           icon={<ShieldAlert />}
           loading={reportsLoading}
-          note={{
-            value: totals.openBySeverity.Critical + totals.openBySeverity.High || undefined,
-            text:
-              totals.openBySeverity.Critical + totals.openBySeverity.High > 0
-                ? "Critical/High belum ditutup"
-                : `dari ${totals.total} temuan tercatat`,
-          }}
         />
         <SummaryTile
           label="Personil Tim"
@@ -99,15 +87,13 @@ export function SuperAdminDashboard({ projects, isLoading }: SuperAdminDashboard
           unit="Orang"
           icon={<Users />}
           loading={usersLoading}
-          note={{ text: `${cap.pentesters} pentester · ${users.length} akun total` }}
         />
         <SummaryTile
-          label="Antrean Katalog"
+          label="Antrean Catalog"
           value={data.catalog.isLoading ? null : catalog.pending}
           unit="Pengajuan"
           icon={<BookCheck />}
           loading={data.catalog.isLoading}
-          note={{ text: `${catalog.approved} kerentanan di katalog disetujui` }}
         />
       </section>
 

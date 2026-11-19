@@ -32,7 +32,7 @@ const mockProjects = [
 ] as unknown as Project[];
 
 describe("report-filters", () => {
-  it("menyaring laporan berdasarkan nama proyek atau klien", () => {
+  it("menyaring report berdasarkan nama proyek atau klien", () => {
     const resName = applyReportFilters(mockProjects, { search: "commerce", statuses: [] });
     expect(resName).toHaveLength(1);
     expect(resName[0]?.project_name).toBe("VAPT Commerce");
@@ -42,7 +42,7 @@ describe("report-filters", () => {
     expect(resClient[0]?.project_name).toBe("VAPT Portal");
   });
 
-  it("menyaring laporan berdasarkan status", () => {
+  it("menyaring report berdasarkan status", () => {
     const resStatus = applyReportFilters(mockProjects, { search: "", statuses: ["Done"] });
     expect(resStatus).toHaveLength(1);
     expect(resStatus[0]?.project_name).toBe("VAPT Portal");

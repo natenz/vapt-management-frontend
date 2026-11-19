@@ -67,8 +67,8 @@ const DEFAULT_ROLES: RoleDetail[] = [
   { role_id: 1, role_name: "super_admin", description: "Hak akses penuh kelola sistem & user" },
   { role_id: 2, role_name: "tech_lead", description: "Template proyek, alokasi mandays, approval" },
   { role_id: 3, role_name: "project_manager", description: "Detail jadwal, tracking eksekusi & remedi" },
-  { role_id: 4, role_name: "pentester", description: "Temuan celah keamanan (findings) & retest" },
-  { role_id: 5, role_name: "technical_writer", description: "Review QA narasi temuan & kompilasi laporan" },
+  { role_id: 4, role_name: "pentester", description: "Findings celah keamanan & retest" },
+  { role_id: 5, role_name: "technical_writer", description: "Review QA narasi finding & kompilasi report" },
 ];
 
 const createUserSchema = z.object({
@@ -721,7 +721,7 @@ export function UsersPage() {
           ) : null}
 
           <p className="mt-2 text-body-sm text-ink-secondary">
-            Tindakan ini tidak dapat dibatalkan. Pengguna yang memiliki riwayat keterlibatan pada proyek atau temuan
+            Tindakan ini tidak dapat dibatalkan. Pengguna yang memiliki riwayat keterlibatan pada proyek atau findings
             tidak dapat dihapus untuk menjaga audit trail.
           </p>
 

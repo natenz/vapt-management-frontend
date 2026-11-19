@@ -46,12 +46,12 @@ describe("Native SVG Charts", () => {
       <DonutChart
         segments={segments}
         centerValue={12}
-        centerLabel="Temuan"
+        centerLabel="Findings"
       />,
     );
 
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("Temuan")).toBeInTheDocument();
+    expect(screen.getByText("Findings")).toBeInTheDocument();
     expect(screen.getByText("Critical")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
   });

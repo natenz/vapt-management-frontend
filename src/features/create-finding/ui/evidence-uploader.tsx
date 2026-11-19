@@ -66,7 +66,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
               {files.length > 0 ? "Tambah foto" : "Pilih foto"}
             </Button>
           </div>
-          <p className="text-caption text-ink-muted" aria-live="polite">{files.length > 0 ? `${files.length} dari 5 foto` : "Maksimal 5 foto untuk setiap temuan."}</p>
+          <p className="text-caption text-ink-muted" aria-live="polite">{files.length > 0 ? `${files.length} dari 5 foto` : "Maksimal 5 foto untuk setiap finding."}</p>
           {previews.length > 0 ? (
             <ul className="divide-y divide-border" aria-label="Foto yang akan diunggah">
               {previews.map(({ file, url }, index) => (

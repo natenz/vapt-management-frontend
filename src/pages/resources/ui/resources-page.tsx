@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { currentMonth, getResourceLoad, listActiveProjectDetails, monthLabel } from "@/entities/project";
+import { currentMonth, getResourceLoad, listActiveProjectDetails } from "@/entities/project";
 import { listUsers, RoleBadge, toUserProfileInfo, UserProfilePopover, type User } from "@/entities/user";
 import {
   ScheduleRangeControls,
@@ -208,15 +208,12 @@ export function ResourcesPage() {
   const isFiltered = hasAnyFilter(filters, thisMonth);
 
   const count = (role: string) => allRows.filter((r) => roleOf(r.user) === role).length;
-  // Fakta saja: belum ada aturan batas beban per orang, jadi yang dihitung adalah yang punya penugasan.
-  const assigned = allRows.filter((r) => roleOf(r.user) === "pentester" && r.load.mandays > 0).length;
   const loading = users.isLoading || load.isLoading;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Resource"
-        description={`Siapa saja yang bisa ditempatkan di proyek beserta mandays yang sudah ditugaskan. Mandays dihitung per bulan (${monthLabel(filters.month)}) dan mulai dari 0 tiap ganti bulan.`}
       />
       {users.error ? <Alert tone="error" title="Gagal memuat daftar orang">{users.error.message}</Alert> : null}
       {load.error ? <Alert tone="warning" title="Beban mandays belum bisa dihitung">{load.error.message}</Alert> : null}
@@ -227,7 +224,6 @@ export function ResourcesPage() {
           value={loading ? null : count("pentester")}
           unit="Orang"
           loading={loading}
-          note={{ text: `${assigned} punya penugasan bulan ini` }}
         />
         <SummaryTile
           icon={<ClipboardCheck />}
@@ -235,7 +231,6 @@ export function ResourcesPage() {
           value={loading ? null : count("technical_writer")}
           unit="Orang"
           loading={loading}
-          note={{ text: "Penyusun laporan" }}
         />
         <SummaryTile
           icon={<FolderKanban />}
@@ -243,7 +238,6 @@ export function ResourcesPage() {
           value={loading ? null : count("project_manager")}
           unit="Orang"
           loading={loading}
-          note={{ text: "Pemilik proyek" }}
         />
         <SummaryTile
           icon={<Users />}
@@ -251,7 +245,6 @@ export function ResourcesPage() {
           value={loading ? null : allRows.length}
           unit="Orang"
           loading={loading}
-          note={{ text: "Pentester, writer, dan PM" }}
         />
       </section>
 
@@ -263,7 +256,7 @@ export function ResourcesPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <SegmentedTabsList aria-label="Pilihan tampilan resource" className="self-start">
             <SegmentedTabsTrigger value="table">Daftar Tim</SegmentedTabsTrigger>
-            <SegmentedTabsTrigger value="timeline">Linimasa Beban Kerja</SegmentedTabsTrigger>
+            <SegmentedTabsTrigger value="timeline">Timeline Beban Kerja</SegmentedTabsTrigger>
           </SegmentedTabsList>
 
           {view === "timeline" ? (

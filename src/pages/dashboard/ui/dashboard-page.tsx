@@ -46,9 +46,9 @@ type RoleView = { turn: string[]; turnHint: string; next: Record<string, string>
 const RUNNING: Record<string, string> = {
   Scoping: "Konfirmasi scope dengan klien",
   Assessment: "Pentester sedang menguji",
-  Analysis: "Analisis dan validasi temuan",
+  Analysis: "Analisis dan validasi findings",
   "Initial Report": "Tech Writer menyusun Initial Report",
-  Remediasi: "Klien memperbaiki temuan",
+  Remediasi: "Klien memperbaiki findings",
   Retesting: "Pentester menguji ulang",
   "Final Report Drafting": "Tech Writer menyusun Final Report",
   "Final Presentation": "Presentasi hasil ke klien",
@@ -58,7 +58,7 @@ const VIEWS: Record<string, RoleView> = {
   tech_lead: {
     turn: ["Draft"],
     turnHint: "Template yang perlu dilengkapi lalu diserahkan ke PM.",
-    next: { ...RUNNING, Draft: "Lengkapi template lalu kickoff ke PM", Scoping: "PM menyiapkan aset dan pentester" },
+    next: { ...RUNNING, Draft: "Lengkapi template lalu kickoff ke PM", Scoping: "PM menyiapkan asset dan pentester" },
   },
 };
 VIEWS.super_admin = VIEWS.tech_lead!;
@@ -87,7 +87,7 @@ function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record
           <TableHead>
             <span className="inline-flex items-center gap-1.5 font-normal normal-case">
               <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-              <span>Tahap</span>
+              <span>Stage</span>
             </span>
           </TableHead>
           <TableHead>
@@ -105,7 +105,7 @@ function ProjectTable({ rows, next, openCount }: { rows: Project[]; next: Record
           <TableHead numeric>
             <span className="inline-flex items-center gap-1.5 font-normal normal-case">
               <Bug className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-              <span>Temuan terbuka</span>
+              <span>Findings terbuka</span>
             </span>
           </TableHead>
         </TableRow>
@@ -210,7 +210,7 @@ export function DashboardPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Dashboard"
-        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.${isTlView ? "" : " Hanya proyek yang menjadi bagian Anda yang ditampilkan."}`}
+        description={`Halo ${name}${isRole(role) ? ` (${ROLE_LABEL[role]})` : ""}.`}
         action={
           isSuperAdmin ? (
             <div className="flex items-center gap-2">
@@ -229,11 +229,11 @@ export function DashboardPage() {
             <div className="flex items-center gap-2">
               {isPentester ? (
                 <Button asChild variant="outline" leadingIcon={<BookOpen />}>
-                  <Link to="/catalog">Katalog Kerentanan</Link>
+                  <Link to="/catalog">Vulnerability Catalog</Link>
                 </Button>
               ) : (
                 <Button asChild variant="outline" leadingIcon={<FileText />}>
-                  <Link to="/reports">Laporan</Link>
+                  <Link to="/reports">Report</Link>
                 </Button>
               )}
               <Button asChild variant="solid" leadingIcon={<FolderKanban />}>

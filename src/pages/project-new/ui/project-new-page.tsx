@@ -83,7 +83,7 @@ export function ProjectNewPage() {
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v as z.output<typeof schema>))} className="flex flex-col gap-8">
       <PageHeader
         title="Buat Template Proyek"
-        description="Tentukan proyek, rentang tanggal, mandays proyeksi, PM, dan anggota tim. Aset yang diuji dan penugasan Pentester per aset diisi Project Manager, dalam batas mandays proyeksi."
+        description="Tentukan proyek, rentang tanggal, mandays proyeksi, PM, dan anggota tim. Asset yang diuji dan penugasan Pentester per asset diisi Project Manager, dalam batas mandays proyeksi."
         action={<Button type="submit" variant="solid" loading={mutation.isPending}>Simpan sebagai Draft</Button>}
       />
 
@@ -104,7 +104,7 @@ export function ProjectNewPage() {
           </div>
           <Field
             label="Mandays proyeksi"
-            helper="Jatah total mandays untuk proyek ini. PM tidak bisa mengisi total mandays aset melebihi angka ini. Kosongkan bila belum ditentukan."
+            helper="Jatah total mandays untuk proyek ini. PM tidak bisa mengisi total mandays asset melebihi angka ini. Kosongkan bila belum ditentukan."
             error={errors.projected_mandays?.message}
           >
             {(f) => <Input type="number" inputMode="decimal" min="0" step="0.5" placeholder="Contoh: 20" {...f} {...register("projected_mandays")} />}
@@ -133,7 +133,7 @@ export function ProjectNewPage() {
       <section className="flex flex-col gap-4 rounded-md border border-border bg-surface p-6" aria-labelledby="team">
         <div>
           <h2 id="team" className="text-title-md text-ink">Anggota tim proyek</h2>
-          <p className="text-body-sm text-ink-muted">Orang yang bertugas di proyek ini. PM yang menentukan aset apa saja dan siapa menguji aset yang mana.</p>
+          <p className="text-body-sm text-ink-muted">Orang yang bertugas di proyek ini. PM yang menentukan asset apa saja dan siapa menguji asset yang mana.</p>
         </div>
         {errors.resource_user_ids?.message ? <p className="text-caption text-error">{errors.resource_user_ids.message}</p> : null}
         <Controller

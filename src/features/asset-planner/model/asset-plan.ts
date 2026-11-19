@@ -94,7 +94,7 @@ export const totalAssetMandays = (drafts: DraftAsset[]) => drafts.filter((a) => 
 export function budgetError(drafts: DraftAsset[], projected: number): string | null {
   const total = totalAssetMandays(drafts);
   if (!(projected > 0) || total <= projected + 1e-9) return null;
-  return `Total mandays aset (${fmtNum(total)} md) melebihi mandays proyeksi Tech Lead (${fmtNum(projected)} md). Kurangi mandays aset atau minta Tech Lead menaikkan proyeksi.`;
+  return `Total mandays asset (${fmtNum(total)} md) melebihi mandays proyeksi Tech Lead (${fmtNum(projected)} md). Kurangi mandays asset atau minta Tech Lead menaikkan proyeksi.`;
 }
 
 export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[] = [], projected = 0): Record<string, string[]> {
@@ -104,10 +104,10 @@ export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[
   for (const a of drafts) {
     if (a.removed) continue;
     const e: string[] = [];
-    const label = a.name.trim() || "Aset baru";
-    if (!a.name.trim()) e.push("Nama aset wajib diisi.");
-    if (a.name.trim().length > 255) e.push("Nama aset maksimal 255 karakter.");
-    if (!ASSET_TYPES.includes(a.type)) e.push("Pilih tipe aset.");
+    const label = a.name.trim() || "Asset baru";
+    if (!a.name.trim()) e.push("Nama asset wajib diisi.");
+    if (a.name.trim().length > 255) e.push("Nama asset maksimal 255 karakter.");
+    if (!ASSET_TYPES.includes(a.type)) e.push("Pilih tipe asset.");
     if (a.domain.trim().length > 255) e.push("Domain maksimal 255 karakter.");
     const ip = a.ip.trim();
     if (ip && !z.ipv4().safeParse(ip).success && !z.ipv6().safeParse(ip).success)
@@ -116,12 +116,12 @@ export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[
     if (a.id != null && !ip && server.find((s) => s.id === a.id)?.ip.trim())
       e.push("IP address yang sudah tersimpan tidak bisa dikosongkan (batasan backend). Ganti dengan IP lain, atau hapus dan buat ulang asetnya.");
     const md = num(a.mandays);
-    if (!(md > 0)) e.push("Mandays aset harus lebih dari 0.");
+    if (!(md > 0)) e.push("Mandays asset harus lebih dari 0.");
     const seen = new Set<number>();
     a.pentesters.forEach((p, i) => {
       const who = `Pentester ${i + 1}`;
       if (p.pentesterId == null) e.push(`${who}: pilih pentester.`);
-      else if (seen.has(p.pentesterId)) e.push(`${who}: pentester yang sama sudah ditugaskan di aset ini.`);
+      else if (seen.has(p.pentesterId)) e.push(`${who}: pentester yang sama sudah ditugaskan di asset ini.`);
       else seen.add(p.pentesterId);
       if (!p.start || !p.end) e.push(`${who}: tanggal mulai dan selesai wajib diisi.`);
       else if (p.end < p.start) e.push(`${who}: tanggal selesai tidak boleh sebelum tanggal mulai.`);
@@ -136,7 +136,7 @@ export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[
     });
     if (md > 0 && a.pentesters.length > 0) {
       const r = allocate(md, a.pentesters);
-      if (r.remaining < 0) e.push(`Total mandays pentester (${fmtNum(md - r.remaining)} md) melebihi mandays aset (${fmtNum(md)} md).`);
+      if (r.remaining < 0) e.push(`Total mandays pentester (${fmtNum(md - r.remaining)} md) melebihi mandays asset (${fmtNum(md)} md).`);
       else if (r.autoStarved)
         e.push("Tidak ada sisa mandays untuk pentester yang diatur otomatis. Kurangi angka manual atau isi semuanya manual.");
     }
@@ -264,7 +264,7 @@ export async function runOps(ops: Op[], api: PlanApi): Promise<Map<string, numbe
       else if (op.t === "mandays.update") await api.updateMandays(op.id, op.body);
       else {
         const id = "id" in op.asset ? op.asset.id : created.get(op.asset.key);
-        if (id == null) throw new Error("Aset baru belum tersimpan");
+        if (id == null) throw new Error("Asset baru belum tersimpan");
         await api.createMandays(id, op.body);
       }
     } catch (e) {

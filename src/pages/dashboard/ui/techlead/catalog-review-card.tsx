@@ -41,8 +41,8 @@ export function CatalogReviewCard({
       void queryClient.invalidateQueries({ queryKey: ["catalog"] });
       notify.success(
         vars.status === "approved"
-          ? "Usulan kerentanan disetujui dan masuk ke katalog standar"
-          : "Usulan kerentanan telah ditolak",
+          ? "Usulan vulnerability disetujui dan masuk ke catalog standar"
+          : "Usulan vulnerability telah ditolak",
       );
       if (selected?.vulna_id === vars.id) setSelected(null);
     },
@@ -54,15 +54,15 @@ export function CatalogReviewCard({
     <BentoCard
       colSpan={12}
       role="region"
-      aria-label="Persetujuan Usulan Katalog Kerentanan"
-      title="Persetujuan Usulan Katalog Kerentanan"
-      description={`Validasi usulan pentester sebelum masuk standar katalog${
-        approvedCount !== null ? ` · ${approvedCount} kerentanan sudah baku` : ""
+      aria-label="Persetujuan Usulan Vulnerability Catalog"
+      title="Persetujuan Usulan Vulnerability Catalog"
+      description={`Validasi usulan pentester sebelum masuk standar catalog${
+        approvedCount !== null ? ` · ${approvedCount} vulnerabilities sudah baku` : ""
       }.`}
       icon={<BookCheck />}
       action={
         <Button asChild variant="link" trailingIcon={<ArrowRight />} className="h-auto p-0 text-xs">
-          <Link to="/catalog">Kelola katalog</Link>
+          <Link to="/catalog">Kelola catalog</Link>
         </Button>
       }
     >
@@ -71,11 +71,11 @@ export function CatalogReviewCard({
       ) : queue.length === 0 ? (
         <EmptyState
           icon={<BookCheck />}
-          title="Tidak ada usulan kerentanan pending"
+          title="Tidak ada usulan vulnerability pending"
           description="Semua usulan dari tim pentester sudah ditinjau."
           action={
             <Button asChild variant="outline">
-              <Link to="/catalog">Kelola Standar Katalog</Link>
+              <Link to="/catalog">Kelola Standar Catalog</Link>
             </Button>
           }
         />
@@ -96,7 +96,7 @@ export function CatalogReviewCard({
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <ColumnLabel icon={<ShieldAlert />}>Kerentanan</ColumnLabel>
+                    <ColumnLabel icon={<ShieldAlert />}>Vulnerability</ColumnLabel>
                   </TableHead>
                   <TableHead>
                     <ColumnLabel icon={<ShieldAlert />}>Severity</ColumnLabel>
@@ -205,7 +205,7 @@ export function CatalogReviewCard({
           <div className="flex flex-col gap-4 py-2 text-sm text-ink">
             {selected?.description ? (
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-ink-muted">Deskripsi Kerentanan</span>
+                <span className="text-xs text-ink-muted">Deskripsi Vulnerability</span>
                 <p className="rounded-xs bg-surface-subtle p-3 text-xs leading-relaxed whitespace-pre-wrap">
                   {selected.description}
                 </p>

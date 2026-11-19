@@ -202,7 +202,7 @@ export function ProjectMetricsSection({
         <TabsContent value="overview" className="mt-4">
           <div className="min-w-0 rounded-md border border-border bg-surface p-6">
             <div data-slot="project-schedule-summary">
-              <h2 className="text-sm font-normal text-ink-muted">Ikhtisar Jadwal Proyek</h2>
+              <h2 className="text-sm font-normal text-ink-muted">Overview Jadwal Proyek</h2>
               <div className="mt-1 flex items-baseline gap-3">
                 {isLoading ? (
                   <Skeleton className="h-9 w-12" />

@@ -14,13 +14,13 @@ describe("humanizeErrorMessage", () => {
 
   it("beberapa field salah sekaligus -> semuanya disebut", () => {
     const r = humanizeErrorMessage("invalid request body", { asset_type: "failed on 'required'", ip_address: "failed on 'ip'" });
-    expect(r).toContain("Tipe aset wajib diisi.");
+    expect(r).toContain("Tipe asset wajib diisi.");
     expect(r).toContain("IP address bukan IP yang valid");
   });
 
   it("aturan gte/max/oneof", () => {
     expect(humanizeErrorMessage("invalid request body", { mandays: "failed on 'gte=0'" })).toBe("Mandays tidak boleh kurang dari 0.");
-    expect(humanizeErrorMessage("invalid request body", { asset_name: "failed on 'max=255'" })).toBe("Nama aset maksimal 255 karakter.");
+    expect(humanizeErrorMessage("invalid request body", { asset_name: "failed on 'max=255'" })).toBe("Nama asset maksimal 255 karakter.");
     expect(humanizeErrorMessage("invalid request body", { severity: "failed on 'oneof=Critical High'" })).toBe("Severity harus salah satu dari: Critical, High.");
   });
 
@@ -30,19 +30,19 @@ describe("humanizeErrorMessage", () => {
 
   it("menerjemahkan pesan bisnis transisi status", () => {
     expect(humanizeErrorMessage("project must have at least one asset before pentest")).toBe(
-      "Tambahkan minimal 1 aset sebelum proyek dapat masuk tahap Pentest.",
+      "Tambahkan minimal 1 assets sebelum proyek dapat masuk stage Pentest.",
     );
     expect(humanizeErrorMessage("project template must have at least one resource")).toBe(
       "Proyek harus memiliki minimal 1 anggota tim sebelum diserahkan ke PM.",
     );
     expect(humanizeErrorMessage("allocated mandays exceed the asset's mandays")).toBe(
-      "Mandays yang dialokasikan melebihi batas kuota mandays aset.",
+      "Mandays yang dialokasikan melebihi batas kuota mandays asset.",
     );
   });
 
-  it("menerjemahkan pola regex dinamis aset tanpa pentester", () => {
+  it("menerjemahkan pola regex dinamis asset tanpa pentester", () => {
     const res = humanizeErrorMessage("asset 'Portal Web' has no pentester assigned in the timeline");
-    expect(res).toBe('Aset "Portal Web" belum ditugaskan ke pentester di timeline jadwal.');
+    expect(res).toBe('Asset "Portal Web" belum ditugaskan ke pentester di timeline jadwal.');
   });
 
   it("400 validasi: message sudah Indonesia dan details kosong (tidak ada 'failed on')", async () => {

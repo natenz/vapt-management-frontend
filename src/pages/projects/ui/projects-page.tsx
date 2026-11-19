@@ -165,7 +165,7 @@ export function ProjectsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Proyek"
-        description="Daftar proyek sesuai hak akses Anda."
+        description="Daftar Proyek"
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
@@ -214,7 +214,7 @@ export function ProjectsPage() {
             columns={columns}
             data={filteredProjects}
             noun="proyek"
-            caption="Daftar proyek"
+            caption="Daftar Proyek"
             isLoading={isLoading}
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}

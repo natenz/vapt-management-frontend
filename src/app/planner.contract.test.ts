@@ -46,7 +46,7 @@ run("planner -> BE asli", () => {
     return fromServer(await getProject(PID));
   };
 
-  it("tambah aset 20 md + 2 pentester, tambah ke-3, kurangi ke 1, naik/turun kuota, lalu hapus (semua diterima BE)", async () => {
+  it("tambah asset 20 md + 2 pentester, tambah ke-3, kurangi ke 1, naik/turun kuota, lalu hapus (semua diterima BE)", async () => {
     const p0 = await getProject(PID);
     const pent = p0.resources
       .map((r) => r.user?.sys_user)

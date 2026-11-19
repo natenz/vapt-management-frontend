@@ -11,7 +11,7 @@ const report = {
   assets: [
     { assets_id: 6, asset_name: "Storefront", asset_type: "web", mandays: 8, project_id: 4, domain: "shop.x.id" },
     { assets_id: 7, asset_name: "Checkout API", asset_type: "api", mandays: 5, project_id: 4 },
-    { assets_id: 8, asset_name: "Aset Kosong", asset_type: "web", mandays: 1, project_id: 4 },
+    { assets_id: 8, asset_name: "Asset Kosong", asset_type: "web", mandays: 1, project_id: 4 },
   ],
   summary: { total_findings: 3, by_severity: { High: 2, Low: 1 }, by_status: {} },
   findings: [
@@ -56,7 +56,7 @@ beforeAll(() => {
 });
 
 describe("ReportPage", () => {
-  it("dua tab: Laporan Proyek (semua temuan) dan Laporan per Aset (dikelompokkan, aset kosong tetap tampil)", async () => {
+  it("dua tab: Report Proyek (semua findings) dan Report per Asset (dikelompokkan, asset kosong tetap tampil)", async () => {
     const user = userEvent.setup();
     const { ReportPage } = await import("./reports-page");
     render(
@@ -69,17 +69,17 @@ describe("ReportPage", () => {
     expect(await screen.findByText("SQLi login")).toBeInTheDocument();
     expect(screen.getAllByText(/Weak JWT|Verbose errors|SQLi login/)).toHaveLength(3);
 
-    await user.click(screen.getByRole("tab", { name: /Laporan per Aset/ }));
-    const checkout = await screen.findByRole("region", { name: "Laporan aset Checkout API" });
+    await user.click(screen.getByRole("tab", { name: /Report per Asset/ }));
+    const checkout = await screen.findByRole("region", { name: "Report asset Checkout API" });
     expect(within(checkout).getAllByText(/Weak JWT|Verbose errors/)).toHaveLength(2);
     expect(within(checkout).queryByText("SQLi login")).toBeNull();
-    const kosong = screen.getByRole("region", { name: "Laporan aset Aset Kosong" });
-    expect(within(kosong).getByText("Tidak ada temuan pada aset ini.")).toBeInTheDocument();
+    const kosong = screen.getByRole("region", { name: "Report asset Asset Kosong" });
+    expect(within(kosong).getByText("Tidak ada findings pada asset ini.")).toBeInTheDocument();
   });
 });
 
 describe("ReportsIndexPage", () => {
-  it("merender tabel proyek siap laporan beserta toolbar dan aksinya", async () => {
+  it("merender tabel proyek siap report beserta toolbar dan aksinya", async () => {
     const { ReportsIndexPage } = await import("./reports-page");
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -91,10 +91,10 @@ describe("ReportsIndexPage", () => {
 
     expect(await screen.findByText("VAPT E-Commerce")).toBeInTheDocument();
     expect(screen.getByText("Klien Telkom")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Buka Laporan" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Buka Report" })).toHaveAttribute(
       "href",
       "/projects/4/report",
     );
-    expect(screen.getByText("1 laporan")).toBeInTheDocument();
+    expect(screen.getByText("1 reports")).toBeInTheDocument();
   });
 });

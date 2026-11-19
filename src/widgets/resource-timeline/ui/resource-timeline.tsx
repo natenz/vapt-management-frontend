@@ -258,7 +258,7 @@ export function ResourceTimeline({
       {error ? (
         <Alert
           tone="error"
-          title="Gagal memuat linimasa resource"
+          title="Gagal memuat timeline resource"
           action={
             onRetry ? (
               <Button type="button" variant="quiet" onClick={onRetry} className="h-8 text-xs">
@@ -279,7 +279,7 @@ export function ResourceTimeline({
             style={{ height: DEFAULT_CHART_HEIGHT, minHeight: MIN_CHART_HEIGHT }}
             aria-busy="true"
           >
-            <span className="sr-only">Memuat linimasa resource</span>
+            <span className="sr-only">Memuat timeline resource</span>
             {Array.from({ length: 8 }, (_, i) => (
               <Skeleton key={i} className="h-7 w-full" />
             ))}
@@ -543,7 +543,7 @@ function ResourceTooltip({
         <div className="flex flex-col gap-1 text-[11px] text-ink-muted">
           {task.assetName ? (
             <div className="flex items-center justify-between">
-              <span>Aset:</span>
+              <span>Asset:</span>
               <span className="text-ink font-medium truncate max-w-[140px]">
                 {task.assetName}
               </span>

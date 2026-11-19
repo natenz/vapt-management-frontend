@@ -15,9 +15,9 @@ import { todayIso } from "./techlead-metrics";
 export const PM_TURN = ["Scoping", "Remediasi", "Retesting"] as const;
 
 export const PM_NEXT_STEP: Record<string, string> = {
-  Scoping: "Konfirmasi scope, isi aset, dan assign pentester",
+  Scoping: "Konfirmasi scope, isi asset, dan assign pentester",
   Assessment: "Pentester sedang menguji",
-  Analysis: "Analisis dan validasi temuan",
+  Analysis: "Analisis dan validasi findings",
   "Initial Report": "Tech Writer menyusun Initial Report",
   Remediasi: "Mulai Retesting setelah klien selesai memperbaiki",
   Retesting: "Tutup Retesting atau kembalikan ke Remediasi",

@@ -91,14 +91,14 @@ describe("CatalogPage 2 tabel (Menunggu ACC & Disetujui)", () => {
 
     // Kedua judul tabel ada
     expect(await screen.findByRole("heading", { name: "Menunggu ACC" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Katalog Kerentanan Disetujui" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Vulnerability Catalog Disetujui" })).toBeInTheDocument();
 
     // Data pada kedua tabel tampil bersamaan
     expect(screen.getByText("SSRF Internal")).toBeInTheDocument();
     expect(screen.getByText("SQL Injection")).toBeInTheDocument();
 
     // Tombol ajukan ada untuk pentester
-    expect(screen.getByRole("button", { name: /Ajukan ke katalog/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ajukan ke catalog/ })).toBeInTheDocument();
 
     // Filter status dihilangkan, tetapi filter severity tetap ada
     expect(screen.queryByRole("button", { name: /^Status: / })).not.toBeInTheDocument();
@@ -122,18 +122,18 @@ describe("CatalogPage 2 tabel (Menunggu ACC & Disetujui)", () => {
     await waitFor(() => expect(api.reviewCatalog).toHaveBeenCalledWith(2, "approved"));
   });
 
-  it("menyaring kerentanan pada input pencarian di kedua tabel", async () => {
+  it("menyaring vulnerability pada input pencarian di kedua tabel", async () => {
     const u = userEvent.setup();
     await mount("tech_lead");
     expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
     expect(screen.getByText("SSRF Internal")).toBeInTheDocument();
 
-    const searchInput = screen.getByRole("searchbox", { name: "Cari kerentanan" });
+    const searchInput = screen.getByRole("searchbox", { name: "Cari vulnerability" });
     await u.type(searchInput, "nonexistent");
 
     expect(screen.queryByText("SQL Injection")).not.toBeInTheDocument();
     expect(screen.queryByText("SSRF Internal")).not.toBeInTheDocument();
     expect(screen.getByText("Tidak ada pengajuan yang cocok")).toBeInTheDocument();
-    expect(screen.getByText("Tidak ada kerentanan yang cocok")).toBeInTheDocument();
+    expect(screen.getByText("Tidak ada vulnerability yang cocok")).toBeInTheDocument();
   });
 });

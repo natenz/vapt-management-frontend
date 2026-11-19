@@ -51,7 +51,7 @@ export function TechLeadDashboard({
           loading={isLoading}
         />
         <SummaryTile
-          label="Usulan Katalog"
+          label="Usulan Catalog"
           value={isLoading ? null : catalogQueue.length}
           unit="Usulan"
           icon={<BookCheck />}

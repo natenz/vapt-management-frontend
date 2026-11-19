@@ -48,7 +48,7 @@ const NEXT: Record<string, { to: string; label: string; roles: string[]; auto?: 
   Scoping: { to: "Assessment", label: "Mulai Assessment", roles: PM, auto: true },
   Assessment: { to: "Analysis", label: "Selesai Assessment, mulai Analysis", roles: PM, auto: true },
   Analysis: { to: "Initial Report", label: "Mulai Initial Report", roles: PM, auto: true },
-  "Initial Report": { to: "Remediasi", label: "Serahkan laporan awal untuk Remediasi", roles: ["technical_writer", ...PM], auto: true },
+  "Initial Report": { to: "Remediasi", label: "Serahkan Initial Report untuk Remediasi", roles: ["technical_writer", ...PM], auto: true },
   Remediasi: { to: "Retesting", label: "Klien selesai, mulai Retesting", roles: PM },
   Retesting: { to: "Final Report Drafting", label: "Selesai Retesting, susun Final Report", roles: PM, back: { to: "Remediasi", label: "Masih ada yang rentan, kembali ke Remediasi" } },
   "Final Report Drafting": { to: "Final Presentation", label: "Final Report siap, mulai Final Presentation", roles: PM, auto: true },
@@ -128,12 +128,12 @@ export function ProjectDetailPage() {
     }
   } else if (current === "Scoping") {
     if (p.assets.length === 0) {
-      advanceBlockReason = "Tambahkan minimal 1 aset sebelum Assessment.";
+      advanceBlockReason = "Tambahkan minimal 1 assets sebelum Assessment.";
     } else {
       const allocatedAssetIds = new Set(p.mandays.map((m) => m.asset_id));
       const unallocated = p.assets.find((a) => !allocatedAssetIds.has(a.assets_id));
       if (unallocated) {
-        advanceBlockReason = `Aset "${unallocated.asset_name}" belum di-assign pentester di timeline.`;
+        advanceBlockReason = `Asset "${unallocated.asset_name}" belum di-assign pentester di timeline.`;
       }
     }
   }
@@ -175,7 +175,7 @@ export function ProjectDetailPage() {
               {advanceBlockReason ? (
                 <span className="text-caption text-ink-muted">{advanceBlockReason}</span>
               ) : next?.auto ? (
-                <span className="text-caption text-ink-muted">Maju otomatis setelah tanggal tahap ini lewat.</span>
+                <span className="text-caption text-ink-muted">Maju otomatis setelah tanggal stage ini lewat.</span>
               ) : null}
             </div>
           ) : (
@@ -248,11 +248,11 @@ export function ProjectDetailPage() {
         <div className="flex flex-col gap-1.5 bg-surface p-4">
           <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
             <Layers className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
-            <span>Aset & Anggota tim</span>
+            <span>Asset & Anggota tim</span>
           </dt>
           <dd className="flex flex-wrap items-center justify-between gap-2 mt-0.5">
             <span className="text-body-sm font-normal text-ink tabular">
-              {(p.assets ?? []).length} aset · {teamProfiles.length} orang
+              {(p.assets ?? []).length} asset · {teamProfiles.length} orang
             </span>
             {teamProfiles.length > 0 ? (
               <TeamResourcesPopover members={teamProfiles}>
@@ -293,9 +293,9 @@ export function ProjectDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-8">
-          <section aria-label="Tahap proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
+          <section aria-label="Stage proyek" className="flex flex-col gap-5 rounded-md border border-border bg-surface p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-title-md text-ink">Tahap proyek</h2>
+              <h2 className="text-title-md text-ink">Stage proyek</h2>
               <span className="text-body-sm text-ink-muted">
                 {statusIndex < 2 ? `${current}: belum kickoff` : `Hari ini ${fmtDate(new Date().toISOString())}`}
               </span>
@@ -307,11 +307,11 @@ export function ProjectDetailPage() {
               allDone={current === "Done"}
             />
             {late ? (
-              <Alert tone="warning" title={`Tahap ${current} melewati jadwal`}>
+              <Alert tone="warning" title={`Stage ${current} melewati jadwal`}>
                 Seharusnya selesai {fmtDate(late)}.{" "}
                 {next?.auto && advanceBlockReason
                   ? `Belum bisa maju otomatis: ${advanceBlockReason}`
-                  : "Tahap ini menunggu tindakan manual, jadi tidak maju otomatis."}
+                  : "Stage ini menunggu tindakan manual, jadi tidak maju otomatis."}
               </Alert>
             ) : null}
           </section>
@@ -319,10 +319,10 @@ export function ProjectDetailPage() {
           {/* PM mengisi aset & pentester tepat di bawah tahap, sebelum jadwal Gantt. */}
           {canEditAssets ? <AssetPlanner project={p} canAssign={canAssign} /> : null}
 
-          <section aria-label="Aset">
+          <section aria-label="Asset">
             <div className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6">
-              <h2 className="text-title-md text-ink">Aset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
-              {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada aset. Project Manager yang mengisinya.</p> : (
+              <h2 className="text-title-md text-ink">Asset <span className="text-body-sm text-ink-muted">({p.total_mandays} mandays)</span></h2>
+              {p.assets.length === 0 ? <p className="text-body-sm text-ink-muted">Belum ada asset. Project Manager yang mengisinya.</p> : (
                 <ul className="flex flex-col divide-y divide-border">
                   {p.assets.map((a) => {
                     // Mandays per pentester = baris trx_mandays aset ini, bukan total aset.
@@ -380,7 +380,7 @@ export function ProjectDetailPage() {
 
           <footer className="flex flex-wrap gap-3">
             {statusBetween(current, "Initial Report", "Done") ? (
-              <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat laporan</Link></Button>
+              <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat report</Link></Button>
             ) : null}
             <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
           </footer>

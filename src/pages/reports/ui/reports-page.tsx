@@ -130,7 +130,7 @@ export function ReportsIndexPage() {
         enableSorting: false,
         cell: ({ row }) => (
           <Button asChild variant="quiet" className="h-8 px-2.5 text-xs text-brand hover:text-brand">
-            <Link to={`/projects/${row.original.project_id}/report`}>Buka Laporan</Link>
+            <Link to={`/projects/${row.original.project_id}/report`}>Buka Report</Link>
           </Button>
         ),
       },
@@ -141,8 +141,8 @@ export function ReportsIndexPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Koreksi & Laporan"
-        description="Proyek yang sudah masuk tahap Initial Report atau sesudahnya."
+        title="Koreksi & Report"
+        description="Proyek yang sudah masuk stage Initial Report atau sesudahnya."
       />
       {error ? <Alert tone="error" title="Gagal memuat">{error.message}</Alert> : null}
 
@@ -158,20 +158,20 @@ export function ReportsIndexPage() {
         <DataTable
           columns={columns}
           data={filteredRows}
-          noun="laporan"
-          caption="Daftar laporan proyek"
+          noun="reports"
+          caption="Daftar report proyek"
           isLoading={isLoading}
           pageSize={pageSize}
           pageSizeOptions={PAGE_SIZE_OPTIONS}
           onPageSizeChange={setPageSize}
           getRowId={(p) => String(p.project_id)}
           onRowClick={(p) => navigate(`/projects/${p.project_id}/report`)}
-          getRowAriaLabel={(p) => `Buka laporan ${p.project_name}`}
+          getRowAriaLabel={(p) => `Buka report ${p.project_name}`}
           emptyState={
             isFiltered ? (
               <EmptyState
                 icon={<FileText />}
-                title="Tidak ada laporan yang cocok"
+                title="Tidak ada report yang cocok"
                 description="Coba ubah kata kunci atau kurangi filter status."
                 action={
                   <Button variant="quiet" onClick={() => setFilters(EMPTY_REPORT_FILTERS)}>
@@ -182,8 +182,8 @@ export function ReportsIndexPage() {
             ) : (
               <EmptyState
                 icon={<FileText />}
-                title="Belum ada laporan"
-                description="Proyek akan muncul di sini setelah masuk tahap Initial Report."
+                title="Belum ada report"
+                description="Proyek akan muncul di sini setelah masuk stage Initial Report."
               />
             )
           }
@@ -204,7 +204,7 @@ function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; s
         <SeverityBadge severity={toSeverityKey(f.severity)} />
       </div>
       <p className="text-body-sm text-ink-muted">
-        {showAsset ? `${f.asset?.asset_name ?? `Aset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
+        {showAsset ? `${f.asset?.asset_name ?? `Asset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
       </p>
       {(f.evidences ?? []).length ? (
         <p className="text-caption text-ink-muted">Evidence: {(f.evidences ?? []).map((e) => e.file_name).join(", ")}</p>
@@ -220,37 +220,37 @@ export function ReportPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["report", id], queryFn: () => getReport(id) });
 
   if (isLoading) return <Skeleton className="h-96" />;
-  if (error || !data) return <Alert tone="error" title="Laporan tidak tersedia">{error?.message}</Alert>;
+  if (error || !data) return <Alert tone="error" title="Report tidak tersedia">{error?.message}</Alert>;
   const perAsset = groupByAsset(data, SEVERITIES);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={`Laporan: ${data.project.project_name}`}
+        title={`Report: ${data.project.project_name}`}
         description={`${fmtRange(data.project.start_date, data.project.end_date)} · dibuat ${fmtDate(data.generated_at)}`}
-        action={<Button disabled leadingIcon={<Download />} title="Ekspor PDF/DOCX belum tersedia di backend">Unduh laporan</Button>}
+        action={<Button disabled leadingIcon={<Download />} title="Ekspor PDF/DOCX belum tersedia di backend">Unduh report</Button>}
       />
       <section className="flex flex-wrap gap-2" aria-label="Ringkasan severity">
         {SEVERITIES.map((s) => (
           <SeverityBadge key={s} severity={toSeverityKey(s)} count={data.summary.by_severity?.[s] ?? 0} />
         ))}
-        <span className="self-center text-body-sm text-ink-muted">Total {data.summary.total_findings} temuan</span>
+        <span className="self-center text-body-sm text-ink-muted">Total {data.summary.total_findings} findings</span>
       </section>
       <Tabs defaultValue="project" className="flex flex-col gap-4">
-        <TabsList aria-label="Jenis laporan">
-          <TabChip value="project" count={data.findings.length}>Laporan Proyek</TabChip>
-          <TabChip value="asset" count={perAsset.length}>Laporan per Aset</TabChip>
+        <TabsList aria-label="Jenis report">
+          <TabChip value="project" count={data.findings.length}>Report Proyek</TabChip>
+          <TabChip value="asset" count={perAsset.length}>Report per Asset</TabChip>
         </TabsList>
         <TabsContent value="project">
           <ul className="flex flex-col gap-3">
-            {data.findings.length === 0 ? <li className="text-body-sm text-ink-muted">Belum ada temuan.</li> : null}
+            {data.findings.length === 0 ? <li className="text-body-sm text-ink-muted">Belum ada findings.</li> : null}
             {data.findings.map((f) => (<FindingItem key={f.vulna_id} f={f} showAsset />))}
           </ul>
         </TabsContent>
         <TabsContent value="asset" className="flex flex-col gap-6">
-          {perAsset.length === 0 ? <p className="text-body-sm text-ink-muted">Proyek ini belum punya aset.</p> : null}
+          {perAsset.length === 0 ? <p className="text-body-sm text-ink-muted">Proyek ini belum punya asset.</p> : null}
           {perAsset.map(({ asset, findings, bySeverity }) => (
-            <section key={asset.assets_id} aria-label={`Laporan aset ${asset.asset_name}`} className="flex flex-col gap-3 rounded-md border border-border bg-surface p-5">
+            <section key={asset.assets_id} aria-label={`Report asset ${asset.asset_name}`} className="flex flex-col gap-3 rounded-md border border-border bg-surface p-5">
               <header className="flex flex-wrap items-start justify-between gap-2">
                 <span className="flex flex-col">
                   <h2 className="text-title-md text-ink">{asset.asset_name}</h2>
@@ -263,7 +263,7 @@ export function ReportPage() {
                 </span>
               </header>
               <ul className="flex flex-col gap-3">
-                {findings.length === 0 ? <li className="text-body-sm text-ink-muted">Tidak ada temuan pada aset ini.</li> : null}
+                {findings.length === 0 ? <li className="text-body-sm text-ink-muted">Tidak ada findings pada asset ini.</li> : null}
                 {findings.map((f) => (<FindingItem key={f.vulna_id} f={f} showAsset={false} />))}
               </ul>
             </section>

@@ -170,7 +170,7 @@ describe("TechLeadDashboard", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("merender 2 SummaryTile operasional eksekutif dengan kalkulasi yang akurat dan CTA katalog", () => {
+  it("merender 2 SummaryTile operasional eksekutif dengan kalkulasi yang akurat dan CTA catalog", () => {
     renderDashboard();
 
     const summarySection = screen.getByRole("region", { name: "Ringkasan Operasional Tech Lead" });
@@ -185,7 +185,7 @@ describe("TechLeadDashboard", () => {
     expect(within(summarySection).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
     // Usulan Katalog dengan Call To Action menuju /catalog
-    expect(within(summarySection).getByText("Usulan Katalog")).toBeInTheDocument();
+    expect(within(summarySection).getByText("Usulan Catalog")).toBeInTheDocument();
     expect(within(summarySection).getByText("01")).toBeInTheDocument();
     const ctaLink = within(summarySection).getByRole("link", { name: /Tinjau/ });
     expect(ctaLink).toHaveAttribute("href", "/catalog");
@@ -193,7 +193,7 @@ describe("TechLeadDashboard", () => {
     // Sub KPI card (keterangan terlambat, sesuai jadwal, dan basis data mutakhir) sudah dihapus
     expect(screen.queryByText(/terlambat/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/sesuai jadwal/i)).not.toBeInTheDocument();
-    expect(within(summarySection).queryByText(/basis data kerentanan mutakhir/i)).not.toBeInTheDocument();
+    expect(within(summarySection).queryByText(/basis data vulnerability mutakhir/i)).not.toBeInTheDocument();
     expect(within(summarySection).queryByText(/total proyek/i)).not.toBeInTheDocument();
   });
 
@@ -225,8 +225,8 @@ describe("TechLeadDashboard", () => {
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
   });
 
-  it("kartu persetujuan usulan katalog kerentanan tidak lagi ada di bento dashboard Tech Lead", () => {
+  it("kartu persetujuan usulan vulnerability catalog tidak lagi ada di bento dashboard Tech Lead", () => {
     renderDashboard();
-    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Vulnerability Catalog" })).not.toBeInTheDocument();
   });
 });

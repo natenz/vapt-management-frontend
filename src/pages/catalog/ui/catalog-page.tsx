@@ -6,8 +6,6 @@ import {
   AlertTriangle,
   BookCheck,
   Check,
-  CheckCircle2,
-  Clock,
   FileText,
   Plus,
   ShieldAlert,
@@ -58,7 +56,7 @@ const baseColumns: ColumnDef<CatalogVulna>[] = [
     header: () => (
       <span className="inline-flex items-center gap-1.5 font-normal normal-case">
         <ShieldAlert className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-        <span>Kerentanan</span>
+        <span>Vulnerability</span>
       </span>
     ),
     cell: ({ row }) => <span className="text-title-sm font-normal text-ink">{row.original.title}</span>,
@@ -154,7 +152,7 @@ export function CatalogPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["catalog"] });
       notify.success(
-        canPropose ? "Pengajuan dikirim, menunggu ACC Tech Lead" : "Ditambahkan ke katalog",
+        canPropose ? "Pengajuan dikirim, menunggu ACC Tech Lead" : "Ditambahkan ke catalog",
       );
       reset();
       setOpen(false);
@@ -167,7 +165,7 @@ export function CatalogPage() {
     onSuccess: (_, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["catalog"] });
       notify.success(
-        vars.status === "approved" ? "Pengajuan disetujui dan masuk katalog" : "Pengajuan ditolak",
+        vars.status === "approved" ? "Pengajuan disetujui dan masuk catalog" : "Pengajuan ditolak",
       );
     },
   });
@@ -261,17 +259,16 @@ export function CatalogPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Katalog Kerentanan"
-        description="Master data kerentanan. Pentester memilih dari katalog yang disetujui saat mencatat temuan."
+        title="Catalog"
         action={
           canSubmit ? (
             <Button variant="solid" leadingIcon={<Plus />} onClick={() => setOpen(true)}>
-              {canApprove ? "Tambah ke katalog" : "Ajukan ke katalog"}
+              {canApprove ? "Tambah ke catalog" : "Ajukan ke catalog"}
             </Button>
           ) : undefined
         }
       />
-      {error ? <Alert tone="error" title="Gagal memuat katalog">{error.message}</Alert> : null}
+      {error ? <Alert tone="error" title="Gagal memuat catalog">{error.message}</Alert> : null}
       {review.error ? (
         <Alert tone="error" title="Gagal memproses pengajuan" compact>
           {review.error.message}
@@ -283,7 +280,7 @@ export function CatalogPage() {
           filters={filters}
           onChange={setFilters}
           severityOptions={severityOptions}
-          noun="kerentanan"
+          noun="vulnerabilities"
           resultCount={filteredPending.length + filteredApproved.length}
           totalCount={allRows.length}
         />
@@ -296,9 +293,6 @@ export function CatalogPage() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-8 place-items-center rounded-sm bg-warning-bg text-warning" aria-hidden="true">
-                <Clock className="size-4" />
-              </span>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 id="catalog-pending-heading" className="text-title-sm font-semibold text-ink">
@@ -309,7 +303,7 @@ export function CatalogPage() {
                   </span>
                 </div>
                 <p className="text-caption text-ink-muted">
-                  Daftar usulan kerentanan yang diajukan pentester dan menunggu peninjauan Tech Lead.
+                  Daftar usulan vulnerability yang diajukan pentester dan menunggu peninjauan Tech Lead.
                 </p>
               </div>
             </div>
@@ -320,7 +314,7 @@ export function CatalogPage() {
             columns={canApprove ? reviewColumns : pendingColumns}
             data={filteredPending}
             noun="pengajuan"
-            caption="Pengajuan katalog menunggu ACC"
+            caption="Pengajuan catalog menunggu ACC"
             isLoading={pending.isLoading}
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
@@ -357,20 +351,17 @@ export function CatalogPage() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-8 place-items-center rounded-sm bg-success-bg text-success" aria-hidden="true">
-                <CheckCircle2 className="size-4" />
-              </span>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 id="catalog-approved-heading" className="text-title-sm font-semibold text-ink">
-                    Katalog Kerentanan Disetujui
+                    Vulnerability Catalog Disetujui
                   </h2>
                   <span className="rounded-full bg-success-bg px-2 py-0.5 text-caption font-medium text-success tabular-nums">
                     {filteredApproved.length}
                   </span>
                 </div>
                 <p className="text-caption text-ink-muted">
-                  Daftar standar kerentanan yang siap digunakan oleh tim saat mencatat temuan pengujian.
+                  Daftar standar vulnerability yang siap digunakan oleh tim saat mencatat findings pengujian.
                 </p>
               </div>
             </div>
@@ -380,8 +371,8 @@ export function CatalogPage() {
             key="table-approved"
             columns={baseColumns}
             data={filteredApproved}
-            noun="kerentanan"
-            caption="Katalog kerentanan disetujui"
+            noun="vulnerabilities"
+            caption="Vulnerability Catalog disetujui"
             isLoading={approved.isLoading}
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
@@ -391,7 +382,7 @@ export function CatalogPage() {
               isFiltered ? (
                 <EmptyState
                   icon={<BookCheck />}
-                  title="Tidak ada kerentanan yang cocok"
+                  title="Tidak ada vulnerability yang cocok"
                   description="Coba ubah kata kunci atau kurangi filter severity."
                   action={
                     <Button variant="quiet" onClick={() => setFilters(EMPTY_CATALOG_FILTERS)}>
@@ -402,8 +393,8 @@ export function CatalogPage() {
               ) : (
                 <EmptyState
                   icon={<BookCheck />}
-                  title="Belum ada kerentanan disetujui"
-                  description="Kerentanan yang telah disetujui akan muncul di sini."
+                  title="Belum ada vulnerability disetujui"
+                  description="Vulnerability yang telah disetujui akan muncul di sini."
                 />
               )
             }
@@ -414,11 +405,11 @@ export function CatalogPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent size="lg">
           <DialogHeader>
-            <DialogTitle>{canApprove ? "Tambah ke katalog" : "Ajukan ke katalog"}</DialogTitle>
+            <DialogTitle>{canApprove ? "Tambah ke catalog" : "Ajukan ke catalog"}</DialogTitle>
             <DialogDescription>
               {canApprove
-                ? "Entri baru langsung muncul sebagai pilihan di form temuan."
-                : "Pengajuan baru muncul sebagai pilihan di form temuan setelah disetujui Tech Lead."}
+                ? "Entri baru langsung muncul sebagai pilihan di form finding."
+                : "Pengajuan baru muncul sebagai pilihan di form finding setelah disetujui Tech Lead."}
             </DialogDescription>
           </DialogHeader>
           <form

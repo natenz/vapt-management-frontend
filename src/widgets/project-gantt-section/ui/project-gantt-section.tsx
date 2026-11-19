@@ -41,7 +41,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
       ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["project", project.project_id] });
-      notify.success("Jadwal 8 tahap tersimpan");
+      notify.success("Jadwal 8 stages tersimpan");
     },
   });
 
@@ -89,7 +89,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
   const stageGantt = (
     <div className="flex flex-col gap-3">
       {save.error ? (
-        <Alert tone="error" title="Gagal menyimpan jadwal tahap" compact>
+        <Alert tone="error" title="Gagal menyimpan jadwal stage" compact>
           {save.error.message}
         </Alert>
       ) : null}
@@ -113,8 +113,8 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
           <h2 id="timeline" className="text-title-md text-ink">Timeline pengujian</h2>
           <p className="mt-1 text-caption text-ink-muted">
             {editable
-              ? "Jadwal 8 tahap pelaksanaan proyek. Geser atau ubah durasi batang lalu klik Simpan jadwal."
-              : "Jadwal 8 tahap pelaksanaan proyek beserta penanggung jawab (Owner)."}
+              ? "Jadwal 8 stages pelaksanaan proyek. Geser atau ubah durasi batang lalu klik Simpan jadwal."
+              : "Jadwal 8 stages pelaksanaan proyek beserta penanggung jawab (Owner)."}
           </p>
         </div>
         {editable ? (

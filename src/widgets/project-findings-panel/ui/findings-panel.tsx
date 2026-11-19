@@ -66,7 +66,7 @@ function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) 
     mutationFn: (to: FindingStatus) => changeFindingStatus(f.vulna_id, to),
     onSuccess: (r) => {
       void qc.invalidateQueries({ queryKey: ["findings", f.project_id] });
-      notify.success("Status temuan diperbarui", { description: STATUS_LABEL[r.status] ?? r.status });
+      notify.success("Status finding diperbarui", { description: STATUS_LABEL[r.status] ?? r.status });
     },
     onError: (e) => notify.info("Status belum bisa diubah", { description: e.message }),
   });
@@ -75,7 +75,7 @@ function StatusSelect({ f, options }: { f: Finding; options: FindingStatus[] }) 
   }
   return (
     <select
-      aria-label={`Status temuan ${f.custom_title}`}
+      aria-label={`Status finding ${f.custom_title}`}
       className="h-9 rounded-sm border border-border-control bg-surface px-2.5 text-caption text-ink focus-ring"
       value={f.status}
       disabled={m.isPending}
@@ -99,7 +99,7 @@ function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
     mutationFn: () => changeFindingStatus(f.vulna_id, f.status as FindingStatus, text.trim()),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["findings", f.project_id] });
-      notify.success("Catatan temuan tersimpan");
+      notify.success("Catatan finding tersimpan");
       onDone();
     },
     onError: (e) => notify.info("Catatan belum bisa disimpan", { description: e.message }),
@@ -157,19 +157,19 @@ function EditFinding({
         await changeFindingStatus(f.vulna_id, v.status);
       }
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["findings", f.project_id] }); notify.success("Temuan diperbarui"); onDone(); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["findings", f.project_id] }); notify.success("Finding diperbarui"); onDone(); },
   });
   return (
     <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))} className="mt-3 flex w-full flex-col gap-3 rounded-sm border border-border p-4">
       {save.error ? <Alert tone="error" title="Gagal menyimpan perubahan" compact>{save.error.message}</Alert> : null}
       <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
-        <Field label="Kode temuan" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
-        <Field label="Judul temuan" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
+        <Field label="Kode finding" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
+        <Field label="Judul finding" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
         <Field label="CVSS score" error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
-        <Field label="Status temuan">
+        <Field label="Status finding">
           {(x) => (
             <select className={selectClass} disabled={statusOptions.length <= 1} {...x} {...register("status")}>
               {statusOptions.map((st) => (
@@ -215,9 +215,9 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
     onSuccess: () => {
       setConfirmDeleteId(null);
       void qc.invalidateQueries({ queryKey: ["findings", project.project_id] });
-      notify.success("Temuan dihapus");
+      notify.success("Finding dihapus");
     },
-    onError: (e) => notify.info("Temuan belum bisa dihapus", { description: e.message }),
+    onError: (e) => notify.info("Finding belum bisa dihapus", { description: e.message }),
   });
   const { data, isLoading, error } = useQuery({
     queryKey: ["findings", project.project_id],
@@ -227,15 +227,15 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   return (
     <section className="flex flex-col gap-3 rounded-md border border-border bg-surface p-6" aria-labelledby="findings">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="findings" className="text-title-md text-ink">Temuan <span className="text-body-sm text-ink-muted">({data?.length ?? 0})</span></h2>
+        <h2 id="findings" className="text-title-md text-ink">Findings <span className="text-body-sm text-ink-muted">({data?.length ?? 0})</span></h2>
         {canRecord ? (
           <Dialog open={creating} onOpenChange={setCreating}>
             <DialogTrigger asChild>
-              <Button type="button" variant="solid" leadingIcon={<Plus />}>Tambah temuan</Button>
+              <Button type="button" variant="solid" leadingIcon={<Plus />}>Tambah finding</Button>
             </DialogTrigger>
             <DialogContent size="lg" className="max-h-[90dvh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Tambah temuan</DialogTitle>
+                <DialogTitle>Tambah finding</DialogTitle>
                 <DialogDescription>{project.project_name}</DialogDescription>
               </DialogHeader>
               <div className="mt-6">
@@ -253,9 +253,9 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
           })}
         </div>
       ) : null}
-      {error ? <Alert tone="error" title="Gagal memuat temuan" compact>{error.message}</Alert> : null}
+      {error ? <Alert tone="error" title="Gagal memuat findings" compact>{error.message}</Alert> : null}
       {isLoading ? <Skeleton className="h-24" /> : (data ?? []).length === 0 ? (
-        <p className="text-body-sm text-ink-muted">Belum ada temuan tercatat.</p>
+        <p className="text-body-sm text-ink-muted">Belum ada findings tercatat.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border">
           {(data ?? []).map((f) => (
@@ -266,7 +266,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   <span className="text-title-sm text-ink">{f.custom_title}</span>
                 </span>
                 <span className="text-body-sm text-ink-muted">
-                  {f.asset?.asset_name ?? `Aset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
+                  {f.asset?.asset_name ?? `Asset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
                 </span>
                 {f.status_note ? <span className="mt-1 text-body-sm text-ink-secondary">Catatan: {f.status_note}</span> : null}
               </span>
@@ -297,7 +297,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                     <Button
                       type="button"
                       variant="quiet"
-                      aria-label={`Hapus temuan ${f.custom_title}`}
+                      aria-label={`Hapus finding ${f.custom_title}`}
                       onClick={() => setConfirmDeleteId(f.vulna_id)}
                     >
                       <Trash2 />

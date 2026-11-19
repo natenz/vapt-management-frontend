@@ -40,7 +40,7 @@ export function PmActionCard({ rows, isLoading }: { rows: PmItem[]; isLoading: b
               <li key={r.project.project_id}>
                 <Link
                   to={`/projects/${r.project.project_id}`}
-                  className="group flex gap-3 rounded-md border border-border p-3 transition-colors hover:border-brand/40 hover:bg-surface-subtle focus-ring"
+                  className="group flex gap-3 rounded-md border border-border p-3 transition-colors hover:bg-surface-subtle focus-ring"
                 >
                   <span className="text-caption text-ink-muted tabular-nums">{i + 1}</span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -59,7 +59,7 @@ export function PmActionCard({ rows, isLoading }: { rows: PmItem[]; isLoading: b
                     </span>
                     {r.findings ? (
                       <span className="text-caption text-ink-muted tabular-nums">
-                        {r.findings.total} temuan · {r.findings.open} terbuka · {r.findings.closed} ditutup
+                        {r.findings.total} findings · {r.findings.open} terbuka · {r.findings.closed} ditutup
                       </span>
                     ) : null}
                   </span>

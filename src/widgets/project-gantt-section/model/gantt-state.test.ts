@@ -5,7 +5,7 @@ const today = new Date("2026-11-09");
 const m = (status: string, start = "2026-11-02") => ({ status, start_date: start });
 
 describe("mandaysState", () => {
-  it("selesai tahap Pentest => done, walau mandays.status masih planned (kondisi nyata BE)", () => {
+  it("selesai stage Pentest => done, walau mandays.status masih planned (kondisi nyata BE)", () => {
     for (const s of ["Initial Report", "Remediasi", "Retesting", "Done"]) expect(mandaysState(m("planned"), s, today)).toBe("done");
   });
   it("Draft/Scoping => todo", () => {
@@ -23,7 +23,7 @@ describe("mandaysState", () => {
 });
 
 describe("buildStageSchedule", () => {
-  it("membentuk 8 tahap standar dengan Owner Telkom dan klien serta status sesuai tahap proyek", () => {
+  it("membentuk 8 stages standar dengan Owner Telkom dan klien serta status sesuai stage proyek", () => {
     const items = buildStageSchedule({
       start_date: "2026-09-02",
       end_date: "2026-09-17",
@@ -48,7 +48,7 @@ describe("buildStageSchedule", () => {
     expect(items[7]).toMatchObject({ owner: "Telkom", startsAt: "2026-09-17", endsAt: "2026-09-17", state: "todo" });
   });
 
-  it("memakai rentang nyata trx_mandays untuk tahap Assessment bila tersedia", () => {
+  it("memakai rentang nyata trx_mandays untuk stage Assessment bila tersedia", () => {
     const items = buildStageSchedule({
       start_date: "2026-10-01",
       end_date: "2026-10-31",

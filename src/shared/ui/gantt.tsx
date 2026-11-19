@@ -421,7 +421,7 @@ function Gantt({
         { id: "text", header: "Item", flexgrow: 1, width: 180, cell: LabelCell },
         ...(isWide ? [{ id: "owner", header: "Owner", width: 110, cell: OwnerCell }] : []),
       ]
-    : [{ id: "text", header: "Tahap", flexgrow: 1, width: isWide ? 200 : 150, cell: LabelCell }];
+    : [{ id: "text", header: "Stage", flexgrow: 1, width: isWide ? 200 : 150, cell: LabelCell }];
   const gridWidth = showMetaColumns ? (isWide ? 340 : 230) : isWide ? 200 : 150;
 
   // Kunci render ulang: SVAR menghitung ulang skala saat konfigurasi berubah
@@ -446,7 +446,7 @@ function Gantt({
             <MoveHorizontal className="size-4 shrink-0" aria-hidden />
             <span>
               {editable
-                ? "Geser batang untuk memindahkan tahap, atau tarik ujungnya untuk mengubah durasi. Keyboard: pilih batang lalu ←/→ (Shift: tanggal selesai, Alt: tanggal mulai)."
+                ? "Geser batang untuk memindahkan stage, atau tarik ujungnya untuk mengubah durasi. Keyboard: pilih batang lalu ←/→ (Shift: tanggal selesai, Alt: tanggal mulai)."
                 : "Geser horizontal untuk melihat seluruh periode proyek. Klik batang untuk melihat detail."}
             </span>
           </div>

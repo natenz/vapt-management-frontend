@@ -118,13 +118,13 @@ beforeEach(() => {
 });
 
 describe("AssetPlanner", () => {
-  it("alur spesifikasi: aset mobile 20 md muncul sebagai draf, 2 pentester => 10 md masing-masing, BE baru disentuh saat Simpan", async () => {
+  it("alur spesifikasi: asset mobile 20 md muncul sebagai draf, 2 pentester => 10 md masing-masing, BE baru disentuh saat Simpan", async () => {
     const u = userEvent.setup();
     await mount();
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "Mobile App");
-    await u.selectOptions(screen.getByLabelText("Tipe aset"), "mobile");
-    await u.type(screen.getByLabelText("Mandays aset"), "20");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "Mobile App");
+    await u.selectOptions(screen.getByLabelText("Tipe asset"), "mobile");
+    await u.type(screen.getByLabelText("Mandays asset"), "20");
 
     const selectAdd = await screen.findByLabelText("Tambah pentester");
     await u.selectOptions(selectAdd, "5");
@@ -163,12 +163,12 @@ describe("AssetPlanner", () => {
     expect(api.createMandays).toHaveBeenNthCalledWith(2, 10, expect.objectContaining({ pentester_id: 7, allocated_mandays: 10 }));
   });
 
-  it("PM mengatur manual: 11 md => 5 + 6 diterima; 5 + 7 ditolak (melebihi aset) tanpa request ke BE", async () => {
+  it("PM mengatur manual: 11 md => 5 + 6 diterima; 5 + 7 ditolak (melebihi asset) tanpa request ke BE", async () => {
     const u = userEvent.setup();
     await mount();
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "Web Portal");
-    await u.type(screen.getByLabelText("Mandays aset"), "11");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "Web Portal");
+    await u.type(screen.getByLabelText("Mandays asset"), "11");
     const selectAdd = await screen.findByLabelText("Tambah pentester");
     await u.selectOptions(selectAdd, "5");
     await u.selectOptions(selectAdd, "7");
@@ -179,7 +179,7 @@ describe("AssetPlanner", () => {
     expect(screen.getByText(/Dialokasikan 12 dari 11 md · lebih 1 md/)).toBeInTheDocument();
 
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
-    expect(await screen.findByText(/Total mandays pentester \(12 md\) melebihi mandays aset \(11 md\)/)).toBeInTheDocument();
+    expect(await screen.findByText(/Total mandays pentester \(12 md\) melebihi mandays asset \(11 md\)/)).toBeInTheDocument();
     expect(api.createAsset).not.toHaveBeenCalled();
 
     await u.clear(screen.getByLabelText("Mandays pentester 2"));
@@ -198,13 +198,13 @@ describe("AssetPlanner", () => {
   it("isian tidak valid: pesan Indonesia, tidak ada request ke BE", async () => {
     const u = userEvent.setup();
     await mount();
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
     await u.type(screen.getByLabelText("IP address"), "2121");
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     const alert = await screen.findByText("Periksa isian berikut");
     const box = alert.closest("[role=alert]") ?? alert.parentElement!;
-    expect(within(box as HTMLElement).getByText(/Nama aset wajib diisi/)).toBeInTheDocument();
-    expect(within(box as HTMLElement).getByText(/Mandays aset harus lebih dari 0/)).toBeInTheDocument();
+    expect(within(box as HTMLElement).getByText(/Nama asset wajib diisi/)).toBeInTheDocument();
+    expect(within(box as HTMLElement).getByText(/Mandays asset harus lebih dari 0/)).toBeInTheDocument();
     expect(within(box as HTMLElement).getByText(/IP address tidak valid/)).toBeInTheDocument();
     expect(api.createAsset).not.toHaveBeenCalled();
   });
@@ -212,25 +212,25 @@ describe("AssetPlanner", () => {
   it("Batalkan perubahan membuang draf tanpa menyentuh BE", async () => {
     const u = userEvent.setup();
     await mount();
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "Aset Baru");
-    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "Asset Baru");
+    await u.type(screen.getByLabelText("Mandays asset"), "5");
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
-    expect(screen.getByText("Aset Baru")).toBeInTheDocument();
+    expect(screen.getByText("Asset Baru")).toBeInTheDocument();
 
     await u.click(screen.getByRole("button", { name: "Batalkan perubahan" }));
-    expect(screen.queryByText("Aset Baru")).toBeNull();
+    expect(screen.queryByText("Asset Baru")).toBeNull();
     expect(Object.values(api).every((f) => f.mock.calls.length === 0)).toBe(true);
   });
 
-  it("tanpa hak assign (mis. super admin) hanya ada tabel aset, tanpa baris assign pentester", async () => {
+  it("tanpa hak assign (mis. super admin) hanya ada tabel asset, tanpa baris assign pentester", async () => {
     const u = userEvent.setup();
     await mount(project, false);
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
     expect(screen.queryByLabelText("Tambah pentester")).toBeNull();
   });
 
-  it("aset tersimpan dihapus: ditandai dulu, baru dihapus di BE saat Simpan", async () => {
+  it("asset tersimpan dihapus: ditandai dulu, baru dihapus di BE saat Simpan", async () => {
     const u = userEvent.setup();
     const p = {
       ...project,
@@ -238,7 +238,7 @@ describe("AssetPlanner", () => {
       mandays: [],
     } as unknown as ProjectDetail;
     await mount(p);
-    await u.click(screen.getByRole("button", { name: "Hapus aset Lama" }));
+    await u.click(screen.getByRole("button", { name: "Hapus asset Lama" }));
     expect(api.deleteAsset).not.toHaveBeenCalled();
     expect(screen.getByText(/akan dihapus saat disimpan/)).toBeInTheDocument();
     await u.click(screen.getByRole("button", { name: "Simpan" }));
@@ -257,9 +257,9 @@ describe("AssetPlanner", () => {
     m.update(withAsset("Dari Server"));
     expect(await screen.findByText("Dari Server")).toBeInTheDocument();
 
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "Draf Saya");
-    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "Draf Saya");
+    await u.type(screen.getByLabelText("Mandays asset"), "5");
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     expect(screen.getByText("Draf Saya")).toBeInTheDocument();
 
@@ -279,9 +279,9 @@ describe("AssetPlanner", () => {
     const add = vi.spyOn(window, "addEventListener");
     await mount();
     expect(add.mock.calls.filter((c) => c[0] === "beforeunload")).toHaveLength(0);
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "Aset Baru");
-    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "Asset Baru");
+    await u.type(screen.getByLabelText("Mandays asset"), "5");
     await u.click(screen.getByRole("button", { name: /Tambahkan ke daftar/ }));
     expect(add.mock.calls.filter((c) => c[0] === "beforeunload")).toHaveLength(1);
     add.mockRestore();
@@ -302,7 +302,7 @@ describe("AssetPlanner", () => {
     await waitFor(() => expect(api.addResources).toHaveBeenCalledWith(10, [8]));
   });
 
-  it("dapat mengubah aset yang ada lewat modal Ubah aset", async () => {
+  it("dapat mengubah asset yang ada lewat modal Ubah asset", async () => {
     const u = userEvent.setup();
     const p = {
       ...project,
@@ -312,10 +312,10 @@ describe("AssetPlanner", () => {
     await mount(p);
 
     expect(screen.getByText("Web Portal")).toBeInTheDocument();
-    await u.click(screen.getByRole("button", { name: "Ubah aset Web Portal" }));
+    await u.click(screen.getByRole("button", { name: "Ubah asset Web Portal" }));
 
-    expect(screen.getByRole("heading", { name: "Ubah aset Web Portal" })).toBeInTheDocument();
-    const nameInput = screen.getByLabelText("Nama aset");
+    expect(screen.getByRole("heading", { name: "Ubah asset Web Portal" })).toBeInTheDocument();
+    const nameInput = screen.getByLabelText("Nama asset");
     expect(nameInput).toHaveValue("Web Portal");
 
     await u.clear(nameInput);
@@ -336,9 +336,9 @@ describe("AssetPlanner", () => {
     } as unknown as ProjectDetail;
     await mount(projectTanpaResource);
 
-    await u.click(screen.getByRole("button", { name: /Tambah aset/ }));
-    await u.type(screen.getByLabelText("Nama aset"), "API Gateway");
-    await u.type(screen.getByLabelText("Mandays aset"), "5");
+    await u.click(screen.getByRole("button", { name: /Tambah asset/ }));
+    await u.type(screen.getByLabelText("Nama asset"), "API Gateway");
+    await u.type(screen.getByLabelText("Mandays asset"), "5");
 
     const selectAdd = await screen.findByLabelText("Tambah pentester");
     await waitFor(() => expect(within(selectAdd).getByRole("option", { name: "Budi" })).toBeInTheDocument());

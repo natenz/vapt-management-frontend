@@ -113,7 +113,7 @@ describe("ResourcesPage", () => {
     expect(screen.getByText("Menampilkan 1 dari 5 orang")).toBeInTheDocument();
   });
 
-  it("dapat beralih ke tampilan Linimasa Beban Kerja", async () => {
+  it("dapat beralih ke tampilan Timeline Beban Kerja", async () => {
     const userEvent = (await import("@testing-library/user-event")).default;
     const user = userEvent.setup();
     const { ResourcesPage } = await import("./resources-page");
@@ -126,7 +126,7 @@ describe("ResourcesPage", () => {
     );
 
     expect(await screen.findByText("Daftar Tim")).toBeInTheDocument();
-    const timelineTab = screen.getByRole("tab", { name: "Linimasa Beban Kerja" });
+    const timelineTab = screen.getByRole("tab", { name: "Timeline Beban Kerja" });
     await user.click(timelineTab);
 
     expect(timelineTab).toHaveAttribute("aria-selected", "true");

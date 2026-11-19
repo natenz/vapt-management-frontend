@@ -84,8 +84,8 @@ export function StageFunnelCard({
     <BentoCard
       colSpan={5}
       role="region"
-      aria-label="Siklus Tahap Proyek"
-      title="Siklus 10 Tahap"
+      aria-label="Siklus Stage Proyek"
+      title="Siklus 10 Stages"
       description={`${total} proyek tersebar dari Draft hingga Done.`}
       icon={<GitBranch />}
     >
@@ -152,7 +152,7 @@ export function DeadlineCard({
                   <ColumnLabel icon={<FolderKanban />}>Proyek</ColumnLabel>
                 </TableHead>
                 <TableHead>
-                  <ColumnLabel icon={<GitBranch />}>Tahap</ColumnLabel>
+                  <ColumnLabel icon={<GitBranch />}>Stage</ColumnLabel>
                 </TableHead>
                 <TableHead>
                   <ColumnLabel icon={<UserRound />}>PM</ColumnLabel>

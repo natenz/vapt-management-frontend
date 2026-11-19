@@ -26,7 +26,6 @@ export function RunningProjectsCard({
     <BentoCard
       colSpan={colSpan}
       scrollable={scrollable}
-      hoverEffect={false}
       role="region"
       aria-label="Proyek Berjalan & Progres"
       title="Proyek Berjalan & Progres"
@@ -50,7 +49,7 @@ export function RunningProjectsCard({
                   <ColumnLabel icon={<FolderKanban />}>Proyek</ColumnLabel>
                 </TableHead>
                 <TableHead>
-                  <ColumnLabel icon={<GitBranch />}>Tahap</ColumnLabel>
+                  <ColumnLabel icon={<GitBranch />}>Stage</ColumnLabel>
                 </TableHead>
                 <TableHead>
                   <ColumnLabel icon={<TrendingUp />}>Progres vs waktu</ColumnLabel>
@@ -83,7 +82,7 @@ export function RunningProjectsCard({
                         <span
                           className="relative h-1.5 overflow-hidden rounded-full bg-surface-subtle"
                           role="img"
-                          aria-label={`Tahap ${stage}%, waktu terpakai ${time ?? 0}%`}
+                          aria-label={`Stage ${stage}%, waktu terpakai ${time ?? 0}%`}
                         >
                           <span className="block h-full rounded-full bg-brand" style={{ width: `${stage}%` }} />
                           {time !== null ? (
@@ -95,7 +94,7 @@ export function RunningProjectsCard({
                           ) : null}
                         </span>
                         <span className="text-caption text-ink-muted tabular-nums">
-                          {stage}% tahap · {time ?? "–"}% waktu
+                          {stage}% stage · {time ?? "–"}% waktu
                         </span>
                       </div>
                     </TableCell>

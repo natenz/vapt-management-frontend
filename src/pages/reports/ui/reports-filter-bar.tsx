@@ -29,13 +29,13 @@ export function ReportsFilterBar({
   return (
     <div
       role="search"
-      aria-label="Filter laporan proyek"
+      aria-label="Filter report proyek"
       className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
     >
       {/* Kiri: pencarian + total laporan */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <SearchInput
-          aria-label="Cari proyek laporan"
+          aria-label="Cari proyek report"
           placeholder="Cari nama proyek atau klien..."
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
@@ -46,8 +46,8 @@ export function ReportsFilterBar({
           className="shrink-0 text-xs whitespace-nowrap text-ink-muted tabular-nums"
         >
           {isFiltered
-            ? `Menampilkan ${resultCount} dari ${totalCount} laporan`
-            : `${totalCount} laporan`}
+            ? `Menampilkan ${resultCount} dari ${totalCount} reports`
+            : `${totalCount} reports`}
         </p>
       </div>
 

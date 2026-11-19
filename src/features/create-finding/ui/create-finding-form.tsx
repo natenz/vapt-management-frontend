@@ -16,7 +16,7 @@ import { EvidenceUploader } from "./evidence-uploader";
 
 const schema = z
   .object({
-    asset_id: z.string().min(1, "Pilih aset"),
+    asset_id: z.string().min(1, "Pilih asset"),
     finding_code: z
       .string()
       .trim()
@@ -31,7 +31,7 @@ const schema = z
   })
   .superRefine((v, ctx) => {
     const fromCatalog = Boolean(v.catalog_vulna_id);
-    if (!fromCatalog && !v.custom_title) ctx.addIssue({ code: "custom", path: ["custom_title"], message: "Isi judul atau pilih dari katalog" });
+    if (!fromCatalog && !v.custom_title) ctx.addIssue({ code: "custom", path: ["custom_title"], message: "Isi judul atau pilih dari catalog" });
     if (!fromCatalog && !v.severity) ctx.addIssue({ code: "custom", path: ["severity"], message: "Pilih severity" });
     if (v.cvss_score && !(Number(v.cvss_score) >= 0 && Number(v.cvss_score) <= 10)) ctx.addIssue({ code: "custom", path: ["cvss_score"], message: "CVSS 0 sampai 10" });
   });
@@ -83,26 +83,26 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["findings", id] });
-      notify.success("Temuan dicatat");
+      notify.success("Finding dicatat");
       onSuccess();
     },
   });
 
   return (
     <form noValidate onSubmit={handleSubmit((v) => mutation.mutate(v))} className="flex flex-col gap-5">
-      {mutation.error ? <Alert tone="error" title="Gagal menyimpan temuan">{mutation.error.message}</Alert> : null}
-      {savedFinding && mutation.error ? <Alert tone="info" title="Temuan sudah tersimpan" compact>Foto yang gagal diunggah masih ada di sini. Klik Coba unggah lagi untuk melanjutkan tanpa membuat temuan baru.</Alert> : null}
+      {mutation.error ? <Alert tone="error" title="Gagal menyimpan finding">{mutation.error.message}</Alert> : null}
+      {savedFinding && mutation.error ? <Alert tone="info" title="Finding sudah tersimpan" compact>Foto yang gagal diunggah masih ada di sini. Klik Coba unggah lagi untuk melanjutkan tanpa membuat finding baru.</Alert> : null}
       <fieldset disabled={mutation.isPending || Boolean(savedFinding)} className="flex min-w-0 flex-col gap-4">
         <FieldGroup>
-          <Field label="Aset" error={errors.asset_id?.message} helper={isPentester && assets.length === 0 ? "Belum ada aset yang ditugaskan ke kamu di proyek ini. Minta PM menugaskan lewat Assign Pentester." : undefined}>
+          <Field label="Asset" error={errors.asset_id?.message} helper={isPentester && assets.length === 0 ? "Belum ada asset yang ditugaskan ke kamu di proyek ini. Minta PM menugaskan lewat Assign Pentester." : undefined}>
             {(f) => (
               <select className={selectClass} defaultValue="" {...f} {...register("asset_id")}>
-                <option value="" disabled>Pilih aset</option>
+                <option value="" disabled>Pilih asset</option>
                 {assets.map((a) => (<option key={a.assets_id} value={a.assets_id}>{a.asset_name}</option>))}
               </select>
             )}
           </Field>
-          <Field label="Dari katalog kerentanan" helper="Judul, severity, dan CVSS terisi otomatis dari katalog. Semuanya bisa kamu ubah.">
+          <Field label="Dari vulnerability catalog" helper="Judul, severity, dan CVSS terisi otomatis dari catalog. Semuanya bisa kamu ubah.">
             {(f) => (
               <select className={selectClass} defaultValue="" {...f} {...register("catalog_vulna_id", { onChange: (event) => {
                 const selected = approvedCatalog.find((item) => String(item.vulna_id) === event.target.value);
@@ -116,10 +116,10 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
               </select>
             )}
           </Field>
-          <Field label="Kode temuan" error={errors.finding_code?.message} helper="Kode unik temuan di proyek ini, terpisah dari judul. Kosongkan untuk kode otomatis (VLN-nomor proyek-urutan), atau isi sendiri, contoh XSS-01.">
+          <Field label="Kode finding" error={errors.finding_code?.message} helper="Kode unik findings di proyek ini, terpisah dari judul. Kosongkan untuk kode otomatis (VLN-nomor proyek-urutan), atau isi sendiri, contoh XSS-01.">
             {(f) => <Input placeholder="Otomatis" autoComplete="off" {...f} {...register("finding_code")} />}
           </Field>
-          <Field label="Judul temuan" error={errors.custom_title?.message}>{(f) => <Input {...f} {...register("custom_title")} />}</Field>
+          <Field label="Judul finding" error={errors.custom_title?.message}>{(f) => <Input {...f} {...register("custom_title")} />}</Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Severity" error={errors.severity?.message}>
               {(f) => (
@@ -137,7 +137,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
       <EvidenceUploader files={photos} onChange={setPhotos} disabled={mutation.isPending} />
       <div className="flex flex-wrap justify-end gap-3">
         <Button type="button" onClick={onCancel} disabled={mutation.isPending}>Batal</Button>
-        <Button type="submit" variant="solid" loading={mutation.isPending}>{savedFinding ? "Coba unggah lagi" : "Simpan temuan"}</Button>
+        <Button type="submit" variant="solid" loading={mutation.isPending}>{savedFinding ? "Coba unggah lagi" : "Simpan finding"}</Button>
       </div>
     </form>
   );

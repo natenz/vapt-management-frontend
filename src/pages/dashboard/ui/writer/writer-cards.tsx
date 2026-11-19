@@ -26,7 +26,7 @@ const SEVERITY_BAR: Record<string, string> = {
 
 function PartialNote({ failed }: { failed: number }) {
   return failed > 0 ? (
-    <p className="mt-3 text-caption text-warning">{failed} laporan proyek belum termuat; angka bisa kurang.</p>
+    <p className="mt-3 text-caption text-warning">{failed} report proyek belum termuat; angka bisa kurang.</p>
   ) : null;
 }
 
@@ -44,19 +44,19 @@ export function QualityCard({
     <BentoCard
       colSpan={12}
       role="region"
-      aria-label="Kelengkapan Temuan"
-      title="Kelengkapan Temuan"
+      aria-label="Kelengkapan Findings"
+      title="Kelengkapan Findings"
       description={
         incomplete > 0
-          ? `${incomplete} temuan belum lengkap datanya. Minta pentester melengkapi sebelum laporan disusun.`
-          : "Temuan di proyek yang akan dilaporkan sudah lengkap bukti, CVSS, dan endpoint."
+          ? `${incomplete} findings belum lengkap datanya. Minta pentester melengkapi sebelum report disusun.`
+          : "Findings di proyek yang akan dilaporkan sudah lengkap bukti, CVSS, dan endpoint."
       }
       icon={<ClipboardCheck />}
     >
       {isLoading ? (
         <CardSkeleton rows={4} />
       ) : rows.length === 0 ? (
-        <CardEmpty>Belum ada proyek di tahap Analysis atau laporan.</CardEmpty>
+        <CardEmpty>Belum ada proyek di stage Analysis atau report.</CardEmpty>
       ) : (
         <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {rows.map((r) => {
@@ -69,7 +69,7 @@ export function QualityCard({
                     <ProjectStatusBadge name={r.project.status?.status_name} />
                   </span>
                   <Button asChild variant="link" trailingIcon={<ArrowRight />} className="h-auto shrink-0 p-0 text-xs">
-                    <Link to={`/projects/${r.project.project_id}/report`}>Buka laporan</Link>
+                    <Link to={`/projects/${r.project.project_id}/report`}>Buka report</Link>
                   </Button>
                 </div>
 
@@ -80,7 +80,7 @@ export function QualityCard({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={pct}
-                    aria-label={`Temuan lengkap ${pct}%`}
+                    aria-label={`Findings lengkap ${pct}%`}
                   >
                     <span
                       className={cn("block h-full rounded-full", pct === 100 ? "bg-success" : "bg-warning")}
@@ -122,7 +122,7 @@ export function QualityCard({
                         </li>
                       ))}
                       {r.incomplete.length > 3 ? (
-                        <li className="text-caption text-ink-muted">+{r.incomplete.length - 3} temuan lain</li>
+                        <li className="text-caption text-ink-muted">+{r.incomplete.length - 3} findings lain</li>
                       ) : null}
                     </ul>
                   </>
@@ -150,15 +150,15 @@ export function VolumeCard({
     <BentoCard
       colSpan={5}
       role="region"
-      aria-label="Volume Temuan"
-      title="Volume Temuan"
-      description="Jumlah temuan per proyek untuk memperkirakan beban penulisan."
+      aria-label="Volume Findings"
+      title="Volume Findings"
+      description="Jumlah findings per proyek untuk memperkirakan beban penulisan."
       icon={<BarChart3 />}
     >
       {isLoading ? (
         <CardSkeleton rows={4} />
       ) : rows.length === 0 ? (
-        <CardEmpty>Belum ada proyek yang memiliki temuan.</CardEmpty>
+        <CardEmpty>Belum ada proyek yang memiliki findings.</CardEmpty>
       ) : (
         <div className="flex flex-col gap-3">
           <ul className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-ink-muted" aria-label="Legenda severity">
@@ -179,7 +179,7 @@ export function VolumeCard({
                   >
                     {r.project.project_name}
                   </Link>
-                  <span className="shrink-0 text-caption text-ink-secondary tabular-nums">{r.total} temuan</span>
+                  <span className="shrink-0 text-caption text-ink-secondary tabular-nums">{r.total} findings</span>
                 </span>
                 <StackedBarChart
                   items={SEVERITIES.map((s) => ({ label: s, count: r.bySeverity[s], colorClass: SEVERITY_BAR[s]! }))}

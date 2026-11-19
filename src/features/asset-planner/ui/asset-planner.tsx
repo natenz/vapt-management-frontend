@@ -286,20 +286,20 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="planner" className="text-title-md text-ink">
-            Aset dan penugasan pentester
+            Asset dan penugasan pentester
           </h2>
           <p className="text-body-sm text-ink-muted">
-            Isi aset beserta mandays-nya.{" "}
+            Isi asset beserta mandays-nya.{" "}
             {canAssign
-              ? "Tambahkan pentester di bawah tiap aset; mandays mereka otomatis dibagi rata dari mandays aset. "
+              ? "Tambahkan pentester di bawah tiap asset; mandays mereka otomatis dibagi rata dari mandays asset. "
               : ""}
-            Mandays pentester bisa diubah manual (total tidak boleh melebihi mandays aset); kosongkan untuk otomatis.
+            Mandays pentester bisa diubah manual (total tidak boleh melebihi mandays asset); kosongkan untuk otomatis.
             Perubahan baru disimpan saat Anda menekan Simpan.
           </p>
         </div>
         <span className="flex gap-2">
           <Button type="button" leadingIcon={<Plus />} onClick={addAsset}>
-            Tambah aset
+            Tambah asset
           </Button>
           <Button
             type="button"
@@ -328,11 +328,11 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
 
       {projected > 0 ? (
         <p className={cn("rounded-sm border px-3 py-2 text-body-sm tabular", overBudget ? "border-error text-error" : "border-border text-ink-secondary")} role={overBudget ? "alert" : undefined}>
-          Mandays proyeksi: <strong>{fmt(projected)} md</strong> · terpakai aset: <strong>{fmt(used)} md</strong> ·{" "}
-          {overBudget ? `lebih ${fmt(used - projected)} md, kurangi mandays aset` : `sisa ${fmt(projected - used)} md`}
+          Mandays proyeksi: <strong>{fmt(projected)} md</strong> · terpakai asset: <strong>{fmt(used)} md</strong> ·{" "}
+          {overBudget ? `lebih ${fmt(used - projected)} md, kurangi mandays asset` : `sisa ${fmt(projected - used)} md`}
         </p>
       ) : (
-        <p className="text-caption text-ink-muted">Mandays proyeksi belum ditetapkan, jadi total mandays aset belum dibatasi.</p>
+        <p className="text-caption text-ink-muted">Mandays proyeksi belum ditetapkan, jadi total mandays asset belum dibatasi.</p>
       )}
 
       {stale ? (
@@ -379,13 +379,13 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       ) : null}
 
       {shown.length === 0 ? (
-        <p className="text-body-sm text-ink-muted">Belum ada aset. Tekan "Tambah aset".</p>
+        <p className="text-body-sm text-ink-muted">Belum ada asset. Tekan "Tambah asset".</p>
       ) : (
-        <ul className="flex flex-col gap-3" aria-label="Aset yang diuji">
+        <ul className="flex flex-col gap-3" aria-label="Asset yang diuji">
           {shown.map((a, idx) => {
             const md = num(a.mandays);
             const alloc = allocate(md > 0 ? md : 0, a.pentesters);
-            const label = a.name.trim() || `Aset ${idx + 1}`;
+            const label = a.name.trim() || `Asset ${idx + 1}`;
             return (
               <li
                 key={a.key}
@@ -406,13 +406,13 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="mr-2 text-body-sm text-ink-secondary tabular">{fmt(md)} md</span>
-                    <Button type="button" variant="quiet" aria-label={`Ubah aset ${label}`} onClick={() => editAsset(a)}>
+                    <Button type="button" variant="quiet" aria-label={`Ubah asset ${label}`} onClick={() => editAsset(a)}>
                       <Pencil />
                     </Button>
                     <Button
                       type="button"
                       variant="quiet"
-                      aria-label={`Hapus aset ${a.name || "baru"}`}
+                      aria-label={`Hapus asset ${a.name || "baru"}`}
                       onClick={() => removeAsset(a)}
                     >
                       <Trash2 />
@@ -459,7 +459,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
       />
 
       {removed.length > 0 ? (
-        <ul className="flex flex-col gap-1 text-body-sm text-ink-muted" aria-label="Aset yang akan dihapus">
+        <ul className="flex flex-col gap-1 text-body-sm text-ink-muted" aria-label="Asset yang akan dihapus">
           {removed.map((a) => (
             <li key={a.key} className="flex items-center gap-2">
               <span className="line-through">{a.name}</span> akan dihapus saat disimpan.
@@ -533,7 +533,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
 
       {canAssign && shown.length > 0 && hasMissing ? (
         <p className="text-caption text-ink-muted">
-          Setiap aset perlu minimal 1 pentester sebelum proyek bisa masuk tahap Pentest.
+          Setiap asset perlu minimal 1 pentester sebelum proyek bisa masuk stage Pentest.
         </p>
       ) : null}
     </section>

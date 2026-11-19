@@ -75,7 +75,7 @@ describe("ProjectMetricsSection - Interval Snapshot & Rentang Data", () => {
     expect(rangeTrigger()).toHaveTextContent("1 Jan – 31 Des 2026");
     // Ikhtisar dan grafik berada dalam satu card; Draft dikecualikan dari total
     const summary = container.querySelector('[data-slot="project-schedule-summary"]');
-    expect(summary).toHaveTextContent("Ikhtisar Jadwal Proyek");
+    expect(summary).toHaveTextContent("Overview Jadwal Proyek");
     expect(summary).toHaveTextContent("2Total Terjadwal (1 Jan – 31 Des 2026)");
     expect(summary?.parentElement).toContainElement(
       container.querySelector('[data-slot="project-schedule-chart"]') as HTMLElement,
@@ -241,6 +241,6 @@ describe("ProjectMetricsSection - Interval Snapshot & Rentang Data", () => {
     expect(
       container.querySelector('[data-slot="project-schedule-chart"]'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Ikhtisar Jadwal Proyek")).toBeInTheDocument();
+    expect(screen.getByText("Overview Jadwal Proyek")).toBeInTheDocument();
   });
 });

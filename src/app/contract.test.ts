@@ -27,7 +27,7 @@ run("kontrak FE <-> BE", () => {
     }
   });
 
-  it("superadmin: user, role, status, katalog, semua proyek", async () => {
+  it("superadmin: user, role, status, catalog, semua proyek", async () => {
     await as("superadmin", "ChangeMe123!");
     expect((await listUsers()).length).toBeGreaterThanOrEqual(8);
     expect((await listRoles()).length).toBeGreaterThanOrEqual(5);

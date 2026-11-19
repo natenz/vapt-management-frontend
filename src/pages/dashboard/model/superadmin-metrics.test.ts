@@ -73,7 +73,7 @@ describe("proyek & siklus", () => {
     ]);
   });
 
-  it("funnel memakai urutan 10 tahap (tanpa Planning) dan menghitung tiap status", () => {
+  it("funnel memakai urutan 10 stages (tanpa Planning) dan menghitung tiap status", () => {
     const funnel = stageFunnel(projects);
     expect(funnel).toHaveLength(10);
     expect(funnel.map((s) => s.name)).not.toContain("Planning");
@@ -97,7 +97,7 @@ describe("proyek & siklus", () => {
   });
 });
 
-describe("temuan & risiko", () => {
+describe("findings & risiko", () => {
   const a = proj(1, "Assessment", null, null);
   const b = proj(2, "Remediasi", null, null);
   const reports = [
@@ -105,7 +105,7 @@ describe("temuan & risiko", () => {
     report(b, [finding("Critical", "open"), finding("Medium", "open")]),
   ];
 
-  it("menjumlahkan severity dan status, serta severity khusus temuan terbuka", () => {
+  it("menjumlahkan severity dan status, serta severity khusus findings terbuka", () => {
     const t = findingTotals(reports);
     expect(t.total).toBe(5);
     expect(t.open).toBe(4);
@@ -114,7 +114,7 @@ describe("temuan & risiko", () => {
     expect(t.byStatus).toEqual({ open: 4, closed: 1 });
   });
 
-  it("proyek berisiko diurutkan Critical lalu High, hanya dari temuan terbuka", () => {
+  it("proyek berisiko diurutkan Critical lalu High, hanya dari findings terbuka", () => {
     const rows = riskiestProjects(reports);
     expect(rows.map((r) => [r.project.project_id, r.critical, r.high, r.open])).toEqual([
       [2, 1, 0, 2],
@@ -123,7 +123,7 @@ describe("temuan & risiko", () => {
   });
 });
 
-describe("tim, katalog & aktivitas", () => {
+describe("tim, catalog & aktivitas", () => {
   it("komposisi role berurutan dari admin ke staf", () => {
     const users = [user(1, "pentester"), user(2, "super_admin"), user(3, "pentester")];
     expect(roleComposition(users)).toEqual([
@@ -147,7 +147,7 @@ describe("tim, katalog & aktivitas", () => {
     expect(cap).not.toHaveProperty("overloaded");
   });
 
-  it("statistik katalog menghitung rasio persetujuan dari yang sudah ditinjau", () => {
+  it("statistik catalog menghitung rasio persetujuan dari yang sudah ditinjau", () => {
     const item = { vulna_id: 1, title: "x", severity: "High", status: "approved" as const };
     expect(catalogStats([item, item, item], [item], [item])).toMatchObject({
       approved: 3,

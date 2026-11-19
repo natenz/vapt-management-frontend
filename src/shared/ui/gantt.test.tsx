@@ -107,7 +107,7 @@ beforeEach(() => {
 const bar = (id: string) => document.querySelector(`.wx-bar[data-id="${id}"]`) as HTMLElement;
 
 describe("Gantt (SVAR)", () => {
-  it("merender satu batang per tahap dengan keadaan Selesai/Belum selesai", () => {
+  it("merender satu batang per stage dengan keadaan Selesai/Belum selesai", () => {
     render(<Gantt items={ITEMS} />);
     expect(document.querySelectorAll(".wx-bar")).toHaveLength(3);
     expect(bar("step-1").querySelector("[data-state]")).toHaveAttribute("data-state", "done");
@@ -123,7 +123,7 @@ describe("Gantt (SVAR)", () => {
     expect(screen.getByText("Belum selesai")).toBeInTheDocument();
   });
 
-  it("menandai posisi progres hanya pada tahap aktif", () => {
+  it("menandai posisi progres hanya pada stage aktif", () => {
     render(<Gantt items={ITEMS} />);
     expect(bar("step-2").querySelector('[data-slot="gantt-progress-pin"]')).not.toBeNull();
     expect(bar("step-1").querySelector('[data-slot="gantt-progress-pin"]')).toBeNull();
@@ -136,9 +136,9 @@ describe("Gantt (SVAR)", () => {
     expect(execSpy).toHaveBeenCalledWith("scroll-chart", expect.objectContaining({ date: expect.any(Date) }));
   });
 
-  it("menampilkan ikon tahap di grid dan kolom No/Item/Owner saat owner diisi", () => {
+  it("menampilkan ikon stage di grid dan kolom No/Item/Owner saat owner diisi", () => {
     const { unmount } = render(<Gantt items={ITEMS} />);
-    expect(screen.getByRole("columnheader", { name: "Tahap" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Stage" })).toBeInTheDocument();
     expect(document.querySelector('[data-slot="gantt-stage-icon"]')?.className).toContain(
       "bg-activity-assessment",
     );
@@ -151,7 +151,7 @@ describe("Gantt (SVAR)", () => {
     expect(screen.getAllByText("Telkom")).toHaveLength(3);
   });
 
-  it("membuka detail tahap saat batang diklik pada mode hanya-baca", () => {
+  it("membuka detail stage saat batang diklik pada mode hanya-baca", () => {
     render(<Gantt items={ITEMS} renderDetail={(item) => <p>Catatan untuk {item.label}</p>} />);
     fireEvent.click(bar("step-2").querySelector('[data-slot="gantt-range"]')!);
     expect(screen.getByRole("tooltip")).toHaveTextContent("Catatan untuk Langkah 2");

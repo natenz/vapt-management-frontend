@@ -57,8 +57,8 @@ const reports = new Map<number, ProjectReport>([
   [2, report(projects[1]!, [f(4, "Medium")])],
 ]);
 
-describe("antrean laporan", () => {
-  it("tahap writer lebih dulu (terlambat paling atas), lalu mulai tahap writer berikutnya", () => {
+describe("antrean report", () => {
+  it("stage writer lebih dulu (terlambat paling atas), lalu mulai stage writer berikutnya", () => {
     const rows = reportQueue(projects, details, reports, TODAY);
     expect(rows.map((r) => [r.project.project_id, r.myTurn, r.dateLabel, r.days])).toEqual([
       [3, true, "Tenggat Final Report Drafting", -1],
@@ -72,7 +72,7 @@ describe("antrean laporan", () => {
   });
 });
 
-describe("kelengkapan temuan", () => {
+describe("kelengkapan findings", () => {
   it("menandai bukti, CVSS, dan endpoint yang kosong", () => {
     expect(qualityIssues(f(9, "High", { evidences: null, cvss_score: null, endpoint: " " }))).toEqual([
       "evidence",
@@ -91,14 +91,14 @@ describe("kelengkapan temuan", () => {
 });
 
 describe("linimasa & volume", () => {
-  it("hanya tahap laporan di jendela 6 minggu", () => {
+  it("hanya stage report di jendela 6 minggu", () => {
     const t = writerTimeline(projects, details, 6, TODAY);
     expect(t.bars.map((b) => b.key)).toEqual(["3-Final Report Drafting", "1-Initial Report", "2-Initial Report", "4-Final Report Drafting"]);
     expect(t.bars[0]!.overdue).toBe(true);
     expect(t.bars[1]!.tag).toBe("7 hari kerja");
   });
 
-  it("volume temuan per severity, terbanyak dulu", () => {
+  it("volume findings per severity, terbanyak dulu", () => {
     const [top] = findingVolume(projects, reports);
     expect(top!.project.project_id).toBe(1);
     expect(top!.bySeverity).toMatchObject({ Critical: 1, High: 1, Low: 1, Medium: 0 });

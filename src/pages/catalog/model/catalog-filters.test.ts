@@ -40,7 +40,7 @@ const mockItems: CatalogVulna[] = [
 ];
 
 describe("catalog-filters", () => {
-  it("menyaring kerentanan berdasarkan pencarian teks", () => {
+  it("menyaring vulnerability berdasarkan pencarian teks", () => {
     const resSql = applyCatalogFilters(mockItems, { search: "sql", severities: [] });
     expect(resSql).toHaveLength(1);
     expect(resSql[0]?.title).toBe("SQL Injection");
@@ -49,7 +49,7 @@ describe("catalog-filters", () => {
     expect(resRec).toHaveLength(1);
   });
 
-  it("menyaring kerentanan berdasarkan severity", () => {
+  it("menyaring vulnerability berdasarkan severity", () => {
     const resSev = applyCatalogFilters(mockItems, { search: "", severities: ["Critical", "High"] });
     expect(resSev).toHaveLength(2);
   });

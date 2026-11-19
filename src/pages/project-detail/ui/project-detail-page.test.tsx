@@ -117,7 +117,7 @@ describe("ProjectDetailPage: alur 10 status (tanpa Planning)", () => {
     expect(screen.queryByText(/Serahkan ke Project Manager/)).not.toBeInTheDocument();
   });
 
-  it("PM: di Scoping mengelola aset, Mulai Assessment tertahan bila ada aset tanpa pentester", async () => {
+  it("PM: di Scoping mengelola asset, Mulai Assessment tertahan bila ada asset tanpa pentester", async () => {
     mount("project_manager", 3, {
       assets: [
         ...baseProjectDetail.assets,
@@ -126,11 +126,11 @@ describe("ProjectDetailPage: alur 10 status (tanpa Planning)", () => {
     });
     const start = await screen.findByRole("button", { name: /Mulai Assessment/ });
     expect(start).toBeDisabled();
-    expect(screen.getByText(/Aset "API Mobile" belum di-assign pentester/)).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "Aset" })).getByText("API Mobile")).toBeInTheDocument();
+    expect(screen.getByText(/Asset "API Mobile" belum di-assign pentester/)).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Asset" })).getByText("API Mobile")).toBeInTheDocument();
   });
 
-  it("PM: semua aset punya pentester, Mulai Assessment aktif", async () => {
+  it("PM: semua asset punya pentester, Mulai Assessment aktif", async () => {
     mount("project_manager", 3);
     expect(await screen.findByRole("button", { name: /Mulai Assessment/ })).toBeEnabled();
   });
@@ -147,6 +147,6 @@ describe("ProjectDetailPage", () => {
 
     expect(screen.getByText("Andi Saputra")).toBeInTheDocument();
     expect(screen.getByText("20 md")).toBeInTheDocument();
-    expect(screen.getByText(/1 aset · 1 orang/)).toBeInTheDocument();
+    expect(screen.getByText(/1 asset · 1 orang/)).toBeInTheDocument();
   });
 });

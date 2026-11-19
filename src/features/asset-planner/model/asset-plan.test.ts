@@ -34,7 +34,7 @@ const asset = (o: Partial<DraftAsset> = {}): DraftAsset => ({
   ...o,
 });
 
-describe("splitMandays (mandays aset dibagi jumlah pentester)", () => {
+describe("splitMandays (mandays asset dibagi jumlah pentester)", () => {
   it("contoh dari spesifikasi: 20 md / 2 pentester = 10 + 10", () => expect(splitMandays(20, 2)).toEqual([10, 10]));
   it("tidak habis dibagi: jumlahnya tetap persis total (20/3 = 6,67 + 6,67 + 6,66)", () => {
     expect(splitMandays(20, 3)).toEqual([6.67, 6.67, 6.66]);
@@ -76,12 +76,12 @@ describe("validate", () => {
   it("draft valid => tanpa pesan", () => {
     expect(validate([asset({ pentesters: [row(5)] })], range)).toEqual({});
   });
-  it("manual melebihi mandays aset ditolak dengan angka yang jelas; pas atau kurang diterima", () => {
+  it("manual melebihi mandays asset ditolak dengan angka yang jelas; pas atau kurang diterima", () => {
     const lebih = asset({
       mandays: "11",
       pentesters: [row(5, undefined, "2026-11-16", "2026-11-20", "5"), row(6, undefined, "2026-11-16", "2026-11-20", "7")],
     });
-    expect((validate([lebih], range)[lebih.key] ?? []).join(" ")).toContain("Total mandays pentester (12 md) melebihi mandays aset (11 md)");
+    expect((validate([lebih], range)[lebih.key] ?? []).join(" ")).toContain("Total mandays pentester (12 md) melebihi mandays asset (11 md)");
     const pas = asset({
       mandays: "11",
       pentesters: [row(5, undefined, "2026-11-16", "2026-11-20", "5"), row(6, undefined, "2026-11-16", "2026-11-20", "6")],
@@ -113,17 +113,17 @@ describe("validate", () => {
     });
     const msg = (validate([a], range)[a.key] ?? []).join(" | ");
     for (const need of [
-      "Nama aset wajib diisi",
-      "Mandays aset harus lebih dari 0",
+      "Nama asset wajib diisi",
+      "Mandays asset harus lebih dari 0",
       "IP address tidak valid",
-      "sudah ditugaskan di aset ini",
+      "sudah ditugaskan di asset ini",
       "di dalam rentang proyek",
       "pilih pentester",
       "sebelum tanggal mulai",
     ])
       expect(msg).toContain(need);
   });
-  it("aset yang akan dihapus tidak divalidasi", () => {
+  it("asset yang akan dihapus tidak divalidasi", () => {
     expect(validate([asset({ name: "", removed: true })], range)).toEqual({});
   });
 });
@@ -191,7 +191,7 @@ const saved = (id: number, md: number, pids: number[]): DraftAsset =>
   asset({
     key: `a${id}`,
     id,
-    name: `Aset ${id}`,
+    name: `Asset ${id}`,
     mandays: String(md),
     pentesters: pids.map((p, i) => ({
       key: `m${id}${i}`,
@@ -204,7 +204,7 @@ const saved = (id: number, md: number, pids: number[]): DraftAsset =>
   });
 
 describe("buildOps + runOps lawan aturan BE", () => {
-  it("alur utama spesifikasi: tambah aset mobile 20 md, assign 2 pentester => 10 + 10, hanya saat Simpan", async () => {
+  it("alur utama spesifikasi: tambah asset mobile 20 md, assign 2 pentester => 10 + 10, hanya saat Simpan", async () => {
     const be = fakeBE([]);
     const draft = asset({ pentesters: [row(5), row(6)] });
     expect(be.api.calls).toEqual([]);
@@ -219,7 +219,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect(buildOps(s, structuredClone(s))).toEqual([]);
   });
 
-  it("tambah pentester ke-3 pada aset 20 md: share dihitung ulang tanpa melanggar kuota", async () => {
+  it("tambah pentester ke-3 pada asset 20 md: share dihitung ulang tanpa melanggar kuota", async () => {
     const s = [saved(1, 20, [5, 6])];
     const be = fakeBE(s);
     const d = structuredClone(s);
@@ -240,7 +240,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect([...be.rows.values()].map((r) => r.md)).toEqual([20]);
   });
 
-  it("naikkan mandays aset: kuota naik dulu, baru share baris", async () => {
+  it("naikkan mandays asset: kuota naik dulu, baru share baris", async () => {
     const s = [saved(1, 10, [5, 6])];
     const be = fakeBE(s);
     const d = structuredClone(s);
@@ -251,7 +251,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect(be.sum(1)).toBe(30);
   });
 
-  it("turunkan mandays aset: share baris turun dulu, kuota paling akhir", async () => {
+  it("turunkan mandays asset: share baris turun dulu, kuota paling akhir", async () => {
     const s = [saved(1, 30, [5, 6])];
     const be = fakeBE(s);
     const d = structuredClone(s);
@@ -307,7 +307,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect([...be.rows.values()].map((r) => r.md)).toEqual([6, 5]);
   });
 
-  it("regresi dari tes BE asli: update aset tanpa IP tidak mengirim ip_address kosong", async () => {
+  it("regresi dari tes BE asli: update asset tanpa IP tidak mengirim ip_address kosong", async () => {
     const s = [saved(1, 10, [5])];
     const be = fakeBE(s);
     const d = structuredClone(s);
@@ -326,7 +326,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect(validate(d, range)).toEqual({});
   });
 
-  it("hapus aset tersimpan", async () => {
+  it("hapus asset tersimpan", async () => {
     const s = [saved(1, 20, [5]), saved(2, 8, [6])];
     const be = fakeBE(s);
     const d = structuredClone(s);
@@ -335,7 +335,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     expect([...be.assets.keys()]).toEqual([2]);
   });
 
-  it("300 skenario acak: tidak pernah ditolak BE dan jumlah share selalu = mandays aset", async () => {
+  it("300 skenario acak: tidak pernah ditolak BE dan jumlah share selalu = mandays asset", async () => {
     let seed = 7;
     const rnd = (n: number) => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
@@ -354,7 +354,7 @@ describe("buildOps + runOps lawan aturan BE", () => {
     }
   });
 
-  it("gagal di tengah: berhenti, melaporkan progres, dan id aset baru dicatat supaya tidak ganda", async () => {
+  it("gagal di tengah: berhenti, melaporkan progres, dan id asset baru dicatat supaya tidak ganda", async () => {
     const be = fakeBE([]);
     const draft = asset({ pentesters: [row(5), row(6)] });
     let calls = 0;
@@ -378,11 +378,11 @@ describe("mandays proyeksi Tech Lead", () => {
   it("proyeksi 0 = belum ditetapkan, tidak membatasi", () => {
     expect(budgetError([a("999")], 0)).toBeNull();
   });
-  it("total aset tepat di batas lolos, lebih sedikit saja ditolak", () => {
+  it("total asset tepat di batas lolos, lebih sedikit saja ditolak", () => {
     expect(budgetError([a("8"), a("12")], 20)).toBeNull();
     expect(budgetError([a("8"), a("12.5")], 20)).toContain("melebihi mandays proyeksi Tech Lead (20 md)");
   });
-  it("aset yang dihapus tidak dihitung; validate memasukkan pesannya", () => {
+  it("asset yang dihapus tidak dihitung; validate memasukkan pesannya", () => {
     expect(budgetError([a("8"), { ...a("50"), removed: true }], 20)).toBeNull();
     expect(validate([a("30")], range, [], 20).__budget__?.[0]).toContain("30 md");
     expect(validate([a("10")], range, [], 20).__budget__).toBeUndefined();

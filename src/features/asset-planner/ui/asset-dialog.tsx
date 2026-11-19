@@ -78,9 +78,9 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
     <Dialog open onOpenChange={(o) => (!o ? onClose() : undefined)}>
       <DialogContent size="lg" className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isNew ? "Tambah aset" : `Ubah aset ${a.name || ""}`.trim()}</DialogTitle>
+          <DialogTitle>{isNew ? "Tambah asset" : `Ubah asset ${a.name || ""}`.trim()}</DialogTitle>
           <DialogDescription>
-            Isi data aset beserta mandays-nya.
+            Isi data asset beserta mandays-nya.
             {canAssign ? " Mandays pentester dibagi rata otomatis; isi manual bila perlu." : ""}
           </DialogDescription>
         </DialogHeader>
@@ -104,12 +104,12 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
 
           <div className="grid gap-3 sm:grid-cols-12">
             <label className="flex flex-col gap-1 sm:col-span-6">
-              <span className="text-caption text-ink-muted">Nama aset</span>
-              <Input aria-label="Nama aset" value={a.name} placeholder="Mobile App" onChange={(e) => patch({ name: e.target.value })} className="h-9" />
+              <span className="text-caption text-ink-muted">Nama asset</span>
+              <Input aria-label="Nama asset" value={a.name} placeholder="Mobile App" onChange={(e) => patch({ name: e.target.value })} className="h-9" />
             </label>
             <label className="flex flex-col gap-1 sm:col-span-3">
               <span className="text-caption text-ink-muted">Tipe</span>
-              <select aria-label="Tipe aset" className={sel} value={a.type} onChange={(e) => patch({ type: e.target.value })}>
+              <select aria-label="Tipe asset" className={sel} value={a.type} onChange={(e) => patch({ type: e.target.value })}>
                 {ASSET_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
@@ -120,7 +120,7 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
             <label className="flex flex-col gap-1 sm:col-span-3">
               <span className="text-caption text-ink-muted">Mandays</span>
               <Input
-                aria-label="Mandays aset"
+                aria-label="Mandays asset"
                 type="number"
                 min={0.5}
                 step="0.5"
@@ -148,7 +148,7 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
                   {a.pentesters.length === 0 ? (
                     "Belum ada pentester"
                   ) : !(md > 0) ? (
-                    "Isi mandays aset untuk menghitung alokasi"
+                    "Isi mandays asset untuk menghitung alokasi"
                   ) : (
                     <span className={cn(alloc.remaining < 0 && "font-medium text-error")}>
                       {`Dialokasikan ${fmt(md - alloc.remaining)} dari ${fmt(md)} md`}
@@ -204,7 +204,7 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
                     <label className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-caption font-medium text-ink">Pentester {i + 1}</span>
                       <select
-                        aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
+                        aria-label={`Pentester ${i + 1} untuk ${a.name || "asset baru"}`}
                         className={sel}
                         value={r.pentesterId ?? ""}
                         onChange={(e) =>

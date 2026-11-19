@@ -70,11 +70,11 @@ describe("Button asChild", () => {
   it("merender sebagai elemen anak, bukan <button>", () => {
     render(
       <Button asChild>
-        <a href="/findings">Lihat temuan</a>
+        <a href="/findings">Lihat findings</a>
       </Button>,
     );
 
-    const link = screen.getByRole("link", { name: "Lihat temuan" });
+    const link = screen.getByRole("link", { name: "Lihat findings" });
     expect(link).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
@@ -82,11 +82,11 @@ describe("Button asChild", () => {
   it("menggabungkan ikon ke dalam elemen anak tanpa melempar", () => {
     const { container } = render(
       <Button asChild trailingIcon={<RefreshCw data-testid="trailing-icon" />}>
-        <a href="/findings">Lihat temuan</a>
+        <a href="/findings">Lihat findings</a>
       </Button>,
     );
 
-    const link = screen.getByRole("link", { name: /Lihat temuan/ });
+    const link = screen.getByRole("link", { name: /Lihat findings/ });
     // Ikon harus berada DI DALAM tautan, bukan sebagai saudara di luarnya.
     expect(link).toContainElement(screen.getByTestId("trailing-icon"));
     expect(container.querySelectorAll("a")).toHaveLength(1);
@@ -99,11 +99,11 @@ describe("Button asChild", () => {
         leadingIcon={<RefreshCw data-testid="lead" />}
         trailingIcon={<RefreshCw data-testid="trail" />}
       >
-        <a href="/findings">Lihat temuan</a>
+        <a href="/findings">Lihat findings</a>
       </Button>,
     );
 
-    const link = screen.getByRole("link", { name: /Lihat temuan/ });
+    const link = screen.getByRole("link", { name: /Lihat findings/ });
     expect(link).toContainElement(screen.getByTestId("lead"));
     expect(link).toContainElement(screen.getByTestId("trail"));
   });

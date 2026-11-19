@@ -60,7 +60,7 @@ const reports = new Map<number, ProjectReport>([
 ]);
 
 describe("perlu tindakan PM", () => {
-  it("Scoping/Remediasi/Retesting dulu; tanggal = akhir tahap berjalan", () => {
+  it("Scoping/Remediasi/Retesting dulu; tanggal = akhir stage berjalan", () => {
     const rows = pmQueue(projects, details, reports, TODAY);
     expect(rows.map((r) => [r.project.project_id, r.myTurn, r.dateLabel, r.days])).toEqual([
       [4, true, "Tenggat Retesting", -1],

@@ -38,8 +38,8 @@ export function CatalogCard({
     <BentoCard
       colSpan={4}
       role="region"
-      aria-label="Katalog Kerentanan"
-      title="Katalog Kerentanan"
+      aria-label="Vulnerability Catalog"
+      title="Vulnerability Catalog"
       description={
         stats.approvalRate === null
           ? "Belum ada pengajuan yang ditinjau."
@@ -48,12 +48,12 @@ export function CatalogCard({
       icon={<BookCheck />}
       action={
         <Button asChild variant="link" trailingIcon={<ArrowRight />} className="h-auto p-0 text-xs">
-          <Link to={stats.pending > 0 ? "/catalog?status=pending" : "/catalog"}>Katalog</Link>
+          <Link to={stats.pending > 0 ? "/catalog?status=pending" : "/catalog"}>Catalog</Link>
         </Button>
       }
     >
       {error ? (
-        <CardError title="Gagal memuat katalog" error={error} />
+        <CardError title="Gagal memuat catalog" error={error} />
       ) : isLoading ? (
         <CardSkeleton rows={4} />
       ) : (
@@ -111,7 +111,7 @@ export function ActivityCard({
       role="region"
       aria-label="Aktivitas Terbaru"
       title="Aktivitas Terbaru"
-      description="Perpindahan tahap proyek paling baru."
+      description="Perpindahan stage proyek paling baru."
       icon={<Activity />}
     >
       {isLoading ? (
@@ -133,7 +133,7 @@ export function ActivityCard({
                 >
                   {a.project.project_name}
                 </Link>
-                <span className="text-caption text-ink-muted">masuk tahap</span>
+                <span className="text-caption text-ink-muted">masuk stage</span>
                 <ProjectStatusBadge name={a.status} />
               </span>
               <time dateTime={a.at} className="text-caption text-ink-muted">
@@ -167,15 +167,15 @@ const SHORTCUTS: { to: string; title: string; text: string; icon: ReactNode; ton
   },
   {
     to: "/catalog",
-    title: "Katalog Kerentanan",
+    title: "Vulnerability Catalog",
     text: "Standarisasi celah & ACC pengajuan.",
     icon: <BookCheck />,
     tone: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
   },
   {
     to: "/reports",
-    title: "Koreksi & Laporan",
-    text: "Pantau laporan proyek yang berjalan.",
+    title: "Koreksi & Report",
+    text: "Pantau report proyek yang berjalan.",
     icon: <ClipboardCheck />,
     tone: "bg-indigo-50 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300",
   },
@@ -196,7 +196,7 @@ export function ShortcutsCard() {
           <Link
             key={s.to}
             to={s.to}
-            className="group flex items-start gap-3 rounded-md border border-border p-3 transition-colors hover:border-brand/40 hover:bg-surface-subtle focus-ring"
+            className="group flex items-start gap-3 rounded-md border border-border p-3 transition-colors hover:bg-surface-subtle focus-ring"
           >
             <span
               aria-hidden

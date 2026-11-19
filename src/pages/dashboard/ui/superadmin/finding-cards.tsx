@@ -59,9 +59,9 @@ export function SeverityCard({
     <BentoCard
       colSpan={4}
       role="region"
-      aria-label="Severity Temuan Terbuka"
-      title="Severity Temuan Terbuka"
-      description="Seluruh proyek, temuan yang masih Open."
+      aria-label="Severity Findings Terbuka"
+      title="Severity Findings Terbuka"
+      description="Seluruh proyek, findings yang masih Open."
       icon={<ShieldAlert />}
     >
       {isLoading ? (
@@ -72,7 +72,7 @@ export function SeverityCard({
             segments={
               hasOpen
                 ? segments
-                : [{ label: "Tidak ada temuan terbuka", value: 1, color: "var(--color-surface-subtle)" }]
+                : [{ label: "Tidak ada findings terbuka", value: 1, color: "var(--color-surface-subtle)" }]
             }
             centerValue={totals.open}
             centerLabel="terbuka"
@@ -100,25 +100,25 @@ export function FindingStatusCard({
     <BentoCard
       colSpan={4}
       role="region"
-      aria-label="Status Penanganan Temuan"
+      aria-label="Status Penanganan Findings"
       title="Status Penanganan"
-      description="Berapa temuan yang sudah Closed."
+      description="Berapa findings yang sudah Closed."
       icon={<Wrench />}
       action={
         <Link to="/reports" className="rounded-xs text-xs text-brand focus-ring hover:underline">
-          Laporan
+          Report
         </Link>
       }
     >
       {isLoading ? (
         <CardSkeleton rows={4} />
       ) : totals.total === 0 ? (
-        <CardEmpty>Belum ada temuan tercatat.</CardEmpty>
+        <CardEmpty>Belum ada findings tercatat.</CardEmpty>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-title-lg text-ink tabular-nums">{closedRate}%</span>
-            <span className="text-xs text-ink-muted">dari {totals.total} temuan sudah Closed</span>
+            <span className="text-xs text-ink-muted">dari {totals.total} findings sudah Closed</span>
           </div>
           <StackedBarChart
             items={FINDING_STATUS_ORDER.map((s) => ({
@@ -161,13 +161,13 @@ export function RiskiestProjectsCard({
       role="region"
       aria-label="Proyek Paling Berisiko"
       title="Proyek Paling Berisiko"
-      description="Urut berdasarkan temuan Critical lalu High yang belum ditutup."
+      description="Urut berdasarkan findings Critical lalu High yang belum ditutup."
       icon={<ShieldAlert />}
     >
       {isLoading ? (
         <CardSkeleton rows={5} />
       ) : rows.length === 0 ? (
-        <CardEmpty>Tidak ada proyek dengan temuan terbuka.</CardEmpty>
+        <CardEmpty>Tidak ada proyek dengan findings terbuka.</CardEmpty>
       ) : (
         <div className="overflow-x-auto">
           <Table boxed>
@@ -177,7 +177,7 @@ export function RiskiestProjectsCard({
                   <ColumnLabel icon={<FolderKanban />}>Proyek</ColumnLabel>
                 </TableHead>
                 <TableHead>
-                  <ColumnLabel icon={<CircleDot />}>Tahap</ColumnLabel>
+                  <ColumnLabel icon={<CircleDot />}>Stage</ColumnLabel>
                 </TableHead>
                 <TableHead>
                   <ColumnLabel icon={<ShieldAlert />}>Terberat</ColumnLabel>

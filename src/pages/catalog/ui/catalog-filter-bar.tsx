@@ -22,7 +22,7 @@ export function CatalogFilterBar({
   filters,
   onChange,
   severityOptions,
-  noun = "kerentanan",
+  noun = "vulnerabilities",
   resultCount,
   totalCount,
 }: CatalogFilterBarProps) {
@@ -32,13 +32,13 @@ export function CatalogFilterBar({
   return (
     <div
       role="search"
-      aria-label="Filter katalog kerentanan"
+      aria-label="Filter vulnerability catalog"
       className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
     >
       {/* Kiri: pencarian + total data */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <SearchInput
-          aria-label="Cari kerentanan"
+          aria-label="Cari vulnerability"
           placeholder="Cari judul atau rekomendasi..."
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
