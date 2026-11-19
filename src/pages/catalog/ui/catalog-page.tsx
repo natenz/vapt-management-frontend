@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   BookCheck,
   Check,
+  CheckCircle2,
   Clock,
   FileText,
   Plus,
@@ -13,18 +14,16 @@ import {
   SlidersHorizontal,
   User as UserIcon,
   X,
-  XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
 import { z } from "zod";
 import { createCatalog, listCatalog, reviewCatalog, type CatalogVulna } from "@/entities/catalog";
-import { SeverityChip, SEVERITIES } from "@/entities/finding";
+import { SeverityChip, SEVERITIES, severityRank } from "@/entities/finding";
 import { useSession } from "@/entities/session";
 import { toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
-import { StatusChip } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { DataTable } from "@/shared/ui/data-table";
 import {
@@ -46,15 +45,12 @@ import {
   getSeverityOptions,
   hasAnyFilter,
   parseCatalogFilters,
-  parseCatalogView,
   parsePageSize,
   writeCatalogFilters,
-  writeCatalogView,
   writePageSize,
   type CatalogFilters,
-  type CatalogView,
 } from "../model/catalog-filters";
-import { CatalogFilterBar, type CatalogViewOption } from "./catalog-filter-bar";
+import { CatalogFilterBar } from "./catalog-filter-bar";
 
 const baseColumns: ColumnDef<CatalogVulna>[] = [
   {
@@ -75,6 +71,11 @@ const baseColumns: ColumnDef<CatalogVulna>[] = [
         <span>Severity</span>
       </span>
     ),
+    sortingFn: (rowA, rowB) => {
+      const rankA = severityRank(toSeverityKey(rowA.original.severity));
+      const rankB = severityRank(toSeverityKey(rowB.original.severity));
+      return rankA - rankB;
+    },
     cell: ({ row }) => <SeverityChip severity={toSeverityKey(row.original.severity)} />,
   },
   {
@@ -139,12 +140,6 @@ export function CatalogPage() {
   const pending = useQuery({
     queryKey: ["catalog", "pending"],
     queryFn: () => listCatalog({ status: "pending" }),
-    enabled: canSubmit,
-  });
-  const rejected = useQuery({
-    queryKey: ["catalog", "rejected"],
-    queryFn: () => listCatalog({ status: "rejected" }),
-    enabled: canPropose,
   });
 
   const {
@@ -182,13 +177,6 @@ export function CatalogPage() {
     [approved.data],
   );
   const pendingRows = useMemo(() => pending.data ?? [], [pending.data]);
-  const mySubmissions = useMemo(
-    () =>
-      [...pendingRows, ...(rejected.data ?? [])].filter(
-        (c) => c.created_by == null || user?.sys_user_id == null || c.created_by === user.sys_user_id,
-      ),
-    [pendingRows, rejected.data, user?.sys_user_id],
-  );
 
   const filteredApproved = useMemo(
     () => applyCatalogFilters(approvedRows, filters),
@@ -198,43 +186,17 @@ export function CatalogPage() {
     () => applyCatalogFilters(pendingRows, filters),
     [pendingRows, filters],
   );
-  const filteredSubmissions = useMemo(
-    () => applyCatalogFilters(mySubmissions, filters),
-    [mySubmissions, filters],
-  );
 
   const isFiltered = hasAnyFilter(filters);
 
-  // Pilihan status mengikuti peran: approver meninjau antrean, pentester memantau pengajuannya
-  const viewOptions = useMemo<CatalogViewOption[]>(() => {
-    const approvedOpt: CatalogViewOption = {
-      value: "approved",
-      label: "Disetujui",
-      count: filteredApproved.length,
-    };
-    if (canApprove)
-      return [approvedOpt, { value: "pending", label: "Menunggu ACC", count: filteredPending.length }];
-    if (canPropose)
-      return [
-        approvedOpt,
-        { value: "submissions", label: "Pengajuan saya", count: filteredSubmissions.length },
-      ];
-    return [approvedOpt];
-  }, [canApprove, canPropose, filteredApproved.length, filteredPending.length, filteredSubmissions.length]);
-
-  const view = parseCatalogView(
-    searchParams,
-    viewOptions.map((o) => o.value),
+  // Opsi severity dihitung dari keseluruhan data katalog (menunggu ACC & disetujui)
+  const allRows = useMemo(
+    () => [...pendingRows, ...approvedRows],
+    [pendingRows, approvedRows],
   );
-  const setView = (next: CatalogView) =>
-    setSearchParams((prev) => writeCatalogView(next, prev), { replace: true });
+  const severityOptions = useMemo(() => getSeverityOptions(allRows), [allRows]);
 
-  // Opsi severity dihitung dari data pada status aktif agar jumlahnya sesuai tabel
-  const viewSource =
-    view === "pending" ? pendingRows : view === "submissions" ? mySubmissions : approvedRows;
-  const severityOptions = useMemo(() => getSeverityOptions(viewSource), [viewSource]);
-
-  const reviewColumns = useMemo<ColumnDef<CatalogVulna>[]>(
+  const pendingColumns = useMemo<ColumnDef<CatalogVulna>[]>(
     () => [
       ...baseColumns,
       {
@@ -251,6 +213,13 @@ export function CatalogPage() {
           </span>
         ),
       },
+    ],
+    [],
+  );
+
+  const reviewColumns = useMemo<ColumnDef<CatalogVulna>[]>(
+    () => [
+      ...pendingColumns,
       {
         id: "actions",
         header: () => (
@@ -284,74 +253,10 @@ export function CatalogPage() {
         ),
       },
     ],
-    [review],
+    [pendingColumns, review],
   );
 
-  const submissionColumns = useMemo<ColumnDef<CatalogVulna>[]>(
-    () => [
-      ...baseColumns,
-      {
-        id: "status",
-        header: () => (
-          <span className="inline-flex items-center gap-1.5 font-normal normal-case">
-            <Clock className="size-3.5 shrink-0 text-ink-muted" aria-hidden />
-            <span>Status</span>
-          </span>
-        ),
-        cell: ({ row }) =>
-          row.original.status === "rejected" ? (
-            <StatusChip tone="error" icon={<XCircle />}>
-              Ditolak
-            </StatusChip>
-          ) : (
-            <StatusChip tone="warning" icon={<Clock />}>
-              Menunggu ACC
-            </StatusChip>
-          ),
-      },
-    ],
-    [],
-  );
-
-  const error = approved.error ?? pending.error ?? rejected.error;
-
-  // Konfigurasi tabel per status yang dipilih di dropdown "Status"
-  const table =
-    view === "pending"
-      ? {
-          columns: reviewColumns,
-          data: filteredPending,
-          total: pendingRows.length,
-          noun: "pengajuan",
-          caption: "Pengajuan katalog menunggu ACC",
-          isLoading: pending.isLoading,
-          filteredEmptyTitle: "Tidak ada pengajuan yang cocok",
-          emptyTitle: "Tidak ada pengajuan menunggu ACC",
-          emptyDescription: "Pengajuan baru dari pentester akan muncul di sini untuk ditinjau.",
-        }
-      : view === "submissions"
-        ? {
-            columns: submissionColumns,
-            data: filteredSubmissions,
-            total: mySubmissions.length,
-            noun: "pengajuan",
-            caption: "Status pengajuan katalog saya",
-            isLoading: pending.isLoading || rejected.isLoading,
-            filteredEmptyTitle: "Tidak ada pengajuan yang cocok",
-            emptyTitle: "Belum ada riwayat pengajuan",
-            emptyDescription: "Kerentanan yang Anda ajukan akan muncul di sini.",
-          }
-        : {
-            columns: baseColumns,
-            data: filteredApproved,
-            total: approvedRows.length,
-            noun: "kerentanan",
-            caption: "Katalog kerentanan disetujui",
-            isLoading: approved.isLoading,
-            filteredEmptyTitle: "Tidak ada kerentanan yang cocok",
-            emptyTitle: "Belum ada kerentanan disetujui",
-            emptyDescription: "Kerentanan yang telah disetujui akan muncul di sini.",
-          };
+  const error = approved.error ?? pending.error;
 
   return (
     <div className="flex flex-col gap-6">
@@ -373,52 +278,137 @@ export function CatalogPage() {
         </Alert>
       ) : null}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <CatalogFilterBar
           filters={filters}
           onChange={setFilters}
           severityOptions={severityOptions}
-          viewOptions={viewOptions}
-          view={view}
-          onViewChange={setView}
-          noun={table.noun}
-          resultCount={table.data.length}
-          totalCount={table.total}
+          noun="kerentanan"
+          resultCount={filteredPending.length + filteredApproved.length}
+          totalCount={allRows.length}
         />
 
-        <DataTable
-          // Remount saat status berganti agar urutan & halaman tidak terbawa
-          key={view}
-          columns={table.columns}
-          data={table.data}
-          noun={table.noun}
-          caption={table.caption}
-          isLoading={table.isLoading}
-          pageSize={pageSize}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          onPageSizeChange={setPageSize}
-          getRowId={(c) => String(c.vulna_id)}
-          emptyState={
-            isFiltered ? (
-              <EmptyState
-                icon={<BookCheck />}
-                title={table.filteredEmptyTitle}
-                description="Coba ubah kata kunci atau kurangi filter severity."
-                action={
-                  <Button variant="quiet" onClick={() => setFilters(EMPTY_CATALOG_FILTERS)}>
-                    Reset filter
-                  </Button>
-                }
-              />
-            ) : (
-              <EmptyState
-                icon={<BookCheck />}
-                title={table.emptyTitle}
-                description={table.emptyDescription}
-              />
-            )
-          }
-        />
+        {/* Tabel 1 (Atas): Menunjukkan Menunggu ACC */}
+        <section
+          id="pending"
+          aria-labelledby="catalog-pending-heading"
+          className="flex flex-col gap-3 rounded-md border border-border bg-surface p-5 shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-8 place-items-center rounded-sm bg-warning-bg text-warning" aria-hidden="true">
+                <Clock className="size-4" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 id="catalog-pending-heading" className="text-title-sm font-semibold text-ink">
+                    Menunggu ACC
+                  </h2>
+                  <span className="rounded-full bg-warning-bg px-2 py-0.5 text-caption font-medium text-warning tabular-nums">
+                    {filteredPending.length}
+                  </span>
+                </div>
+                <p className="text-caption text-ink-muted">
+                  Daftar usulan kerentanan yang diajukan pentester dan menunggu peninjauan Tech Lead.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DataTable
+            key="table-pending"
+            columns={canApprove ? reviewColumns : pendingColumns}
+            data={filteredPending}
+            noun="pengajuan"
+            caption="Pengajuan katalog menunggu ACC"
+            isLoading={pending.isLoading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={setPageSize}
+            getRowId={(c) => String(c.vulna_id)}
+            emptyState={
+              isFiltered ? (
+                <EmptyState
+                  icon={<BookCheck />}
+                  title="Tidak ada pengajuan yang cocok"
+                  description="Coba ubah kata kunci atau kurangi filter severity."
+                  action={
+                    <Button variant="quiet" onClick={() => setFilters(EMPTY_CATALOG_FILTERS)}>
+                      Reset filter
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={<BookCheck />}
+                  title="Tidak ada pengajuan menunggu ACC"
+                  description="Pengajuan baru dari pentester akan muncul di sini untuk ditinjau."
+                />
+              )
+            }
+          />
+        </section>
+
+        {/* Tabel 2 (Bawah): Katalog Kerentanan Disetujui */}
+        <section
+          id="approved"
+          aria-labelledby="catalog-approved-heading"
+          className="flex flex-col gap-3 rounded-md border border-border bg-surface p-5 shadow-xs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-8 place-items-center rounded-sm bg-success-bg text-success" aria-hidden="true">
+                <CheckCircle2 className="size-4" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 id="catalog-approved-heading" className="text-title-sm font-semibold text-ink">
+                    Katalog Kerentanan Disetujui
+                  </h2>
+                  <span className="rounded-full bg-success-bg px-2 py-0.5 text-caption font-medium text-success tabular-nums">
+                    {filteredApproved.length}
+                  </span>
+                </div>
+                <p className="text-caption text-ink-muted">
+                  Daftar standar kerentanan yang siap digunakan oleh tim saat mencatat temuan pengujian.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DataTable
+            key="table-approved"
+            columns={baseColumns}
+            data={filteredApproved}
+            noun="kerentanan"
+            caption="Katalog kerentanan disetujui"
+            isLoading={approved.isLoading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={setPageSize}
+            getRowId={(c) => String(c.vulna_id)}
+            emptyState={
+              isFiltered ? (
+                <EmptyState
+                  icon={<BookCheck />}
+                  title="Tidak ada kerentanan yang cocok"
+                  description="Coba ubah kata kunci atau kurangi filter severity."
+                  action={
+                    <Button variant="quiet" onClick={() => setFilters(EMPTY_CATALOG_FILTERS)}>
+                      Reset filter
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={<BookCheck />}
+                  title="Belum ada kerentanan disetujui"
+                  description="Kerentanan yang telah disetujui akan muncul di sini."
+                />
+              )
+            }
+          />
+        </section>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

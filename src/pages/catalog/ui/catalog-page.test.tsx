@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -74,12 +74,6 @@ async function mount(role: "pentester" | "tech_lead") {
   );
 }
 
-/** Pilih status lewat dropdown "Status" (desainnya sama dengan filter Severity). */
-async function pickStatus(label: RegExp) {
-  fireEvent.keyDown(screen.getByRole("button", { name: /^Status: / }), { key: "Enter" });
-  fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: label }));
-}
-
 beforeEach(() => {
   Object.values(api).forEach((f) => f.mockReset());
   api.listCatalog.mockImplementation(async (q: { status?: string } = {}) => {
@@ -91,42 +85,55 @@ beforeEach(() => {
   api.reviewCatalog.mockResolvedValue({ ...pendingItem, status: "approved" });
 });
 
-describe("CatalogPage approval", () => {
-  it("pentester melihat tombol Ajukan ke katalog dan status Pengajuan saya (Menunggu ACC)", async () => {
+describe("CatalogPage 2 tabel (Menunggu ACC & Disetujui)", () => {
+  it("menampilkan 2 tabel bersamaan: Menunggu ACC di atas dan Disetujui di bawah tanpa sort status", async () => {
     await mount("pentester");
-    expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
-    expect(screen.queryByText("SSRF Internal")).toBeNull();
 
+    // Kedua judul tabel ada
+    expect(await screen.findByRole("heading", { name: "Menunggu ACC" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Katalog Kerentanan Disetujui" })).toBeInTheDocument();
+
+    // Data pada kedua tabel tampil bersamaan
+    expect(screen.getByText("SSRF Internal")).toBeInTheDocument();
+    expect(screen.getByText("SQL Injection")).toBeInTheDocument();
+
+    // Tombol ajukan ada untuk pentester
     expect(screen.getByRole("button", { name: /Ajukan ke katalog/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Status: Disetujui" })).toBeInTheDocument();
-    await pickStatus(/^Pengajuan saya/);
-    expect(await screen.findByText("SSRF Internal")).toBeInTheDocument();
-    expect(screen.getByText("Menunggu ACC")).toBeInTheDocument();
+
+    // Filter status dihilangkan, tetapi filter severity tetap ada
+    expect(screen.queryByRole("button", { name: /^Status: / })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filter Severity" })).toBeInTheDocument();
+
+    // Kedua tabel mempertahankan sorting kolom Severity
+    expect(screen.getAllByRole("button", { name: /^Severity/ })).toHaveLength(2);
   });
 
-  it("tech lead dapat memilih status Menunggu ACC dan menekan ACC", async () => {
+  it("tech lead melihat tabel Menunggu ACC dan dapat menekan ACC untuk menyetujui usulan", async () => {
     const u = userEvent.setup();
     await mount("tech_lead");
-    expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
 
-    await pickStatus(/^Menunggu ACC/);
-    expect(screen.getByRole("button", { name: "Status: Menunggu ACC" })).toBeInTheDocument();
-    expect(await screen.findByText("SSRF Internal")).toBeInTheDocument();
-    expect(screen.getByText("Budi Santoso")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Menunggu ACC" })).toBeInTheDocument();
+    const pendingSection = screen.getByRole("region", { name: "Menunggu ACC" });
+    expect(within(pendingSection).getByText("SSRF Internal")).toBeInTheDocument();
+    expect(within(pendingSection).getByText("Budi Santoso")).toBeInTheDocument();
 
-    await u.click(screen.getByRole("button", { name: "ACC" }));
+    const accBtn = within(pendingSection).getByRole("button", { name: "ACC" });
+    await u.click(accBtn);
     await waitFor(() => expect(api.reviewCatalog).toHaveBeenCalledWith(2, "approved"));
   });
 
-  it("menyaring kerentanan pada input pencarian", async () => {
+  it("menyaring kerentanan pada input pencarian di kedua tabel", async () => {
     const u = userEvent.setup();
-    await mount("pentester");
+    await mount("tech_lead");
     expect(await screen.findByText("SQL Injection")).toBeInTheDocument();
+    expect(screen.getByText("SSRF Internal")).toBeInTheDocument();
 
     const searchInput = screen.getByRole("searchbox", { name: "Cari kerentanan" });
     await u.type(searchInput, "nonexistent");
 
     expect(screen.queryByText("SQL Injection")).not.toBeInTheDocument();
+    expect(screen.queryByText("SSRF Internal")).not.toBeInTheDocument();
+    expect(screen.getByText("Tidak ada pengajuan yang cocok")).toBeInTheDocument();
     expect(screen.getByText("Tidak ada kerentanan yang cocok")).toBeInTheDocument();
   });
 });
