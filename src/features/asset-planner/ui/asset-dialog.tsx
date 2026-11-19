@@ -199,87 +199,62 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, c
                 return (
                   <div
                     key={r.key}
-                    className="flex flex-col gap-3 rounded-md border border-border bg-surface p-3.5"
+                    className="flex items-center gap-2.5 rounded-md border border-border bg-surface p-3"
                   >
-                    {/* Baris 1: Bar pemilihan pentester (satu baris sendiri) + tombol hapus */}
-                    <div className="flex items-center gap-2">
-                      <label className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className="text-caption font-medium text-ink">Pentester {i + 1}</span>
-                        <select
-                          aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
-                          className={sel}
-                          value={r.pentesterId ?? ""}
-                          onChange={(e) =>
-                            patchRow(r.key, {
-                              pentesterId: e.target.value ? Number(e.target.value) : null,
-                            })
-                          }
-                        >
-                          {r.pentesterId ? (
-                            <option value={r.pentesterId}>{pName}</option>
-                          ) : (
-                            <option value="">Pilih pentester</option>
-                          )}
-                          {availablePentesters.map((u) => (
-                            <option key={u.sys_user_id} value={u.sys_user_id}>
-                              {u.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <div className="flex flex-col justify-end pt-5">
-                        <Button
-                          type="button"
-                          variant="quiet"
-                          className="size-9 text-ink-muted hover:text-error"
-                          aria-label={`Hapus pentester ${i + 1}`}
-                          onClick={() =>
-                            patch({
-                              pentesters: a.pentesters.filter((x) => x.key !== r.key),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <label className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="text-caption font-medium text-ink">Pentester {i + 1}</span>
+                      <select
+                        aria-label={`Pentester ${i + 1} untuk ${a.name || "aset baru"}`}
+                        className={sel}
+                        value={r.pentesterId ?? ""}
+                        onChange={(e) =>
+                          patchRow(r.key, {
+                            pentesterId: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
+                      >
+                        {r.pentesterId ? (
+                          <option value={r.pentesterId}>{pName}</option>
+                        ) : (
+                          <option value="">Pilih pentester</option>
+                        )}
+                        {availablePentesters.map((u) => (
+                          <option key={u.sys_user_id} value={u.sys_user_id}>
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
 
-                    {/* Baris 2: Tanggal mulai, Tanggal selesai, dan Mandays */}
-                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-caption text-ink-muted">Tanggal mulai</span>
-                        <Input
-                          aria-label={`Mulai pentester ${i + 1}`}
-                          type="date"
-                          value={r.start}
-                          onChange={(e) => patchRow(r.key, { start: e.target.value })}
-                          className="h-9"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className="text-caption text-ink-muted">Tanggal selesai</span>
-                        <Input
-                          aria-label={`Selesai pentester ${i + 1}`}
-                          type="date"
-                          value={r.end}
-                          onChange={(e) => patchRow(r.key, { end: e.target.value })}
-                          className="h-9"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className="text-caption text-ink-muted">Mandays</span>
-                        <Input
-                          aria-label={`Mandays pentester ${i + 1}`}
-                          type="number"
-                          min={0.5}
-                          step="0.5"
-                          value={r.md}
-                          placeholder={md > 0 ? fmt(alloc.shares[i]!) : "otomatis"}
-                          title="Kosongkan untuk dibagi otomatis"
-                          onChange={(e) => patchRow(r.key, { md: e.target.value })}
-                          className="h-9 text-right"
-                        />
-                      </label>
+                    <label className="flex w-32 shrink-0 flex-col gap-1">
+                      <span className="text-caption text-ink-muted">Mandays</span>
+                      <Input
+                        aria-label={`Mandays pentester ${i + 1}`}
+                        type="number"
+                        min={0.5}
+                        step="0.5"
+                        value={r.md}
+                        placeholder={md > 0 ? fmt(alloc.shares[i]!) : "otomatis"}
+                        title="Kosongkan untuk dibagi otomatis"
+                        onChange={(e) => patchRow(r.key, { md: e.target.value })}
+                        className="h-9 text-right"
+                      />
+                    </label>
+
+                    <div className="flex flex-col justify-end pt-5">
+                      <Button
+                        type="button"
+                        variant="quiet"
+                        className="size-9 shrink-0 text-ink-muted hover:text-error"
+                        aria-label={`Hapus pentester ${i + 1}`}
+                        onClick={() =>
+                          patch({
+                            pentesters: a.pentesters.filter((x) => x.key !== r.key),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </div>
                 );
