@@ -86,6 +86,7 @@ describe("DashboardPage", () => {
   it("pentester: proyek berjalan milik akun, timeline proyek, tanpa Prioritas Kerja", async () => {
     await mount("pentester");
     expect(await screen.findByRole("region", { name: "Ringkasan Kerja Pentester" })).toBeInTheDocument();
+    expect(screen.getByText("Findings - Status Open")).toBeInTheDocument();
     const running = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
     expect(await within(running).findByText("Proyek Uji")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Prioritas Kerja" })).not.toBeInTheDocument();
