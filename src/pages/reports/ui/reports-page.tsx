@@ -14,6 +14,7 @@ import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
 import { getReport, SeverityBadge, SEVERITIES, type ProjectReport } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge, statusBetween, type Project } from "@/entities/project";
+import { useSession } from "@/entities/session";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -39,6 +40,7 @@ import { ReportsFilterBar } from "./reports-filter-bar";
 export function ReportsIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const isProjectManager = useSession((state) => state.user?.role?.role_name === "project_manager");
   const filters = useMemo(() => parseReportFilters(searchParams), [searchParams]);
   const pageSize = parsePageSize(searchParams);
 
@@ -141,8 +143,8 @@ export function ReportsIndexPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Koreksi & Report"
-        description="Proyek yang sudah masuk stage Initial Report atau sesudahnya."
+        title={isProjectManager ? "Reports" : "Koreksi & Report"}
+        description={isProjectManager ? undefined : "Proyek yang sudah masuk stage Initial Report atau sesudahnya."}
       />
       {error ? <Alert tone="error" title="Gagal memuat">{error.message}</Alert> : null}
 

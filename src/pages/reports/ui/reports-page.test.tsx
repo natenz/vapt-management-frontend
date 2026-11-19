@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ProjectReport } from "@/entities/finding";
+import { useSession } from "@/entities/session";
 
 const report = {
   generated_at: "2026-11-09T00:00:00Z",
@@ -79,6 +80,28 @@ describe("ReportPage", () => {
 });
 
 describe("ReportsIndexPage", () => {
+  it("menampilkan judul Reports tanpa deskripsi untuk Project Manager", async () => {
+    useSession.setState({
+      token: "token",
+      user: {
+        sys_user_id: 1,
+        username: "pm.andi",
+        email: "pm.andi@vapt.local",
+        role_id: 3,
+        role: { role_id: 3, role_name: "project_manager" },
+      },
+    });
+    const { ReportsIndexPage } = await import("./reports-page");
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter><ReportsIndexPage /></MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Reports" })).toBeInTheDocument();
+    expect(screen.queryByText("Proyek yang sudah masuk stage Initial Report atau sesudahnya.")).not.toBeInTheDocument();
+  });
+
   it("merender tabel proyek siap report beserta toolbar dan aksinya", async () => {
     const { ReportsIndexPage } = await import("./reports-page");
     render(
