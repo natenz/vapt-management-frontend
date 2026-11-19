@@ -61,7 +61,8 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const role = useSession((s) => s.user?.role?.role_name);
   const currentUserId = useSession((s) => s.user?.sys_user_id);
-  const usesProjectsLabel = role === "tech_lead" || role === "project_manager";
+  const usesProjectsLabel = role === "tech_lead" || role === "project_manager" || role === "pentester";
+  const isPentester = role === "pentester";
   const projectLabel = usesProjectsLabel ? "Projects" : "Proyek";
   const projectNoun = usesProjectsLabel ? "projects" : "proyek";
   const includePm = role !== "project_manager";
@@ -168,7 +169,7 @@ export function ProjectsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title={projectLabel}
-        description={`${projectLabel} yang bisa kamu buka.`}
+        description={isPentester ? undefined : `${projectLabel} yang bisa kamu buka.`}
         action={
           role === "tech_lead" || role === "super_admin" ? (
             <Button asChild variant="solid" leadingIcon={<Plus />}>
