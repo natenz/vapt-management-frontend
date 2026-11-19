@@ -61,9 +61,9 @@ export function ProjectsPage() {
   const navigate = useNavigate();
   const role = useSession((s) => s.user?.role?.role_name);
   const currentUserId = useSession((s) => s.user?.sys_user_id);
-  const isTechLead = role === "tech_lead";
-  const projectLabel = isTechLead ? "Projects" : "Proyek";
-  const projectNoun = isTechLead ? "projects" : "proyek";
+  const usesProjectsLabel = role === "tech_lead" || role === "project_manager";
+  const projectLabel = usesProjectsLabel ? "Projects" : "Proyek";
+  const projectNoun = usesProjectsLabel ? "projects" : "proyek";
   const includePm = role !== "project_manager";
 
   const { data, isLoading, error, refetch } = useQuery({

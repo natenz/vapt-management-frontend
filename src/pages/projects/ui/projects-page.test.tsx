@@ -114,7 +114,7 @@ vi.mock("@/entities/project", async (importOriginal) => ({
   ],
 }));
 
-function renderPage(roleName: "super_admin" | "tech_lead" = "super_admin") {
+function renderPage(roleName: "super_admin" | "tech_lead" | "project_manager" = "super_admin") {
   useSession.setState({
     token: "token",
     user: {
@@ -122,7 +122,10 @@ function renderPage(roleName: "super_admin" | "tech_lead" = "super_admin") {
       username: "admin",
       email: "admin@vapt.local",
       role_id: 1,
-      role: { role_id: roleName === "tech_lead" ? 2 : 1, role_name: roleName },
+      role: {
+        role_id: roleName === "tech_lead" ? 2 : roleName === "project_manager" ? 3 : 1,
+        role_name: roleName,
+      },
     },
   });
 
@@ -234,6 +237,15 @@ describe("ProjectsPage", () => {
     expect(screen.getByRole("searchbox", { name: "Cari projects" })).toBeInTheDocument();
     expect(screen.getByText("2 projects")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Buat Template Projects" })).toHaveAttribute("href", "/projects/new");
+  });
+
+  it("menggunakan label Projects untuk Project Manager", async () => {
+    renderPage("project_manager");
+    await screen.findByText("VAPT Mobile Banking");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Cari projects" })).toBeInTheDocument();
+    expect(screen.getByText("2 projects")).toBeInTheDocument();
   });
 
   it("merender judul halaman Proyek tanpa logo", () => {
