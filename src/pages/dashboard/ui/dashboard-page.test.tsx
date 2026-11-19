@@ -107,6 +107,10 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
+
+    // CTA Linimasa Tim dihapus dari dashboard Tech Lead
+    expect(screen.queryByRole("link", { name: "Linimasa Tim" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Buat Template Proyek" })).toHaveAttribute("href", "/projects/new");
   });
 
   it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {

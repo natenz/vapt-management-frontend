@@ -189,18 +189,29 @@ describe("TechLeadDashboard", () => {
     expect(within(summarySection).getByText("01")).toBeInTheDocument();
     const ctaLink = within(summarySection).getByRole("link", { name: /Tinjau/ });
     expect(ctaLink).toHaveAttribute("href", "/catalog");
+
+    // Sub KPI card (keterangan terlambat, sesuai jadwal, dan basis data mutakhir) sudah dihapus
+    expect(screen.queryByText(/terlambat/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sesuai jadwal/i)).not.toBeInTheDocument();
+    expect(within(summarySection).queryByText(/basis data kerentanan mutakhir/i)).not.toBeInTheDocument();
+    expect(within(summarySection).queryByText(/total proyek/i)).not.toBeInTheDocument();
   });
 
-  it("merender tabel proyek berjalan dengan kemajuan dan tenggat", () => {
+  it("merender tabel proyek berjalan dengan kemajuan dan tenggat tanpa keterangan subjudul", () => {
     renderDashboard();
 
     const projectSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
+    // Keterangan di bawah Proyek Berjalan & Progres sudah dihapus
+    expect(within(projectSec).queryByText(/proyek aktif/i)).not.toBeInTheDocument();
     expect(within(projectSec).getByText("Web Portal SSO Telkom")).toBeInTheDocument();
     expect(within(projectSec).getByText(/Divisi IT · PM Andi Wijaya/)).toBeInTheDocument();
     expect(within(projectSec).getAllByText("Assessment").length).toBeGreaterThanOrEqual(1);
 
     expect(within(projectSec).getByText("Aplikasi Mobile MyTelkom")).toBeInTheDocument();
     expect(within(projectSec).getAllByText("Remediasi").length).toBeGreaterThanOrEqual(1);
+
+    // Aksi Buka semua proyek tanpa panah tetap mengarah ke /projects
+    expect(within(projectSec).getByRole("link", { name: "Buka semua proyek" })).toHaveAttribute("href", "/projects");
 
     // Proyek dengan status Done dan Draft tidak ditampilkan di proyek aktif berjalan
     expect(within(projectSec).queryByText("Audit API Gateway Legacy")).not.toBeInTheDocument();

@@ -5,7 +5,6 @@ import {
   BookOpen,
   Bug,
   FileText,
-  CalendarRange,
   Clock,
   FolderKanban,
   Plus,
@@ -223,14 +222,9 @@ export function DashboardPage() {
               </Button>
             </div>
           ) : isTechLead ? (
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" leadingIcon={<CalendarRange />}>
-                <Link to="/resources?tampilan=timeline">Linimasa Tim</Link>
-              </Button>
-              <Button asChild variant="solid" leadingIcon={<Plus />}>
-                <Link to="/projects/new">Buat Template Proyek</Link>
-              </Button>
-            </div>
+            <Button asChild variant="solid" leadingIcon={<Plus />}>
+              <Link to="/projects/new">Buat Template Proyek</Link>
+            </Button>
           ) : isPentester || isWriter || isPm ? (
             <div className="flex items-center gap-2">
               {isPentester ? (

@@ -16,6 +16,8 @@ export interface BentoCardProps extends Omit<HTMLAttributes<HTMLDivElement>, "ti
    * (kartu tersusun ke bawah) tinggi dibatasi 70dvh.
    */
   scrollable?: boolean;
+  /** Apakah kartu memiliki efek glow/border brand saat di-hover (default: true). */
+  hoverEffect?: boolean;
 }
 
 const COL_SPAN_CLASSES: Record<number, string> = {
@@ -41,6 +43,7 @@ export function BentoCard({
   children,
   colSpan = 4,
   scrollable = false,
+  hoverEffect = true,
   className,
   ...props
 }: BentoCardProps) {
@@ -51,7 +54,7 @@ export function BentoCard({
       data-slot="bento-card"
       className={cn(
         "group flex flex-col justify-between rounded-xl border border-border bg-surface p-5 sm:p-6",
-        "transition-all duration-200 hover:border-brand/35 hover:shadow-xs",
+        hoverEffect && "transition-all duration-200 hover:border-brand/35 hover:shadow-xs",
         spanClass,
         scrollable && "max-h-[70dvh] min-h-0 justify-start lg:max-h-none",
         className,

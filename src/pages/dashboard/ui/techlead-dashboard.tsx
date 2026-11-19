@@ -35,8 +35,6 @@ export function TechLeadDashboard({
   isLoading,
 }: TechLeadDashboardProps) {
   const running = useMemo(() => runningProjects(projects), [projects]);
-  const late = running.filter((r) => r.health === "late").length;
-  const atRisk = running.filter((r) => r.health === "at-risk").length;
 
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
@@ -51,11 +49,6 @@ export function TechLeadDashboard({
           icon={<FolderKanban />}
           fill="brand"
           loading={isLoading}
-          note={
-            late + atRisk > 0
-              ? { value: `${late} terlambat`, text: `· ${atRisk} berisiko tertinggal` }
-              : { text: `${projects.length} total proyek, semua sesuai jadwal` }
-          }
         />
         <SummaryTile
           label="Usulan Katalog"
@@ -63,9 +56,6 @@ export function TechLeadDashboard({
           unit="Usulan"
           icon={<BookCheck />}
           loading={isLoading}
-          note={{
-            text: catalogQueue.length > 0 ? "menunggu peninjauan Anda" : "basis data kerentanan mutakhir",
-          }}
           action={
             <Button
               asChild
