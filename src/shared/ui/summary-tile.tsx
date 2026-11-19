@@ -20,6 +20,8 @@ type SummaryTileProps = {
   /** Keterangan di bawah. `value` opsional ditebalkan sebelum teks. */
   note: { value?: ReactNode; text: string };
   loading?: boolean;
+  /** Aksi atau tautan Call to Action opsional di bagian bawah kartu. */
+  action?: ReactNode;
 };
 
 export function SummaryTile({
@@ -30,6 +32,7 @@ export function SummaryTile({
   fill = "charcoal",
   note,
   loading = false,
+  action,
 }: SummaryTileProps) {
   return (
     <article
@@ -63,14 +66,19 @@ export function SummaryTile({
 
       {loading ? (
         <span className="mt-6 block h-5 w-2/5 animate-pulse rounded-xs bg-ink-inverse/10 motion-reduce:animate-none" />
-      ) : note.value !== undefined ? (
-        <p className="mt-6 flex items-center gap-2 text-caption text-ink-inverse-muted">
-          <TrendingUp className="size-4" aria-hidden />
-          <span className="text-button text-ink-inverse tabular">{note.value}</span>
-          {note.text}
-        </p>
       ) : (
-        <p className="mt-6 text-caption text-ink-inverse-muted">{note.text}</p>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+          {note.value !== undefined ? (
+            <p className="flex items-center gap-2 text-caption text-ink-inverse-muted">
+              <TrendingUp className="size-4" aria-hidden />
+              <span className="text-button text-ink-inverse tabular">{note.value}</span>
+              {note.text}
+            </p>
+          ) : (
+            <p className="text-caption text-ink-inverse-muted">{note.text}</p>
+          )}
+          {action ? <div className="shrink-0">{action}</div> : null}
+        </div>
       )}
     </article>
   );

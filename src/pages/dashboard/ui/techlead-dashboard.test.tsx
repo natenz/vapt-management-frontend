@@ -1,17 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as catalogModule from "@/entities/catalog";
 import type { CatalogVulna } from "@/entities/catalog";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { TechLeadDashboard } from "./techlead-dashboard";
-
-vi.mock("@/entities/catalog", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/entities/catalog")>()),
-  reviewCatalog: vi.fn(),
-}));
 
 const mockProjects: Project[] = [
   {
@@ -176,7 +170,7 @@ describe("TechLeadDashboard", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it("merender 3 SummaryTile operasional eksekutif dengan kalkulasi yang akurat", () => {
+  it("merender 3 SummaryTile operasional eksekutif dengan kalkulasi yang akurat dan CTA katalog", () => {
     renderDashboard();
 
     const summarySection = screen.getByRole("region", { name: "Ringkasan Operasional Tech Lead" });
@@ -192,10 +186,12 @@ describe("TechLeadDashboard", () => {
     // Total mandays tim: 8 + 16 + 24 = 48 MD
     expect(within(summarySection).getByText("Mandays Tim")).toBeInTheDocument();
     expect(within(summarySection).getByText("48")).toBeInTheDocument();
-    expect(within(summarySection).getByText("01")).toBeInTheDocument(); // antrean katalog
 
-    // Antrean Usulan Katalog
-    expect(within(summarySection).getByText("Antrean Usulan Katalog")).toBeInTheDocument();
+    // Usulan Katalog dengan Call To Action menuju /catalog?status=pending
+    expect(within(summarySection).getByText("Usulan Katalog")).toBeInTheDocument();
+    expect(within(summarySection).getByText("01")).toBeInTheDocument();
+    const ctaLink = within(summarySection).getByRole("link", { name: /Tinjau/ });
+    expect(ctaLink).toHaveAttribute("href", "/catalog?status=pending");
   });
 
   it("merender tabel proyek berjalan dengan kemajuan dan tenggat", () => {
@@ -236,57 +232,8 @@ describe("TechLeadDashboard", () => {
     expect(within(md).queryByText(/batas/)).not.toBeInTheDocument();
   });
 
-  it("menampilkan usulan katalog kerentanan dan menyetujui saat tombol Setujui ditekan", async () => {
-    vi.mocked(catalogModule.reviewCatalog).mockResolvedValueOnce({
-      vulna_id: 501,
-      title: "SQL Injection pada Endpoint Auth",
-      severity: "Critical",
-      status: "approved",
-    });
-
+  it("kartu persetujuan usulan katalog kerentanan tidak lagi ada di bento dashboard Tech Lead", () => {
     renderDashboard();
-
-    const catalogSec = screen.getByRole("region", {
-      name: "Persetujuan Usulan Katalog Kerentanan",
-    });
-    expect(within(catalogSec).getByText("SQL Injection pada Endpoint Auth")).toBeInTheDocument();
-    expect(within(catalogSec).getByText("Budi Santoso")).toBeInTheDocument();
-
-    const approveButton = within(catalogSec).getByRole("button", { name: "Setujui" });
-    fireEvent.click(approveButton);
-
-    await waitFor(() => {
-      expect(catalogModule.reviewCatalog).toHaveBeenCalledWith(501, "approved");
-    });
-  });
-
-  it("dapat membuka dialog tinjau detail usulan kerentanan", () => {
-    renderDashboard();
-
-    const catalogSec = screen.getByRole("region", {
-      name: "Persetujuan Usulan Katalog Kerentanan",
-    });
-    const reviewButton = within(catalogSec).getByRole("button", { name: "Tinjau" });
-    fireEvent.click(reviewButton);
-
-    // Dialog terbuka dengan deskripsi lengkap
-    const dialog = screen.getByRole("dialog");
-    expect(
-      within(dialog).getByText("Parameter username tidak disanitasi sebelum dikirim ke query database."),
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByText("Gunakan parameterized prepared statements."),
-    ).toBeInTheDocument();
-  });
-
-  it("menampilkan EmptyState saat tidak ada usulan kerentanan pending", () => {
-    renderDashboard({ catalogQueue: [] });
-
-    const catalogSec = screen.getByRole("region", {
-      name: "Persetujuan Usulan Katalog Kerentanan",
-    });
-    expect(
-      within(catalogSec).getByText("Tidak ada usulan kerentanan pending"),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
   });
 });

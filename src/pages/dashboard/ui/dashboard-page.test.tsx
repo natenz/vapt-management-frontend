@@ -91,9 +91,12 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });
 
-  it("tech lead: menampilkan ringkasan operasional, proyek berjalan & progres, penugasan pentester, dan persetujuan katalog", async () => {
+  it("tech lead: menampilkan ringkasan operasional dengan CTA katalog, proyek berjalan & progres, dan penugasan pentester", async () => {
     await mount("tech_lead");
-    expect(await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" })).toBeInTheDocument();
+    const summarySec = await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" });
+    expect(summarySec).toBeInTheDocument();
+    expect(within(summarySec).getByRole("link", { name: /Tinjau/ })).toHaveAttribute("href", "/catalog?status=pending");
+
     const projectsSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });
     expect(within(projectsSec).getByText("Proyek Uji")).toBeInTheDocument();
     expect(within(projectsSec).getByText("Proyek Remediasi")).toBeInTheDocument();
@@ -102,11 +105,7 @@ describe("DashboardPage", () => {
     expect(await within(resourceSec).findByText("Budi Santoso")).toBeInTheDocument();
     expect(within(resourceSec).getByRole("link", { name: /Cek Benturan Jadwal di Linimasa/ })).toHaveAttribute("href", "/resources?tampilan=timeline");
 
-    const acc = screen.getByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" });
-    expect(within(acc).getByText("Stored XSS")).toBeInTheDocument();
-    expect(within(acc).getByText("IDOR profil")).toBeInTheDocument();
-    expect(within(acc).getByRole("link", { name: /Kelola katalog/ })).toHaveAttribute("href", "/catalog");
-
+    expect(screen.queryByRole("region", { name: "Persetujuan Usulan Katalog Kerentanan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Giliran Anda" })).not.toBeInTheDocument();
   });

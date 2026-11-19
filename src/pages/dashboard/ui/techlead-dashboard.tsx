@@ -6,17 +6,18 @@
  * 2. Mengelola katalog kerentanan: meninjau dan meng-ACC usulan dari tim.
  * Angka dihitung di `model/techlead-metrics`.
  */
-import { BookCheck, Clock, FolderKanban } from "lucide-react";
+import { ArrowRight, BookCheck, Clock, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
+import { Link } from "react-router";
 import type { CatalogVulna } from "@/entities/catalog";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { BentoGrid } from "@/shared/ui/bento-grid";
+import { Button } from "@/shared/ui/button";
 import { SummaryTile } from "@/shared/ui/summary-tile";
 import { teamMandays } from "../model/superadmin-metrics";
 import { pentestersOf, runningProjects } from "../model/techlead-metrics";
 import { PentesterMandaysCard } from "./superadmin/team-cards";
-import { CatalogReviewCard } from "./techlead/catalog-review-card";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
 import { WorkloadHeatmapCard } from "./techlead/workload-heatmap-card";
 
@@ -43,7 +44,6 @@ export function TechLeadDashboard({
   details = [],
   detailsLoading = false,
   detailsError = null,
-  approvedCount = null,
 }: TechLeadDashboardProps) {
   const pentesters = useMemo(() => pentestersOf(users), [users]);
   const running = useMemo(() => runningProjects(projects), [projects]);
@@ -79,7 +79,7 @@ export function TechLeadDashboard({
           note={{ text: "ditugaskan ke pentester bulan ini" }}
         />
         <SummaryTile
-          label="Antrean Usulan Katalog"
+          label="Usulan Katalog"
           value={isLoading ? null : catalogQueue.length}
           unit="Usulan"
           icon={<BookCheck />}
@@ -87,6 +87,18 @@ export function TechLeadDashboard({
           note={{
             text: catalogQueue.length > 0 ? "menunggu peninjauan Anda" : "basis data kerentanan mutakhir",
           }}
+          action={
+            <Button
+              asChild
+              variant="outline"
+              className="h-7 gap-1 border-ink-inverse/30 bg-transparent px-2.5 text-caption font-medium text-ink-inverse hover:border-ink-inverse hover:bg-ink-inverse/15 hover:text-ink-inverse"
+            >
+              <Link to="/catalog?status=pending">
+                <span>Tinjau</span>
+                <ArrowRight className="size-3" aria-hidden="true" />
+              </Link>
+            </Button>
+          }
         />
       </section>
 
@@ -102,9 +114,6 @@ export function TechLeadDashboard({
 
         {/* Pemantauan */}
         <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} />
-
-        {/* Katalog */}
-        <CatalogReviewCard queue={catalogQueue} approvedCount={approvedCount} isLoading={isLoading} />
       </BentoGrid>
     </div>
   );
