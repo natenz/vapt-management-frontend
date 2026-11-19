@@ -5,16 +5,13 @@ import { fmtRange } from "@/shared/lib/format";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Gantt, type GanttGranularity, type GanttItem } from "@/shared/ui/gantt";
-import { TabChip, Tabs, TabsContent, TabsList } from "@/shared/ui/tabs";
 import { notify } from "@/shared/ui/toast";
-import { buildStageSchedule, mandaysState } from "../model/gantt-state";
+import { buildStageSchedule } from "../model/gantt-state";
 
 export function ProjectGanttSection({ project, canEdit = false }: { project: ProjectDetail; canEdit?: boolean }) {
   const qc = useQueryClient();
-  const current = project.status?.status_name ?? "";
   const serverStages = useMemo(() => buildStageSchedule(project), [project]);
   const [drafts, setDrafts] = useState(serverStages);
-  // Skala Hari/Minggu dibagi kedua tab agar tidak kembali ke default saat berpindah tab
   const [granularity, setGranularity] = useState<GanttGranularity>("day");
   const scale = { granularity, onGranularityChange: setGranularity };
 
@@ -64,19 +61,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
     state: s.state,
   }));
 
-  const mandaysItems: GanttItem[] = project.mandays
-    .filter((m) => m.start_date && m.end_date)
-    .map((m) => ({
-      id: String(m.mandays_id),
-      label: `${m.asset?.asset_name ?? `Aset ${m.asset_id}`} · ${m.pentester?.profile?.full_name ?? m.pentester?.username ?? "-"}`,
-      startsAt: m.start_date as string,
-      endsAt: m.end_date as string,
-      state: mandaysState(m, current),
-      // Penugasan aset adalah pekerjaan tahap Assessment
-      ...chipFor("Assessment"),
-    }));
-
-  if (stageItems.length === 0 && mandaysItems.length === 0) return null;
+  if (stageItems.length === 0) return null;
 
   const rangeStart = project.start_date?.slice(0, 10);
   const rangeEnd = project.end_date?.slice(0, 10);
@@ -100,14 +85,6 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
       </div>
     );
   };
-
-  // Penugasan aset sebelumnya tanpa detail; kini tooltip memuat aset, pentester, dan rentang
-  const renderMandaysDetail = (item: GanttItem) => (
-    <div className="flex flex-col gap-1 text-body-sm">
-      <span className="font-medium text-ink">{item.label}</span>
-      <span className="text-caption text-ink-muted">{fmtRange(item.startsAt, item.endsAt)}</span>
-    </div>
-  );
 
   const stageGantt = (
     <div className="flex flex-col gap-3">
@@ -166,32 +143,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
         ) : null}
       </div>
 
-      {stageItems.length > 0 && mandaysItems.length > 0 ? (
-        <Tabs defaultValue="stages" className="flex flex-col">
-          <TabsList aria-label="Tampilan timeline">
-            <TabChip value="stages" count={stageItems.length}>Tahapan proyek</TabChip>
-            <TabChip value="assets" count={mandaysItems.length}>Penugasan aset</TabChip>
-          </TabsList>
-          <TabsContent value="stages">{stageGantt}</TabsContent>
-          <TabsContent value="assets">
-            <Gantt
-              items={mandaysItems}
-              initialMonth={mandaysItems[0] ? new Date(mandaysItems[0].startsAt) : undefined}
-              renderDetail={renderMandaysDetail}
-              {...scale}
-            />
-          </TabsContent>
-        </Tabs>
-      ) : stageItems.length > 0 ? (
-        stageGantt
-      ) : (
-        <Gantt
-          items={mandaysItems}
-          initialMonth={mandaysItems[0] ? new Date(mandaysItems[0].startsAt) : undefined}
-          renderDetail={renderMandaysDetail}
-          {...scale}
-        />
-      )}
+      {stageGantt}
     </section>
   );
 }
