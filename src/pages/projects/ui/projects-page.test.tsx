@@ -114,7 +114,7 @@ vi.mock("@/entities/project", async (importOriginal) => ({
   ],
 }));
 
-function renderPage(roleName: "super_admin" | "tech_lead" | "project_manager" | "pentester" = "super_admin") {
+function renderPage(roleName: "super_admin" | "tech_lead" | "project_manager" | "pentester" | "technical_writer" = "super_admin") {
   useSession.setState({
     token: "token",
     user: {
@@ -123,7 +123,7 @@ function renderPage(roleName: "super_admin" | "tech_lead" | "project_manager" | 
       email: "admin@vapt.local",
       role_id: 1,
       role: {
-        role_id: roleName === "tech_lead" ? 2 : roleName === "project_manager" ? 3 : roleName === "pentester" ? 4 : 1,
+        role_id: roleName === "tech_lead" ? 2 : roleName === "project_manager" ? 3 : roleName === "pentester" ? 4 : roleName === "technical_writer" ? 5 : 1,
         role_name: roleName,
       },
     },
@@ -250,6 +250,14 @@ describe("ProjectsPage", () => {
 
   it("menggunakan label Projects tanpa deskripsi untuk Pentester", async () => {
     renderPage("pentester");
+    await screen.findByText("VAPT Mobile Banking");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Projects" })).toBeInTheDocument();
+    expect(screen.queryByText("Projects yang bisa kamu buka.")).not.toBeInTheDocument();
+  });
+
+  it("menggunakan label Projects tanpa deskripsi untuk Technical Writer", async () => {
+    renderPage("technical_writer");
     await screen.findByText("VAPT Mobile Banking");
 
     expect(screen.getByRole("heading", { level: 1, name: "Projects" })).toBeInTheDocument();
