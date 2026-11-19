@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BookOpen,
   ClipboardCheck,
   FileText,
   FolderKanban,
@@ -50,7 +49,6 @@ export const NAV: readonly NavItem[] = [
   { label: "Kelola User", to: "/users", icon: UsersRound, roles: ["super_admin"], section: "akun" },
   { label: "Akun Saya", to: "/account", icon: UserCog, roles: ALL, section: "akun" },
   { label: "Hak Akses Role", to: "/roles", icon: Lock, roles: ["super_admin"], section: "akun" },
-  { label: "Guideline", to: "/guideline", icon: BookOpen, roles: ALL, section: "akun" },
 ];
 
 export function isRole(name: string | undefined | null): name is RoleName {
