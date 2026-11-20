@@ -37,11 +37,12 @@ import {
 import { ReportsFilterBar } from "./reports-filter-bar";
 import { ReportPreview } from "./report-preview";
 
-/** Daftar proyek yang laporannya bisa dibuka (tahap Initial Report dan sesudahnya). */
+/** Daftar seluruh projects yang laporannya bisa dibuka oleh pengguna. */
 export function ReportsIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const isProjectManager = useSession((state) => state.user?.role?.role_name === "project_manager");
+  const isTechnicalWriter = useSession((state) => state.user?.role?.role_name === "technical_writer");
   const filters = useMemo(() => parseReportFilters(searchParams), [searchParams]);
   const pageSize = parsePageSize(searchParams);
 
@@ -56,11 +57,10 @@ export function ReportsIndexPage() {
   });
 
   const allRows = useMemo(
-    () =>
-      (data?.data ?? []).filter((p) =>
-        statusBetween(p.status?.status_name, "Initial Report", "Done"),
-      ),
-    [data],
+    () => (data?.data ?? []).filter((p) =>
+      isTechnicalWriter || statusBetween(p.status?.status_name, "Initial Report", "Done"),
+    ),
+    [data, isTechnicalWriter],
   );
 
   const filteredRows = useMemo(
@@ -145,7 +145,7 @@ export function ReportsIndexPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title={isProjectManager ? "Reports" : "Koreksi & Report"}
-        description={isProjectManager ? undefined : "Proyek yang sudah masuk stage Initial Report atau sesudahnya."}
+        description={isProjectManager ? undefined : isTechnicalWriter ? "Projects yang bisa kamu buka." : "Proyek yang sudah masuk stage Initial Report atau sesudahnya."}
       />
       {error ? <Alert tone="error" title="Gagal memuat">{error.message}</Alert> : null}
 
@@ -186,7 +186,7 @@ export function ReportsIndexPage() {
               <EmptyState
                 icon={<FileText />}
                 title="Belum ada report"
-                description="Proyek akan muncul di sini setelah masuk stage Initial Report."
+                description={isTechnicalWriter ? "Belum ada projects yang bisa ditampilkan." : "Proyek akan muncul di sini setelah masuk stage Initial Report."}
               />
             )
           }

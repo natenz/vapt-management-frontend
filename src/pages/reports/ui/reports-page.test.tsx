@@ -46,6 +46,14 @@ vi.mock("@/entities/project", async (importOriginal) => {
     listProjects: async () => ({
       data: [
         {
+          project_id: 7,
+          project_name: "Project Draft",
+          client_name: "Klien Draft",
+          start_date: "2026-10-01",
+          end_date: "2026-10-30",
+          status: { status_process_id: 1, status_name: "Draft" },
+        },
+        {
           project_id: 4,
           project_name: "VAPT E-Commerce",
           client_name: "Klien Telkom",
@@ -53,8 +61,24 @@ vi.mock("@/entities/project", async (importOriginal) => {
           end_date: "2026-10-30",
           status: { status_process_id: 6, status_name: "Initial Report" },
         },
+        {
+          project_id: 5,
+          project_name: "Project Scoping",
+          client_name: "Klien Awal",
+          start_date: "2026-10-01",
+          end_date: "2026-10-30",
+          status: { status_process_id: 2, status_name: "Scoping" },
+        },
+        {
+          project_id: 6,
+          project_name: "Project Done",
+          client_name: "Klien Selesai",
+          start_date: "2026-10-01",
+          end_date: "2026-10-30",
+          status: { status_process_id: 10, status_name: "Done" },
+        },
       ],
-      meta: { page: 1, limit: 100, total: 1 },
+      meta: { page: 1, limit: 100, total: 4 },
     }),
   };
 });
@@ -137,10 +161,20 @@ describe("ReportsIndexPage", () => {
     );
 
     expect(await screen.findByRole("heading", { level: 1, name: "Reports" })).toBeInTheDocument();
-    expect(screen.queryByText("Proyek yang sudah masuk stage Initial Report atau sesudahnya.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Projects yang bisa kamu buka.")).not.toBeInTheDocument();
   });
 
   it("merender tabel proyek siap report beserta toolbar dan aksinya", async () => {
+    useSession.setState({
+      token: "token",
+      user: {
+        sys_user_id: 8,
+        username: "writer.eka",
+        email: "eka@vapt.local",
+        role_id: 5,
+        role: { role_id: 5, role_name: "technical_writer" },
+      },
+    });
     const { ReportsIndexPage } = await import("./reports-page");
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -152,10 +186,11 @@ describe("ReportsIndexPage", () => {
 
     expect(await screen.findByText("VAPT E-Commerce")).toBeInTheDocument();
     expect(screen.getByText("Klien Telkom")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Buka Report" })).toHaveAttribute(
-      "href",
-      "/projects/4/report",
-    );
-    expect(screen.getByText("1 reports")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Buka Report" })).toHaveLength(4);
+    expect(screen.getAllByRole("link", { name: "Buka Report" }).find((link) => link.getAttribute("href") === "/projects/4/report")).toBeInTheDocument();
+    expect(screen.getByText("4 reports")).toBeInTheDocument();
+    expect(screen.getByText("Project Draft")).toBeInTheDocument();
+    expect(screen.getByText("Project Scoping")).toBeInTheDocument();
+    expect(screen.getByText("Project Done")).toBeInTheDocument();
   });
 });

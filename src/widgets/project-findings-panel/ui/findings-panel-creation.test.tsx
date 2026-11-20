@@ -54,20 +54,12 @@ function renderPanel(status: string, role = "pentester") {
 }
 
 describe("Tambah finding", () => {
-  it.each(["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"])(
+  it.each(["Draft", "Scoping", "Assessment", "Analysis", "Initial Report", "Remediasi", "Retesting", "Final Report Drafting", "Final Presentation", "Done"])(
     "pentester bisa membuka form dari panel kosong saat %s",
     (status) => {
       renderPanel(status);
       expect(screen.getByText("Belum ada findings tercatat.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Tambah finding" })).toBeInTheDocument();
-    },
-  );
-
-  it.each(["Draft", "Scoping", "Remediasi", "Final Presentation", "Done"])(
-    "pentester tidak bisa menambah findings saat %s",
-    (status) => {
-      renderPanel(status);
-      expect(screen.queryByRole("button", { name: "Tambah finding" })).not.toBeInTheDocument();
     },
   );
 

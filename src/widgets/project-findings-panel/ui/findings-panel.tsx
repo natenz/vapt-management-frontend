@@ -29,8 +29,10 @@ import { Alert } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-// BE (vulna_service.Update): admin/TL, technical_writer, atau pentester pemilik; terkunci saat Remediasi, terbuka lagi saat Retesting.
-const EDITABLE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
+// Pencatatan dan penyuntingan findings tersedia di setiap stage proyek.
+const EDITABLE_STATUSES = ["Draft", "Scoping", "Assessment", "Analysis", "Initial Report", "Remediasi", "Retesting", "Final Report Drafting", "Final Presentation", "Done"];
+// Perubahan status triage tetap dikunci saat remediasi dan hanya tersedia di stage pengujian/laporan.
+const STATUS_CHANGE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
   finding_code: z
@@ -51,7 +53,7 @@ const STATUS_LABEL: Record<string, string> = { open: "Terbuka", closed: "Ditutup
 const STATUS_ROLES = ["pentester", "technical_writer"];
 
 export function allowedFindingStatuses(f: Finding, projectStatus: string, role: string): FindingStatus[] {
-  if (EDITABLE_STATUSES.includes(projectStatus) && STATUS_ROLES.includes(role)) {
+  if (STATUS_CHANGE_STATUSES.includes(projectStatus) && STATUS_ROLES.includes(role)) {
     return [...FINDING_STATUSES];
   }
   return FINDING_STATUSES.includes(f.status as FindingStatus) ? [f.status as FindingStatus] : ["open"];

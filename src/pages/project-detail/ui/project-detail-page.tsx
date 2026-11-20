@@ -103,6 +103,7 @@ export function ProjectDetailPage() {
 
   const p = project.data;
   const current = p.status?.status_name ?? "Draft";
+  const canOpenReport = role === "technical_writer" || statusBetween(current, "Initial Report", "Done");
   // PM baru melihat proyek setelah Tech Lead menyerahkannya (keluar dari Draft).
   if (role === "project_manager" && current === "Draft") {
     return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih disiapkan Tech Lead, jadi belum bisa dibuka.</Alert>;
@@ -370,12 +371,10 @@ export function ProjectDetailPage() {
             }
           />
 
-          {statusBetween(current, "Assessment", "Done") ? <FindingsPanel project={p} /> : null}
+          <FindingsPanel project={p} />
 
           <footer className="flex flex-wrap gap-3">
-            {statusBetween(current, "Initial Report", "Done") ? (
-              <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat report</Link></Button>
-            ) : null}
+            {canOpenReport ? <Button asChild leadingIcon={<FileText />}><Link to={`/projects/${id}/report`}>Lihat report</Link></Button> : null}
             <span className="self-center text-caption text-ink-muted">{p.updated_at ? `Diperbarui ${fmtDate(p.updated_at)}` : ""}</span>
           </footer>
         </div>
