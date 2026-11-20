@@ -131,11 +131,11 @@ it("memisahkan category dari judul finding dan mengirim severity serta CVSS hasi
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "9" } });
   expect(screen.getByLabelText("Vulnerability Name")).toHaveValue("XSS pada halaman profil");
   expect(screen.getByLabelText("Severity")).toHaveValue("High");
-  expect(screen.getByLabelText("CVSS")).toHaveValue(8.1);
+  expect(screen.getByLabelText("CVSS")).toHaveValue("8.1");
   fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "Low" } });
   fireEvent.change(screen.getByLabelText("CVSS"), { target: { value: "0" } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
-  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, custom_title: "XSS pada halaman profil", severity: "Low", cvss_score: 0 })));
+  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, custom_title: "XSS pada halaman profil", severity: "Low", cvss_score: "0" })));
 });
 
 it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisah (category awal %s)", async (categoryId) => {
@@ -150,17 +150,18 @@ it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisa
   client.setQueryData(["findings", 42], [{
     vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
     catalog_vulna_id: categoryId, finding_code: "SCP-002", custom_title: "Tentang SQL",
-    severity: "High", cvss_score: 8.1, endpoint: "api/category", status: "open",
+    severity: "High", cvss_score: "8.1", endpoint: "api/category", status: "open",
   }]);
   fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
   expect(screen.getByLabelText("Category")).toHaveValue(categoryId ? String(categoryId) : "");
   expect(screen.queryByRole("option", { name: /Category belum disetujui/ })).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "10" } });
   expect(screen.getByLabelText("Vulnerability Name")).toHaveValue("Tentang SQL");
-  expect(screen.getByLabelText("CVSS")).toHaveValue(8.1);
+  expect(screen.getByLabelText("CVSS")).toHaveValue("8.1");
+  fireEvent.change(screen.getByLabelText("CVSS"), { target: { value: "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N" } });
   fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
-    catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: undefined, cvss_score: 8.1,
+    catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: undefined, cvss_score: "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
   })));
   await waitFor(() => expect(screen.queryByLabelText("Category")).not.toBeInTheDocument());
 });
@@ -180,7 +181,7 @@ it("mencatat seluruh detail Network/Infra, status, dan screenshot dengan validas
     ["Nama Perangkat", "Router Cabang"], ["Skenario Pengujian", "Uji konfigurasi jaringan"],
     ["Description", "Layanan lama terbuka"], ["Impact", "Akses informasi perangkat"],
     ["Recommendation", "Batasi layanan"], ["Referensi", "https://example.test/advisory"],
-    ["CWE", "CWE-200"], ["Note Pentester", "Dikonfirmasi saat pengujian"], ["CVSS", "8.1"], ["Severity", "High"],
+    ["CWE", "CWE-200"], ["Note Pentester", "Dikonfirmasi saat pengujian"], ["CVSS", "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"], ["Severity", "High"],
   ]) fireEvent.change(screen.getByLabelText(label!), { target: { value } });
   fireEvent.change(screen.getByLabelText("Status Pentest"), { target: { value: "closed_with_note" } });
   fireEvent.change(screen.getByLabelText("IP"), { target: { value: "bukan-ip" } });
@@ -197,7 +198,7 @@ it("mencatat seluruh detail Network/Infra, status, dan screenshot dengan validas
     finding_code: undefined, custom_title: "Layanan perangkat tidak aman", device_name: "Router Cabang",
     ip_address: "2001:db8::1", test_scenario: "Uji konfigurasi jaringan", description: "Layanan lama terbuka",
     impact: "Akses informasi perangkat", recommendation: "Batasi layanan", references: "https://example.test/advisory",
-    cwe: "CWE-200", pentester_note: "Dikonfirmasi saat pengujian", status: "closed_with_note", status_note: "Risiko diterima klien", cvss_score: 8.1,
+    cwe: "CWE-200", pentester_note: "Dikonfirmasi saat pengujian", status: "closed_with_note", status_note: "Risiko diterima klien", cvss_score: "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
   })));
   await waitFor(() => expect(uploadEvidence).toHaveBeenCalledWith(123, file));
 });
@@ -221,7 +222,7 @@ it("menyunting detail network tanpa menimpa category atau alasan penutupan", asy
   client.setQueryData(["findings", 42], [{
     vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
     catalog_vulna_id: 9, finding_code: "NET-001", custom_title: "Perangkat jaringan",
-    severity: "High", cvss_score: 8.1, status: "open",
+    severity: "High", cvss_score: "8.1", status: "open",
     device_name: "Router", ip_address: "192.0.2.10", description: "Data lama",
   }]);
   fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
@@ -277,10 +278,11 @@ it.each(["mobile", "web", "api"])("menyimpan field lengkap untuk %s dan tidak me
   for (const [label, value] of [
     ["APP Name", "Aplikasi Pelanggan"], ["Endpoint", "/api/session"], ["Platform", type === "mobile" ? "Android" : "REST API"],
     ["Vulnerability Name", "Akses data tanpa otorisasi"], ["Description", "Deskripsi spesifik finding"],
-    ["Severity", "High"], ["CVSS", "8.1"], ["Impact", "Kebocoran data"],
+    ["Severity", "High"], ["CVSS", "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"], ["Impact", "Kebocoran data"],
     ["Recommendation", "Tambahkan pemeriksaan akses"], ["References", "https://example.test/advisory"], ["CWE", "CWE-862"],
   ]) fireEvent.change(screen.getByLabelText(label!), { target: { value } });
   if (type === "mobile") {
+    expect(screen.getByRole("option", { name: "M3: Insecure Authentication/Authorization" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Object Source"), { target: { value: "customer.apk" } });
     fireEvent.change(screen.getByLabelText("Tools"), { target: { value: "Proxy pengujian\nAnalisis statis" } });
     fireEvent.change(screen.getByLabelText("OWASP Mobile Top 10 2024"), { target: { value: "M3" } });
@@ -295,7 +297,7 @@ it.each(["mobile", "web", "api"])("menyimpan field lengkap untuk %s dan tidak me
   await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({
     app_name: "Aplikasi Pelanggan", endpoint: "/api/session", platform: type === "mobile" ? "Android" : "REST API",
     custom_title: "Akses data tanpa otorisasi", description: "Deskripsi spesifik finding", status: "open",
-    severity: "High", cvss_score: 8.1, impact: "Kebocoran data", recommendation: "Tambahkan pemeriksaan akses",
+    severity: "High", cvss_score: "8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N", impact: "Kebocoran data", recommendation: "Tambahkan pemeriksaan akses",
     references: "https://example.test/advisory", cwe: "CWE-862", finding_code: undefined,
     ...(type === "mobile" ? { object_source: "customer.apk", tools: "Proxy pengujian\nAnalisis statis", owasp_mobile_2024: "M3" } : { ip_domain: "api.customer.internal" }),
   })));
@@ -331,11 +333,12 @@ it.each(["mobile", "web", "api"])("mengedit metadata %s dan bisa mengosongkan fi
     vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5, status: "open", finding_code: "VLN-42-001",
     custom_title: "Temuan aplikasi", severity: "High", app_name: "Aplikasi tersimpan", platform: "Platform lama",
     description: "Deskripsi lama", object_source: "lama.apk", tools: "Tool lama", owasp_mobile_2024: "M3",
-    ip_domain: "lama.example.test",
+    ip_domain: "lama.example.test", cvss_score: "8.1 — CVSS:3.1/AV:N/AC:L",
   }]);
   fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
   expect(screen.getByLabelText("APP Name")).toHaveValue("Aplikasi tersimpan");
   fireEvent.change(screen.getByLabelText("Description"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("CVSS"), { target: { value: "" } });
   fireEvent.change(screen.getByLabelText("Platform"), { target: { value: "Platform baru" } });
   if (type === "mobile") {
     expect(screen.getByLabelText("OWASP Mobile Top 10 2024")).toHaveValue("M3");
@@ -343,7 +346,7 @@ it.each(["mobile", "web", "api"])("mengedit metadata %s dan bisa mengosongkan fi
   }
   fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
-    app_name: "Aplikasi tersimpan", platform: "Platform baru", description: "", finding_code: undefined,
+    app_name: "Aplikasi tersimpan", platform: "Platform baru", description: "", finding_code: undefined, cvss_score: "",
     ...(type === "mobile" ? { owasp_mobile_2024: "" } : { ip_domain: "lama.example.test" }),
   })));
 });

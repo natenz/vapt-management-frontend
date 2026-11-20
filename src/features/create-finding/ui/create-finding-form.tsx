@@ -32,14 +32,13 @@ const schema = z
     catalog_vulna_id: z.string().optional(),
     custom_title: z.string().trim().min(1, "Isi judul finding").max(255),
     severity: z.string().optional(),
-    cvss_score: z.string().optional(),
+    cvss_score: z.string().trim().max(2000, "CVSS maksimal 2000 karakter").optional(),
     endpoint: z.string().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.status === "closed_with_note" && !v.status_note.trim()) ctx.addIssue({ code: "custom", path: ["status_note"], message: "Isi alasan finding ditutup dengan catatan" });
     const fromCatalog = Boolean(v.catalog_vulna_id);
     if (!fromCatalog && !v.severity) ctx.addIssue({ code: "custom", path: ["severity"], message: "Pilih severity" });
-    if (v.cvss_score && !(Number(v.cvss_score) >= 0 && Number(v.cvss_score) <= 10)) ctx.addIssue({ code: "custom", path: ["cvss_score"], message: "CVSS 0 sampai 10" });
   });
 type Values = z.infer<typeof schema>;
 
@@ -91,7 +90,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
         catalog_vulna_id: v.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
         custom_title: v.custom_title || undefined,
         severity: v.severity || undefined,
-        cvss_score: v.cvss_score ? Number(v.cvss_score) : undefined,
+        cvss_score: v.cvss_score || undefined,
         endpoint: v.endpoint || undefined,
         });
         setSavedFinding(finding);
@@ -173,7 +172,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
                 </select>
               )}
             </Field>
-            <Field label={detailed ? "CVSS" : "CVSS score"} error={errors.cvss_score?.message}>{(f) => <Input type="number" step="0.1" min={0} max={10} {...f} {...register("cvss_score")} />}</Field>
+            <Field label={detailed ? "CVSS" : "CVSS score"} helper="Bisa diisi skor beserta vector/matrix CVSS." error={errors.cvss_score?.message}>{(f) => <Input type="text" maxLength={2000} placeholder="8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N" {...f} {...register("cvss_score")} />}</Field>
           </div>
           {network ? <NetworkFindingFields register={register} errors={errors} /> : application ? <ApplicationFindingFields section="details" mobile={kind === "mobile"} register={register} errors={errors} /> : <Field label="Endpoint" helper="Contoh: POST /api/v1/login">{(f) => <Input {...f} {...register("endpoint")} />}</Field>}
         </FieldGroup>

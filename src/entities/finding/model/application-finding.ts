@@ -9,18 +9,18 @@ export function findingKind(type?: string | null): FindingKind {
   return "other";
 }
 
-// Sumber kategori: https://owasp.org/www-project-mobile-top-10/ (edisi 2024).
+// Sumber kategori: https://owasp.github.io/www-project-mobile-top-10/ (edisi 2024).
 export const OWASP_MOBILE_2024 = [
-  ["M1", "Penggunaan kredensial yang tidak tepat"],
-  ["M2", "Keamanan rantai pasokan yang tidak memadai"],
-  ["M3", "Autentikasi/otorisasi yang tidak aman"],
-  ["M4", "Validasi input/output yang tidak memadai"],
-  ["M5", "Komunikasi yang tidak aman"],
-  ["M6", "Kontrol privasi yang tidak memadai"],
-  ["M7", "Proteksi biner yang tidak memadai"],
-  ["M8", "Kesalahan konfigurasi keamanan"],
-  ["M9", "Penyimpanan data yang tidak aman"],
-  ["M10", "Kriptografi yang tidak memadai"],
+  ["M1", "Improper Credential Usage"],
+  ["M2", "Inadequate Supply Chain Security"],
+  ["M3", "Insecure Authentication/Authorization"],
+  ["M4", "Insufficient Input/Output Validation"],
+  ["M5", "Insecure Communication"],
+  ["M6", "Inadequate Privacy Controls"],
+  ["M7", "Insufficient Binary Protections"],
+  ["M8", "Security Misconfiguration"],
+  ["M9", "Insecure Data Storage"],
+  ["M10", "Insufficient Cryptography"],
 ] as const;
 
 export const APPLICATION_TEXT_FIELDS = [

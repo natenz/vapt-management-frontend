@@ -51,7 +51,7 @@ const editSchema = z.object({
     .refine((v) => v === "" || /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v), "Hanya huruf, angka, titik, garis bawah, dan strip"),
   custom_title: z.string().trim().min(1, "Judul wajib diisi").max(255, "Judul maksimal 255 karakter"),
   severity: z.enum(SEVERITIES),
-  cvss_score: z.string().refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 10), "CVSS 0 sampai 10"),
+  cvss_score: z.string().trim().max(2000, "CVSS maksimal 2000 karakter"),
   endpoint: z.string(),
 }).superRefine((v, ctx) => {
   if (v.status === "closed_with_note" && !v.status_note.trim()) ctx.addIssue({ code: "custom", path: ["status_note"], message: "Isi alasan finding ditutup dengan catatan" });
@@ -177,7 +177,7 @@ function EditFinding({ f, onDone, asset, projectStatus }: { f: Finding; onDone: 
         finding_code: canEditCode ? v.finding_code || undefined : undefined,
         custom_title: v.custom_title,
         severity: v.severity,
-        cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score),
+        cvss_score: v.cvss_score,
         endpoint: v.endpoint,
       });
     },
@@ -205,7 +205,7 @@ function EditFinding({ f, onDone, asset, projectStatus }: { f: Finding; onDone: 
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
-        <Field label={detailed ? "CVSS" : "CVSS score"} error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
+        <Field label={detailed ? "CVSS" : "CVSS score"} helper="Bisa diisi skor beserta vector/matrix CVSS." error={errors.cvss_score?.message}>{(x) => <Input type="text" maxLength={2000} placeholder="8.1 — CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N" {...x} {...register("cvss_score")} />}</Field>
       </div>
       {detailed ? <>
         <Field label="Status Pentest">{(x) => <select {...x} className={selectClass} {...register("status")}>
@@ -291,13 +291,13 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
         <ul className="flex flex-col divide-y divide-border">
           {(data ?? []).map((f) => (
             <li key={f.vulna_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <span className="flex flex-col">
+              <span className="flex min-w-0 max-w-full flex-col">
                 <span className="flex flex-wrap items-baseline gap-2">
                   {f.finding_code ? <code className="rounded-xs bg-surface-sunken px-1.5 py-0.5 text-caption text-ink-secondary tabular">{f.finding_code}</code> : null}
                   <span className="text-title-sm text-ink">{f.custom_title}</span>
                 </span>
-                <span className="text-body-sm text-ink-muted">
-                  {f.asset?.asset_name ?? `Asset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score != null ? ` · CVSS ${f.cvss_score}` : ""}
+                <span className="break-words whitespace-pre-wrap text-body-sm text-ink-muted">
+                  {f.asset?.asset_name ?? `Asset ${f.asset_id}`}{f.endpoint ? ` · ${f.endpoint}` : ""}{f.cvss_score?.trim() ? ` · CVSS ${f.cvss_score}` : ""}
                 </span>
                 {f.status_note ? <span className="mt-1 text-body-sm text-ink-secondary">Catatan: {f.status_note}</span> : null}
               </span>

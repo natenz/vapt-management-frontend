@@ -206,8 +206,8 @@ function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; s
         </span>
         <SeverityBadge severity={toSeverityKey(f.severity)} />
       </div>
-      <p className="text-body-sm text-ink-muted">
-        {showAsset ? `${f.asset?.asset_name ?? `Asset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
+      <p className="break-words whitespace-pre-wrap text-body-sm text-ink-muted">
+        {showAsset ? `${f.asset?.asset_name ?? `Asset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score?.trim() ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
       </p>
       <FindingDetails finding={f} />
       {(f.evidences ?? []).length ? (

@@ -64,7 +64,7 @@ export const QUALITY_LABEL: Record<QualityIssue, string> = {
 export function qualityIssues(f: Finding): QualityIssue[] {
   const issues: QualityIssue[] = [];
   if (!f.evidences?.length) issues.push("evidence");
-  if (f.cvss_score === null || f.cvss_score === undefined) issues.push("cvss");
+  if (!f.cvss_score?.trim()) issues.push("cvss");
   if (!f.endpoint?.trim()) issues.push("endpoint");
   return issues;
 }

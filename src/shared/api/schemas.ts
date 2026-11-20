@@ -182,7 +182,7 @@ export const findingSchema = z.object({
   finding_code: z.string().optional().default(""),
   custom_title: z.string(),
   severity: z.string(),
-  cvss_score: z.number().optional().nullable(),
+  cvss_score: z.union([z.string(), z.number().transform(String)]).optional().nullable(),
   endpoint: z.string().optional().nullable(),
   status: z.string(),
   status_note: z.string().optional().default(""),

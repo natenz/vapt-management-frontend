@@ -37,7 +37,7 @@ const f = (id: number, severity: string, extra: Partial<F> = {}): F =>
     custom_title: `T${id}`,
     severity,
     status: "open",
-    cvss_score: 7.5,
+    cvss_score: "7.5",
     endpoint: "/api",
     evidences: [{ evidence_id: 1 }],
     ...extra,
@@ -80,6 +80,8 @@ describe("kelengkapan findings", () => {
       "endpoint",
     ]);
     expect(qualityIssues(f(9, "High"))).toEqual([]);
+    expect(qualityIssues(f(9, "High", { cvss_score: " " }))).toEqual(["cvss"]);
+    expect(qualityIssues(f(9, "High", { cvss_score: "0" }))).toEqual([]);
   });
 
   it("per proyek, giliran writer dulu, severity tertinggi dulu", () => {

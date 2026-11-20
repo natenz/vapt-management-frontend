@@ -38,7 +38,7 @@ export type FindingInput = {
   catalog_vulna_id?: number;
   custom_title?: string;
   severity?: string;
-  cvss_score?: number;
+  cvss_score?: string;
   endpoint?: string;
 };
 
