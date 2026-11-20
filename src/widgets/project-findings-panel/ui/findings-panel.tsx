@@ -7,6 +7,12 @@ import { z } from "zod";
 import { listCatalog } from "@/entities/catalog";
 import {
   changeFindingStatus,
+  NetworkFindingFields,
+  NetworkFindingDetails,
+  networkFindingSchema,
+  networkFindingInput,
+  isNetworkAsset,
+  canEditFindingStatus,
   deleteFinding,
   listFindings,
   updateFinding,
@@ -32,10 +38,11 @@ import { Skeleton } from "@/shared/ui/skeleton";
 
 // Pencatatan dan penyuntingan findings tersedia di setiap stage proyek.
 const EDITABLE_STATUSES = ["Draft", "Scoping", "Assessment", "Analysis", "Initial Report", "Remediasi", "Retesting", "Final Report Drafting", "Final Presentation", "Done"];
-// Perubahan status triage tetap dikunci saat remediasi dan hanya tersedia di stage pengujian/laporan.
-const STATUS_CHANGE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
+  ...networkFindingSchema.shape,
+  status: z.enum(FINDING_STATUSES),
+  status_note: z.string().max(500),
   catalog_vulna_id: z.string(),
   finding_code: z
     .string()
@@ -46,16 +53,17 @@ const editSchema = z.object({
   severity: z.enum(SEVERITIES),
   cvss_score: z.string().refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 10), "CVSS 0 sampai 10"),
   endpoint: z.string(),
+}).superRefine((v, ctx) => {
+  if (v.status === "closed_with_note" && !v.status_note.trim()) ctx.addIssue({ code: "custom", path: ["status_note"], message: "Isi alasan finding ditutup dengan catatan" });
 });
 type EditValues = z.infer<typeof editSchema>;
 
 const STATUS_LABEL: Record<string, string> = { open: "Terbuka", closed: "Ditutup", closed_with_note: "Ditutup dengan catatan" };
 
 // BE: hanya pentester dan technical writer yang mengubah status temuan; PM dan Tech Lead cuma melihat.
-const STATUS_ROLES = ["pentester", "technical_writer"];
 
 export function allowedFindingStatuses(f: Finding, projectStatus: string, role: string): FindingStatus[] {
-  if (STATUS_CHANGE_STATUSES.includes(projectStatus) && STATUS_ROLES.includes(role)) {
+  if (canEditFindingStatus(role, projectStatus)) {
     return [...FINDING_STATUSES];
   }
   return FINDING_STATUSES.includes(f.status as FindingStatus) ? [f.status as FindingStatus] : ["open"];
@@ -127,13 +135,19 @@ function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
   );
 }
 
-function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
+function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone: () => void; network: boolean; projectStatus: string }) {
   const qc = useQueryClient();
+  const role = useSession((s) => s.user?.role?.role_name ?? "");
   const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
   const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
-  const { register, handleSubmit, formState: { errors } } = useForm<EditValues>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
+      ...networkFindingInput(f),
+      device_name: f.device_name || f.asset?.asset_name || "",
+      ip_address: f.ip_address || f.asset?.ip_address || "",
+      status: f.status as EditValues["status"],
+      status_note: f.status_note ?? "",
       catalog_vulna_id: f.catalog_vulna_id == null ? "" : String(f.catalog_vulna_id),
       finding_code: f.finding_code ?? "",
       custom_title: f.custom_title,
@@ -142,9 +156,15 @@ function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
       endpoint: f.endpoint ?? "",
     },
   });
+  const watchStatus = watch("status");
   const save = useMutation({
     mutationFn: async (v: EditValues) => {
       await updateFinding(f.vulna_id, {
+        ...(network ? {
+          ...networkFindingInput(v),
+          status: v.status !== f.status ? v.status : undefined,
+          status_note: v.status === "closed_with_note" && (v.status_note !== (f.status_note ?? "") || v.status !== f.status) ? v.status_note : undefined,
+        } : {}),
         catalog_vulna_id: v.catalog_vulna_id && Number(v.catalog_vulna_id) !== f.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
         finding_code: v.finding_code || undefined,
         custom_title: v.custom_title,
@@ -171,14 +191,20 @@ function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
         )}
       </Field>
       <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
-        <Field label="Kode finding" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
-        <Field label="Judul finding" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
+        <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
+        <Field label={network ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
-        <Field label="CVSS score" error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
+        <Field label={network ? "CVSS" : "CVSS score"} error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
       </div>
-      <Field label="Endpoint">{(x) => <Input {...x} {...register("endpoint")} />}</Field>
+      {network ? <>
+        <Field label="Status Pentest">{(x) => <select {...x} className={selectClass} {...register("status")}>
+          {allowedFindingStatuses(f, projectStatus, role).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>}</Field>
+        {watchStatus === "closed_with_note" ? <Field label="Alasan penutupan" error={errors.status_note?.message}>{(x) => <Textarea {...x} maxLength={500} {...register("status_note")} readOnly={!canEditFindingStatus(role, projectStatus)} />}</Field> : null}
+        <NetworkFindingFields register={register} errors={errors} />
+      </> : <Field label="Endpoint">{(x) => <Input {...x} {...register("endpoint")} />}</Field>}
       <div className="flex gap-2">
         <Button type="submit" variant="solid" loading={save.isPending}>Simpan</Button>
         <Button type="button" onClick={onDone}>Batal</Button>
@@ -196,7 +222,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const role = user?.role?.role_name ?? "";
   const statusOpen = EDITABLE_STATUSES.includes(project.status?.status_name ?? "");
-  // Sama dengan BE (vulna_service Create): sebelum Remediasi dan lagi dari Retesting sampai Final Report Drafting.
+  // Pencatatan tersedia di seluruh stage; perubahan status finding mengikuti aturan terpisah.
   const canRecord = statusOpen && ["pentester", "super_admin"].includes(role);
   const projectStatus = project.status?.status_name ?? "";
   const isOwner = (f: Finding) => f.pentester_id === user?.sys_user_id;
@@ -301,6 +327,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   )
                 )}
               </span>
+              {isNetworkAsset(f.asset?.asset_type ?? project.assets.find((a) => a.assets_id === f.asset_id)?.asset_type) && editingId !== f.vulna_id ? <NetworkFindingDetails finding={f} /> : null}
               {(f.evidences ?? []).some((evidence) => evidence.s3_bucket === "local") ? (
                 <div className="flex w-full flex-wrap gap-2" aria-label={`Evidence ${f.custom_title}`}>
                   {(f.evidences ?? []).filter((evidence) => evidence.s3_bucket === "local").map((evidence) => <EvidencePhoto key={evidence.evidence_id} evidence={evidence} />)}
@@ -308,7 +335,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               ) : null}
               {notingId === f.vulna_id ? <NoteEditor f={f} onDone={() => setNotingId(null)} /> : null}
               {editingId === f.vulna_id ? (
-                <EditFinding f={f} onDone={() => setEditingId(null)} />
+                <EditFinding f={f} network={isNetworkAsset(f.asset?.asset_type ?? project.assets.find((a) => a.assets_id === f.asset_id)?.asset_type)} projectStatus={projectStatus} onDone={() => setEditingId(null)} />
               ) : null}
             </li>
           ))}

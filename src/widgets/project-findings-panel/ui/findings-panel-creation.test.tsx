@@ -17,7 +17,7 @@ afterEach(() => {
   useSession.getState().clear();
 });
 
-function renderPanel(status: string, role = "pentester") {
+function renderPanel(status: string, role = "pentester", assetType = "web") {
   useSession.setState({
     user: {
       sys_user_id: 5,
@@ -35,7 +35,7 @@ function renderPanel(status: string, role = "pentester") {
     projected_mandays: 10,
     pm_id: 7,
     status: { status_process_id: 1, status_name: status },
-    assets: [{ assets_id: 8, asset_name: "API pengujian", asset_type: "Web", mandays: 10, project_id: 42 }],
+    assets: [{ assets_id: 8, asset_name: "API pengujian", asset_type: assetType, ip_address: "192.0.2.10", mandays: 10, project_id: 42 }],
     mandays: [{ mandays_id: 1, asset_id: 8, pentester_id: 5, allocated_mandays: 10 }],
     resources: [],
     stages: [],
@@ -157,6 +157,76 @@ it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisa
     catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: "SCP-002", cvss_score: 8.1,
   })));
   await waitFor(() => expect(screen.queryByLabelText("Category")).not.toBeInTheDocument());
+});
+
+it("mencatat seluruh detail Network/Infra, status, dan screenshot dengan validasi IP dan alasan penutupan", async () => {
+  const { createFinding, uploadEvidence } = await import("@/entities/finding");
+  vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
+  vi.mocked(uploadEvidence).mockResolvedValue({} as Awaited<ReturnType<typeof uploadEvidence>>);
+  renderPanel("Analysis", "pentester", "network");
+  fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
+  fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
+  expect(screen.getByLabelText("Nama Perangkat")).toHaveValue("API pengujian");
+  expect(screen.getByLabelText("IP")).toHaveValue("192.0.2.10");
+  for (const [label, value] of [
+    ["Findings Code", "NET-001"], ["Vulnerability Name", "Layanan perangkat tidak aman"],
+    ["Nama Perangkat", "Router Cabang"], ["Skenario Pengujian", "Uji konfigurasi jaringan"],
+    ["Description", "Layanan lama terbuka"], ["Impact", "Akses informasi perangkat"],
+    ["Recommendation", "Batasi layanan"], ["Referensi", "https://example.test/advisory"],
+    ["CWE", "CWE-200"], ["Note Pentester", "Dikonfirmasi saat pengujian"], ["CVSS", "8.1"], ["Severity", "High"],
+  ]) fireEvent.change(screen.getByLabelText(label!), { target: { value } });
+  fireEvent.change(screen.getByLabelText("Status Pentest"), { target: { value: "closed_with_note" } });
+  fireEvent.change(screen.getByLabelText("IP"), { target: { value: "bukan-ip" } });
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  expect(await screen.findByText("Isi alamat IPv4 atau IPv6 yang valid")).toBeInTheDocument();
+  expect(screen.getByText("Isi alasan finding ditutup dengan catatan")).toBeInTheDocument();
+  expect(createFinding).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("IP"), { target: { value: "2001:db8::1" } });
+  fireEvent.change(screen.getByLabelText("Alasan penutupan"), { target: { value: "Risiko diterima klien" } });
+  const file = new File(["photo"], "bukti-network.png", { type: "image/png" });
+  fireEvent.change(screen.getByLabelText("Screenshot / Evidence"), { target: { files: [file] } });
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({
+    finding_code: "NET-001", custom_title: "Layanan perangkat tidak aman", device_name: "Router Cabang",
+    ip_address: "2001:db8::1", test_scenario: "Uji konfigurasi jaringan", description: "Layanan lama terbuka",
+    impact: "Akses informasi perangkat", recommendation: "Batasi layanan", references: "https://example.test/advisory",
+    cwe: "CWE-200", pentester_note: "Dikonfirmasi saat pengujian", status: "closed_with_note", status_note: "Risiko diterima klien", cvss_score: 8.1,
+  })));
+  await waitFor(() => expect(uploadEvidence).toHaveBeenCalledWith(123, file));
+});
+
+it("tetap bisa mencatat network di Draft dengan status awal Terbuka", async () => {
+  const { createFinding } = await import("@/entities/finding");
+  vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
+  renderPanel("Draft", "pentester", "network");
+  fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
+  fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
+  fireEvent.change(screen.getByLabelText("Vulnerability Name"), { target: { value: "Temuan awal" } });
+  fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "Low" } });
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ status: "open", device_name: "API pengujian" })));
+});
+
+it("menyunting detail network tanpa menimpa category atau alasan penutupan", async () => {
+  const { updateFinding } = await import("@/entities/finding");
+  vi.mocked(updateFinding).mockResolvedValue({} as Awaited<ReturnType<typeof updateFinding>>);
+  const client = renderPanel("Analysis", "pentester", "network");
+  client.setQueryData(["findings", 42], [{
+    vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
+    catalog_vulna_id: 9, finding_code: "NET-001", custom_title: "Perangkat jaringan",
+    severity: "High", cvss_score: 8.1, status: "open",
+    device_name: "Router", ip_address: "192.0.2.10", description: "Data lama",
+  }]);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Description")).toHaveValue("Data lama");
+  fireEvent.change(screen.getByLabelText("Description"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("Impact"), { target: { value: "Dampak hasil uji ulang" } });
+  fireEvent.change(screen.getByLabelText("Status Pentest"), { target: { value: "closed" } });
+  fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
+  await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
+    description: "", impact: "Dampak hasil uji ulang", status: "closed", catalog_vulna_id: undefined,
+    device_name: "Router", ip_address: "192.0.2.10",
+  })));
 });
 
 it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () => {

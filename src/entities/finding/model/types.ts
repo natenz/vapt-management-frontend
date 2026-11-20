@@ -15,6 +15,17 @@ export { evidenceSchema, findingSchema, reportSchema, SEVERITIES, FINDING_STATUS
 export type { Evidence, Finding, FindingStatus, ProjectReport, BackendSeverity };
 
 export type FindingInput = {
+  status?: FindingStatus;
+  status_note?: string;
+  device_name?: string;
+  ip_address?: string;
+  test_scenario?: string;
+  description?: string;
+  impact?: string;
+  recommendation?: string;
+  references?: string;
+  cwe?: string;
+  pentester_note?: string;
   asset_id: number;
   /** Kosong = kode otomatis dari BE (VLN-<proyek>-<urut>). */
   finding_code?: string;

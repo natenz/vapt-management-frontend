@@ -5,6 +5,7 @@ import { Button } from "@/shared/ui/button";
 import { Field } from "@/shared/ui/input";
 
 type EvidenceUploaderProps = {
+  label?: string;
   files: File[];
   onChange: (files: File[]) => void;
   disabled?: boolean;
@@ -16,7 +17,7 @@ function fileSize(bytes: number) {
     : `${(bytes / (1024 * 1024)).toLocaleString("id-ID", { maximumFractionDigits: 1 })} MB`;
 }
 
-export function EvidenceUploader({ files, onChange, disabled = false }: EvidenceUploaderProps) {
+export function EvidenceUploader({ files, onChange, disabled = false, label = "Foto evidence" }: EvidenceUploaderProps) {
   const input = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [dragging, setDragging] = useState(false);
@@ -40,7 +41,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
   }
 
   return (
-    <Field label="Foto evidence" labelMeta="Opsional" error={error || undefined}>
+    <Field label={label} labelMeta="Opsional" error={error || undefined}>
       {(field) => (
         <div className="flex min-w-0 flex-col gap-3">
           <input {...field} ref={input} type="file" className="sr-only" tabIndex={-1} accept="image/png,image/jpeg" multiple disabled={disabled}
