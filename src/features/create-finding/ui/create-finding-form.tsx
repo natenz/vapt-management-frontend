@@ -44,6 +44,12 @@ const schema = z
 type Values = z.infer<typeof schema>;
 
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
+const assetTypeLabels: Record<string, string> = {
+  web: "Web",
+  api: "API",
+  mobile: "Mobile",
+  network: "Network/Infra",
+};
 
 export function CreateFindingForm({ project, onSuccess, onCancel }: {
   project: ProjectDetail;
@@ -126,7 +132,11 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
                 setValue("status_note", "");
               } })}>
                 <option value="" disabled>Pilih asset</option>
-                {assets.map((a) => (<option key={a.assets_id} value={a.assets_id}>{a.asset_name}</option>))}
+                {assets.map((a) => (
+                  <option key={a.assets_id} value={a.assets_id}>
+                    {a.asset_name} — {assetTypeLabels[a.asset_type.trim().toLowerCase()] ?? (a.asset_type || "Tanpa tipe")}
+                  </option>
+                ))}
               </select>
             )}
           </Field>
