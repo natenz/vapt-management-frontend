@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { listCatalog } from "@/entities/catalog";
 import {
   changeFindingStatus,
   deleteFinding,
@@ -35,6 +36,7 @@ const EDITABLE_STATUSES = ["Draft", "Scoping", "Assessment", "Analysis", "Initia
 const STATUS_CHANGE_STATUSES = ["Assessment", "Analysis", "Initial Report", "Retesting", "Final Report Drafting"];
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
+  catalog_vulna_id: z.string(),
   finding_code: z
     .string()
     .trim()
@@ -127,9 +129,12 @@ function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
 
 function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
   const qc = useQueryClient();
+  const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
+  const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
   const { register, handleSubmit, formState: { errors } } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
+      catalog_vulna_id: f.catalog_vulna_id == null ? "" : String(f.catalog_vulna_id),
       finding_code: f.finding_code ?? "",
       custom_title: f.custom_title,
       severity: f.severity as EditValues["severity"],
@@ -140,6 +145,7 @@ function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
   const save = useMutation({
     mutationFn: async (v: EditValues) => {
       await updateFinding(f.vulna_id, {
+        catalog_vulna_id: v.catalog_vulna_id && Number(v.catalog_vulna_id) !== f.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
         finding_code: v.finding_code || undefined,
         custom_title: v.custom_title,
         severity: v.severity,
@@ -152,6 +158,18 @@ function EditFinding({ f, onDone }: { f: Finding; onDone: () => void }) {
   return (
     <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))} className="mt-3 flex w-full flex-col gap-3 rounded-sm border border-border p-4">
       {save.error ? <Alert tone="error" title="Gagal menyimpan perubahan" compact>{save.error.message}</Alert> : null}
+      {catalog.error ? <Alert tone="error" title="Gagal memuat category" compact>{catalog.error.message}</Alert> : null}
+      <Field label="Category" helper="Pilih kategori dari master catalog. Judul finding diisi secara terpisah.">
+        {(x) => (
+          <select className={selectClass} disabled={catalog.isLoading || save.isPending} {...x} {...register("catalog_vulna_id")}>
+            <option value="" disabled={Boolean(f.catalog_vulna_id)}>Tanpa category</option>
+            {f.catalog_vulna_id && !approvedCatalog.some((c) => c.vulna_id === f.catalog_vulna_id) ? (
+              <option value={f.catalog_vulna_id}>Category saat ini (#{f.catalog_vulna_id})</option>
+            ) : null}
+            {approvedCatalog.map((c) => <option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>)}
+          </select>
+        )}
+      </Field>
       <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
         <Field label="Kode finding" error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
         <Field label="Judul finding" error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>

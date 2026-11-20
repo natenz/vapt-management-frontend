@@ -77,6 +77,7 @@ describe("Tambah finding", () => {
 vi.mock("@/entities/finding", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/entities/finding")>(),
   createFinding: vi.fn(),
+  updateFinding: vi.fn(),
   uploadEvidence: vi.fn(),
   listFindings: vi.fn().mockResolvedValue([]),
 }));
@@ -129,6 +130,33 @@ it("memisahkan category dari judul finding dan mengirim severity serta CVSS hasi
   fireEvent.change(screen.getByLabelText("CVSS score"), { target: { value: "0" } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
   await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, custom_title: "XSS pada halaman profil", severity: "Low", cvss_score: 0 })));
+});
+
+it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisah (category awal %s)", async (categoryId) => {
+  const { updateFinding } = await import("@/entities/finding");
+  vi.mocked(updateFinding).mockResolvedValue({} as Awaited<ReturnType<typeof updateFinding>>);
+  const client = renderPanel("Analysis");
+  client.setQueryData(["catalog", "approved"], [
+    { vulna_id: 9, title: "SQL Injection", severity: "High", status: "approved" },
+    { vulna_id: 10, title: "Broken Access Control", severity: "High", status: "approved" },
+    { vulna_id: 11, title: "Category belum disetujui", severity: "Low", status: "pending" },
+  ]);
+  client.setQueryData(["findings", 42], [{
+    vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
+    catalog_vulna_id: categoryId, finding_code: "SCP-002", custom_title: "Tentang SQL",
+    severity: "High", cvss_score: 8.1, endpoint: "api/category", status: "open",
+  }]);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Category")).toHaveValue(categoryId ? String(categoryId) : "");
+  expect(screen.queryByRole("option", { name: /Category belum disetujui/ })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Category"), { target: { value: "10" } });
+  expect(screen.getByLabelText("Judul finding")).toHaveValue("Tentang SQL");
+  expect(screen.getByLabelText("CVSS score")).toHaveValue(8.1);
+  fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
+  await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
+    catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: "SCP-002", cvss_score: 8.1,
+  })));
+  await waitFor(() => expect(screen.queryByLabelText("Category")).not.toBeInTheDocument());
 });
 
 it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () => {
