@@ -34,6 +34,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/shared/lib/cn";
+import { workingSegments } from "@/shared/lib/work-calendar";
 import { Button } from "@/shared/ui/button";
 import {
   GanttTooltip,
@@ -57,6 +58,7 @@ type GanttItem = {
   state: GanttState;
   icon?: ReactNode;
   iconClassName?: string;
+  barClassName?: string;
 };
 
 type GanttGranularity = "day" | "week";
@@ -79,6 +81,8 @@ type GanttProps = {
   granularity?: GanttGranularity;
   onGranularityChange?: (next: GanttGranularity) => void;
   className?: string;
+  skipWeekends?: boolean;
+  holidays?: readonly string[];
 };
 
 type DragMode = "move" | "start" | "end";
@@ -111,7 +115,9 @@ type GanttTask = {
 
 const GanttItemsContext = createContext<{
   itemsById: Map<string, GanttItem>;
-}>({ itemsById: new Map() });
+  skipWeekends: boolean;
+  holidays: readonly string[];
+}>({ itemsById: new Map(), skipWeekends: false, holidays: [] });
 
 function parseDate(value: string) {
   const parsed = startOfDay(new Date(value));
@@ -196,6 +202,8 @@ function Gantt({
   granularity: granularityProp,
   onGranularityChange,
   className,
+  skipWeekends = false,
+  holidays = [],
 }: GanttProps) {
   const [innerGranularity, setInnerGranularity] = useState<GanttGranularity>("day");
   const granularity = granularityProp ?? innerGranularity;
@@ -439,7 +447,7 @@ function Gantt({
   const itemsById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
   return (
-    <GanttItemsContext.Provider value={{ itemsById }}>
+    <GanttItemsContext.Provider value={{ itemsById, skipWeekends, holidays }}>
       <div data-slot="gantt" className={cn("flex flex-col gap-3", className)}>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-caption text-ink-muted">
           <div className="flex items-center gap-2">
@@ -452,6 +460,7 @@ function Gantt({
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-4" aria-label="Legenda status kalender">
+              {items.some((item) => item.barClassName) ? <span>Warna batang mengikuti stage · pin menandai progres</span> : <>
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-surface-brand" aria-hidden />
                 Selesai
@@ -460,6 +469,7 @@ function Gantt({
                 <span className="size-2.5 rounded-xs bg-surface-inverse" aria-hidden />
                 Belum selesai
               </span>
+              </>}
             </div>
             <div
               role="radiogroup"
@@ -531,7 +541,7 @@ function Gantt({
               highlightTime={(date, unit) => {
                 if (unit !== granularity) return "";
                 if (isCurrentPeriod(date, unit, today)) return TODAY_CELL_CLASS;
-                return unit === "day" && isWeekend(date) ? WEEKEND_CELL_CLASS : "";
+                return unit === "day" && (isWeekend(date) || holidays.includes(toDateValue(date))) ? WEEKEND_CELL_CLASS : "";
               }}
             />
           </Willow>
@@ -595,22 +605,43 @@ function OwnerCell(props: CellProps) {
 /* ---------- Batang ---------- */
 
 function BarBody({ task, children }: { task: GanttTask; children?: ReactNode }) {
+  const { itemsById, skipWeekends, holidays } = useContext(GanttItemsContext);
+  const colors = itemsById.get(task.id)?.barClassName ?? RANGE_STATE[task.state];
+  const split = skipWeekends || holidays.length > 0;
+  const start = startOfDay(new Date(task.start));
+  const end = addDays(startOfDay(new Date(task.end)), -1);
+  const segments = split ? workingSegments(start, end, holidays, skipWeekends) : [];
+  const pin = task.pin === null ? null : split
+    ? ((differenceInCalendarDays(task.state === "current" ? min([end, max([start, startOfDay(new Date())])]) : end, start) + 0.5) /
+      (differenceInCalendarDays(end, start) + 1)) * 100
+    : task.pin;
+  const visiblePin = pin !== null && (!split || segments.some((s) => pin >= s.left && pin < s.left + s.width));
   return (
     <div
       data-slot="gantt-range"
       data-state={task.state}
       className={cn(
-        "absolute inset-0 overflow-visible rounded-[inherit] border-l-[3px]",
-        RANGE_STATE[task.state],
+        "absolute inset-0 overflow-visible rounded-[inherit]",
+        !split && cn("border-l-[3px]", colors),
       )}
     >
+      {split ? segments.map((segment) => (
+        <span
+          key={segment.startsAt}
+          data-slot="gantt-work-segment"
+          data-start={segment.startsAt}
+          data-end={segment.endsAt}
+          className={cn("absolute inset-y-0 rounded-sm border-l-[3px]", colors)}
+          style={{ left: `${segment.left}%`, width: `${segment.width}%` }}
+        />
+      )) : null}
       {/* Tanpa teks di batang: nama tahap ada di grid kiri dan tooltip */}
-      {task.pin !== null ? (
+      {visiblePin ? (
         <span
           data-slot="gantt-progress-pin"
           title="Posisi progres saat ini"
           className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-surface bg-surface-brand shadow-float"
-          style={{ left: `${task.pin}%` }}
+          style={{ left: `${pin}%` }}
         />
       ) : null}
       {children}
@@ -625,12 +656,17 @@ function StageBar({ data }: { data: ITask }) {
 /** Pegangan visual di kedua ujung; SVAR mendeteksi resize dari posisi pointer di tepi batang. */
 function EditableBar({ data }: { data: ITask }) {
   const task = data as unknown as GanttTask;
+  const { skipWeekends, holidays } = useContext(GanttItemsContext);
+  const split = skipWeekends || holidays.length > 0;
+  const segments = split ? workingSegments(new Date(task.start), addDays(new Date(task.end), -1), holidays, skipWeekends) : [];
+  const first = segments[0];
+  const last = segments[segments.length - 1];
   const grip =
     "absolute top-1/2 h-4 w-0.5 -translate-y-1/2 cursor-ew-resize rounded-full bg-current opacity-60";
   return (
     <BarBody task={task}>
-      <span aria-hidden data-slot="gantt-resize-start" className={cn(grip, "left-1")} />
-      <span aria-hidden data-slot="gantt-resize-end" className={cn(grip, "right-1")} />
+      {!split || first?.left === 0 ? <span aria-hidden data-slot="gantt-resize-start" className={cn(grip, "left-1", split && "text-ink-secondary")} /> : null}
+      {!split || last && last.left + last.width >= 99.999 ? <span aria-hidden data-slot="gantt-resize-end" className={cn(grip, "right-1", split && "text-ink-secondary")} /> : null}
     </BarBody>
   );
 }

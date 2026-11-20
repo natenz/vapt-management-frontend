@@ -1,31 +1,49 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { parseISO } from "date-fns";
 import { getProjectStatusStyle, updateProjectStages, type ProjectDetail } from "@/entities/project";
 import { fmtRange } from "@/shared/lib/format";
+import { workingSegments } from "@/shared/lib/work-calendar";
+import { Field, Input } from "@/shared/ui/input";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Gantt, type GanttGranularity, type GanttItem } from "@/shared/ui/gantt";
 import { notify } from "@/shared/ui/toast";
 import { buildStageSchedule } from "../model/gantt-state";
+import { HolidayEditor } from "./holiday-editor";
+
+const STAGE_COLORS: Record<string, string> = {
+  Scoping: "bg-cyan-600 text-on-brand border-cyan-300",
+  Assessment: "bg-amber-600 text-on-brand border-amber-300",
+  Analysis: "bg-indigo-600 text-on-brand border-indigo-300",
+  "Initial Report": "bg-blue-600 text-on-brand border-blue-300",
+  Remediasi: "bg-rose-600 text-on-brand border-rose-300",
+  Retesting: "bg-purple-600 text-on-brand border-purple-300",
+  "Final Report Drafting": "bg-fuchsia-600 text-on-brand border-fuchsia-300",
+  "Final Presentation": "bg-emerald-600 text-on-brand border-emerald-300",
+};
 
 export function ProjectGanttSection({ project, canEdit = false }: { project: ProjectDetail; canEdit?: boolean }) {
   const qc = useQueryClient();
   const serverStages = useMemo(() => buildStageSchedule(project), [project]);
   const [drafts, setDrafts] = useState(serverStages);
+  const serverHolidays = useMemo(() => project.schedule_holidays ?? [], [project.schedule_holidays]);
+  const [holidays, setHolidays] = useState(serverHolidays);
   const [granularity, setGranularity] = useState<GanttGranularity>("day");
   const scale = { granularity, onGranularityChange: setGranularity };
 
   useEffect(() => {
     setDrafts(serverStages);
   }, [serverStages]);
+  useEffect(() => { setHolidays(serverHolidays); }, [serverHolidays]);
 
   const hasPersistedStages = drafts.length > 0 && drafts.every((s) => s.stageId != null);
   const editable = canEdit && hasPersistedStages;
   const dirty = useMemo(
     () =>
       drafts.length === serverStages.length &&
-      drafts.some((s, i) => s.startsAt !== serverStages[i]?.startsAt || s.endsAt !== serverStages[i]?.endsAt),
-    [drafts, serverStages],
+      (drafts.some((s, i) => s.startsAt !== serverStages[i]?.startsAt || s.endsAt !== serverStages[i]?.endsAt) || holidays.join() !== serverHolidays.join()),
+    [drafts, serverStages, holidays, serverHolidays],
   );
 
   const save = useMutation({
@@ -38,6 +56,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
           start_date: s.startsAt,
           end_date: s.endsAt,
         })),
+        holidays,
       ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["project", project.project_id] });
@@ -56,6 +75,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
     id: s.id,
     label: s.label,
     ...chipFor(s.label),
+    barClassName: STAGE_COLORS[s.label],
     startsAt: s.startsAt,
     endsAt: s.endsAt,
     state: s.state,
@@ -75,6 +95,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
       <div className="flex flex-col gap-1 text-body-sm">
         <span className="font-medium text-ink">{item.label}</span>
         <span className="text-caption text-ink-muted">{fmtRange(item.startsAt, item.endsAt)}</span>
+        <span className="text-caption text-ink-muted">{workingSegments(parseISO(item.startsAt), parseISO(item.endsAt), holidays).reduce((n, s) => n + s.days, 0)} hari kerja · {item.state === "done" ? "Selesai" : item.state === "current" ? "Stage aktif" : "Belum selesai"}</span>
         <span className="text-caption text-ink-muted">
           {detail?.source === "server"
             ? "Tersimpan di backend"
@@ -96,7 +117,9 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
       <Gantt
         items={stageItems}
         initialMonth={stageItems[0] ? new Date(stageItems[0].startsAt) : undefined}
-        editable={editable}
+        editable={editable && !save.isPending}
+        skipWeekends
+        holidays={holidays}
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
         onItemChange={handleStageChange}
@@ -125,6 +148,7 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
               disabled={!dirty || save.isPending}
               onClick={() => {
                 setDrafts(serverStages);
+                setHolidays(serverHolidays);
                 save.reset();
               }}
             >
@@ -142,6 +166,22 @@ export function ProjectGanttSection({ project, canEdit = false }: { project: Pro
           </span>
         ) : null}
       </div>
+
+      <p className="text-caption text-ink-muted">Warna berbeda untuk setiap stage. Sabtu–Minggu dan libur tambahan dikosongkan; batang berlanjut pada hari kerja dalam rentang jadwal. Geser tanggal selesai bila perlu memperpanjang jadwal.</p>
+
+      {editable ? <>
+        <HolidayEditor value={holidays} onChange={setHolidays} min={rangeStart} max={rangeEnd} disabled={save.isPending} />
+        <details className="rounded-sm border border-border p-4">
+          <summary className="cursor-pointer text-body-sm text-ink focus-ring">Atur tanggal stage</summary>
+          <div className="mt-3 flex flex-col gap-4">
+            {drafts.map((stage) => <div key={stage.id} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_1fr]">
+              <span className="text-body-sm text-ink">{stage.label}</span>
+              <Field label={`Mulai ${stage.label}`}>{(f) => <Input {...f} type="date" min={rangeStart} max={stage.endsAt} value={stage.startsAt} disabled={save.isPending} onChange={(e) => { if (e.target.value && e.target.value <= stage.endsAt && (!rangeStart || e.target.value >= rangeStart)) handleStageChange(stage.id, e.target.value, stage.endsAt); }} />}</Field>
+              <Field label={`Selesai ${stage.label}`}>{(f) => <Input {...f} type="date" min={stage.startsAt} max={rangeEnd} value={stage.endsAt} disabled={save.isPending} onChange={(e) => { if (e.target.value && e.target.value >= stage.startsAt && (!rangeEnd || e.target.value <= rangeEnd)) handleStageChange(stage.id, stage.startsAt, e.target.value); }} />}</Field>
+            </div>)}
+          </div>
+        </details>
+      </> : holidays.length ? <p className="text-caption text-ink-muted">Libur tambahan: {holidays.join(", ")}</p> : null}
 
       {stageGantt}
     </section>

@@ -121,11 +121,11 @@ export const updateAsset = async (id: number, body: Partial<AssetInput>) =>
 export const deleteAsset = async (assetId: number) =>
   (await apiRequest(`/assets/${assetId}`, { method: "DELETE" }, z.unknown())).data;
 
-export const updateProjectStages = async (id: number, stages: StageScheduleInput[]) =>
+export const updateProjectStages = async (id: number, stages: StageScheduleInput[], scheduleHolidays?: string[]) =>
   (
     await apiRequest(
       `/projects/${id}/stages`,
-      { method: "PUT", body: { stages } },
+      { method: "PUT", body: { stages, schedule_holidays: scheduleHolidays } },
       z.array(projectStageSchema),
     )
   ).data;

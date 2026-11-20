@@ -107,6 +107,18 @@ beforeEach(() => {
 const bar = (id: string) => document.querySelector(`.wx-bar[data-id="${id}"]`) as HTMLElement;
 
 describe("Gantt (SVAR)", () => {
+  it("merender warna per stage dan potongan yang melewati Sabtu–Minggu serta libur pilihan", () => {
+    const items = [{ ...ITEMS[0]!, startsAt: "2026-09-04", endsAt: "2026-09-09", barClassName: "bg-cyan-600" }];
+    const { rerender } = render(<Gantt items={items} skipWeekends holidays={["2026-09-08"]} />);
+    const segments = bar("step-1").querySelectorAll('[data-slot="gantt-work-segment"]');
+    expect(segments).toHaveLength(3);
+    expect([...segments].map((s) => [s.getAttribute("data-start"), s.getAttribute("data-end")])).toEqual([
+      ["2026-09-04", "2026-09-04"], ["2026-09-07", "2026-09-07"], ["2026-09-09", "2026-09-09"],
+    ]);
+    expect(segments[0]).toHaveClass("bg-cyan-600");
+    rerender(<Gantt items={items} skipWeekends holidays={[]} />);
+    expect(bar("step-1").querySelectorAll('[data-slot="gantt-work-segment"]')).toHaveLength(2);
+  });
   it("merender satu batang per stage dengan keadaan Selesai/Belum selesai", () => {
     render(<Gantt items={ITEMS} />);
     expect(document.querySelectorAll(".wx-bar")).toHaveLength(3);

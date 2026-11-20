@@ -71,6 +71,7 @@ export type Asset = z.infer<typeof assetSchema>;
 
 export const projectSchema = z.object({
   project_id: z.number(),
+  schedule_holidays: z.array(z.string()).optional().nullable(),
   s_id: z.number().optional().nullable(),
   project_name: z.string(),
   client_name: z.string(),
