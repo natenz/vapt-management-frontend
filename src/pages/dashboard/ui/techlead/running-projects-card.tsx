@@ -52,7 +52,7 @@ export function RunningProjectsCard({
                   <ColumnLabel icon={<GitBranch />}>Stage</ColumnLabel>
                 </TableHead>
                 <TableHead>
-                  <ColumnLabel icon={<TrendingUp />}>Progres vs waktu</ColumnLabel>
+                  <ColumnLabel icon={<TrendingUp />}>Progress</ColumnLabel>
                 </TableHead>
                 <TableHead>
                   <ColumnLabel icon={<CalendarClock />}>Tenggat</ColumnLabel>
