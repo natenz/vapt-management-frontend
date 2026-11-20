@@ -380,7 +380,7 @@ describe("mandays proyeksi Tech Lead", () => {
   });
   it("total asset tepat di batas lolos, lebih sedikit saja ditolak", () => {
     expect(budgetError([a("8"), a("12")], 20)).toBeNull();
-    expect(budgetError([a("8"), a("12.5")], 20)).toContain("melebihi mandays proyeksi Tech Lead (20 md)");
+    expect(budgetError([a("8"), a("12.5")], 20)).toContain("melebihi mandays proyek (20 md)");
   });
   it("asset yang dihapus tidak dihitung; validate memasukkan pesannya", () => {
     expect(budgetError([a("8"), { ...a("50"), removed: true }], 20)).toBeNull();

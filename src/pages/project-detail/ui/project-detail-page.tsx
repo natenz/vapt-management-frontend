@@ -34,6 +34,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { Stepper } from "@/shared/ui/stepper";
 import { notify } from "@/shared/ui/toast";
 import { AssetPlanner } from "@/features/asset-planner";
+import { EditProjectMandays } from "@/features/edit-project-mandays";
 import { FindingsPanel } from "@/widgets/project-findings-panel";
 import { ProjectGanttSection } from "@/widgets/project-gantt-section";
 import { TeamSidebar } from "@/widgets/project-team-sidebar";
@@ -230,9 +231,13 @@ export function ProjectDetailPage() {
         <div className="flex flex-col gap-1.5 bg-surface p-4">
           <dt className="flex items-center gap-1.5 text-caption text-ink-muted">
             <Clock className="size-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
-            <span>Total mandays</span>
+            <span>Mandays proyek</span>
           </dt>
-          <dd className="text-title-sm text-ink tabular">{p.total_mandays} md</dd>
+          <dd className="flex flex-col gap-1.5">
+            <span className="text-title-sm text-ink tabular">{p.projected_mandays > 0 ? `${p.projected_mandays} md` : "Belum ditetapkan"}</span>
+            <span className="text-caption text-ink-muted">Terpakai asset: <span className="tabular">{p.total_mandays} md</span></span>
+            <EditProjectMandays project={p} />
+          </dd>
         </div>
 
         {/* 4. Aset / anggota tim */}

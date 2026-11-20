@@ -64,6 +64,9 @@ export const getProject = async (id: number) =>
 export const createProject = async (body: CreateProjectInput) =>
   (await apiRequest("/projects", { method: "POST", body }, projectDetailSchema)).data;
 
+export const updateProjectMandays = async (id: number, projectedMandays: number) =>
+  (await apiRequest(`/projects/${id}`, { method: "PUT", body: { projected_mandays: projectedMandays } }, projectDetailSchema)).data;
+
 export const changeProjectStatus = async (id: number, status_id: number) =>
   (
     await apiRequest(

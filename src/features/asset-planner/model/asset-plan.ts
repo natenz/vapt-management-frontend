@@ -94,7 +94,7 @@ export const totalAssetMandays = (drafts: DraftAsset[]) => drafts.filter((a) => 
 export function budgetError(drafts: DraftAsset[], projected: number): string | null {
   const total = totalAssetMandays(drafts);
   if (!(projected > 0) || total <= projected + 1e-9) return null;
-  return `Total mandays asset (${fmtNum(total)} md) melebihi mandays proyeksi Tech Lead (${fmtNum(projected)} md). Kurangi mandays asset atau minta Tech Lead menaikkan proyeksi.`;
+  return `Total mandays asset (${fmtNum(total)} md) melebihi mandays proyek (${fmtNum(projected)} md). Kurangi mandays asset atau gunakan Edit mandays proyek untuk menyesuaikan jatah.`;
 }
 
 export function validate(drafts: DraftAsset[], range: Range, server: DraftAsset[] = [], projected = 0): Record<string, string[]> {

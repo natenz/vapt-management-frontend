@@ -113,12 +113,14 @@ describe("ProjectDetailPage: alur 10 status (tanpa Planning)", () => {
   it.each(["Draft", "Scoping", "Assessment", "Analysis", "Initial Report", "Remediasi", "Retesting", "Final Report Drafting", "Final Presentation", "Done"])("PM pemilik dapat menambah asset saat %s", async (status) => {
     mount("project_manager", 3, { status: { status_process_id: 1, status_name: status } });
     expect(await screen.findByRole("button", { name: "Tambah asset" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Edit mandays proyek" })).toBeEnabled();
   });
 
   it("PM tidak mendapat kontrol asset untuk proyek PM lain", async () => {
     mount("project_manager", 4, { status: { status_process_id: 1, status_name: "Done" } });
     expect(await screen.findByText("Audit Keamanan Portal")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Tambah asset" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit mandays proyek" })).not.toBeInTheDocument();
   });
   it("Tech Lead: Draft langsung kickoff ke Scoping", async () => {
     mount("tech_lead", 1, { status: { status_process_id: 1, status_name: "Draft" } });
