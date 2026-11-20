@@ -104,10 +104,6 @@ export function ProjectDetailPage() {
   const p = project.data;
   const current = p.status?.status_name ?? "Draft";
   const canOpenReport = role === "technical_writer" || statusBetween(current, "Initial Report", "Done");
-  // PM baru melihat proyek setelah Tech Lead menyerahkannya (keluar dari Draft).
-  if (role === "project_manager" && current === "Draft") {
-    return <Alert tone="warning" title="Proyek belum diserahkan">Proyek ini masih disiapkan Tech Lead, jadi belum bisa dibuka.</Alert>;
-  }
   const statusIndex = Math.max(0, PROJECT_STATUSES.indexOf(current as (typeof PROJECT_STATUSES)[number]));
   const next = NEXT[current];
   const nextStatus = statuses.data?.find((s) => s.status_name === next?.to);
@@ -139,10 +135,10 @@ export function ProjectDetailPage() {
   const overdue = currentStage?.end_date && currentStage.end_date.slice(0, 10) < new Date().toISOString().slice(0, 10);
   const late = next && overdue && (!next.auto || advanceBlockReason) ? currentStage!.end_date! : null;
 
-  // BE: aset hanya bisa diubah saat Draft/Scoping oleh PM pemilik (atau admin).
-  const canEditAssets = current === "Scoping" && ownsAsPm && (role === "project_manager" || role === "super_admin");
+  // PM pemilik mengelola asset di seluruh status proyek.
+  const canEditAssets = (role === "project_manager" && ownsAsPm) || (current === "Scoping" && role === "super_admin");
   // Assign pentester per aset: urusan PM pemilik proyek saja (TL hanya buat template dan tim).
-  const canAssign = current === "Scoping" && role === "project_manager" && ownsAsPm;
+  const canAssign = role === "project_manager" && ownsAsPm;
 
   return (
     <div className="flex flex-col gap-8">

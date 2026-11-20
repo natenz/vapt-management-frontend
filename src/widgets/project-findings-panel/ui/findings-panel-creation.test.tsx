@@ -154,7 +154,7 @@ it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisa
   expect(screen.getByLabelText("CVSS score")).toHaveValue(8.1);
   fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
-    catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: "SCP-002", cvss_score: 8.1,
+    catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: undefined, cvss_score: 8.1,
   })));
   await waitFor(() => expect(screen.queryByLabelText("Category")).not.toBeInTheDocument());
 });
@@ -168,8 +168,9 @@ it("mencatat seluruh detail Network/Infra, status, dan screenshot dengan validas
   fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
   expect(screen.getByLabelText("Nama Perangkat")).toHaveValue("API pengujian");
   expect(screen.getByLabelText("IP")).toHaveValue("192.0.2.10");
+  expect(screen.getByLabelText("Findings Code")).toHaveAttribute("readonly");
   for (const [label, value] of [
-    ["Findings Code", "NET-001"], ["Vulnerability Name", "Layanan perangkat tidak aman"],
+    ["Vulnerability Name", "Layanan perangkat tidak aman"],
     ["Nama Perangkat", "Router Cabang"], ["Skenario Pengujian", "Uji konfigurasi jaringan"],
     ["Description", "Layanan lama terbuka"], ["Impact", "Akses informasi perangkat"],
     ["Recommendation", "Batasi layanan"], ["Referensi", "https://example.test/advisory"],
@@ -187,7 +188,7 @@ it("mencatat seluruh detail Network/Infra, status, dan screenshot dengan validas
   fireEvent.change(screen.getByLabelText("Screenshot / Evidence"), { target: { files: [file] } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
   await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({
-    finding_code: "NET-001", custom_title: "Layanan perangkat tidak aman", device_name: "Router Cabang",
+    finding_code: undefined, custom_title: "Layanan perangkat tidak aman", device_name: "Router Cabang",
     ip_address: "2001:db8::1", test_scenario: "Uji konfigurasi jaringan", description: "Layanan lama terbuka",
     impact: "Akses informasi perangkat", recommendation: "Batasi layanan", references: "https://example.test/advisory",
     cwe: "CWE-200", pentester_note: "Dikonfirmasi saat pengujian", status: "closed_with_note", status_note: "Risiko diterima klien", cvss_score: 8.1,
@@ -227,6 +228,37 @@ it("menyunting detail network tanpa menimpa category atau alasan penutupan", asy
     description: "", impact: "Dampak hasil uji ulang", status: "closed", catalog_vulna_id: undefined,
     device_name: "Router", ip_address: "192.0.2.10",
   })));
+});
+
+it.each(["pentester", "tech_lead", "super_admin"])("%s tidak dapat mengubah kode meskipun nilai input dimanipulasi", async (role) => {
+  const { updateFinding } = await import("@/entities/finding");
+  vi.mocked(updateFinding).mockResolvedValue({} as Awaited<ReturnType<typeof updateFinding>>);
+  const client = renderPanel("Analysis", role);
+  client.setQueryData(["findings", 42], [{
+    vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
+    finding_code: "VLN-42-001", custom_title: "Temuan uji", severity: "High", status: "open",
+  }]);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Kode finding")).toHaveAttribute("readonly");
+  fireEvent.change(screen.getByLabelText("Kode finding"), { target: { value: "MANUAL-001" } });
+  fireEvent.change(screen.getByLabelText("Judul finding"), { target: { value: "Judul diperbarui" } });
+  fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
+  await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({ finding_code: undefined, custom_title: "Judul diperbarui" })));
+});
+
+it("Technical Writer dapat mengganti kode finding", async () => {
+  const { updateFinding } = await import("@/entities/finding");
+  vi.mocked(updateFinding).mockResolvedValue({} as Awaited<ReturnType<typeof updateFinding>>);
+  const client = renderPanel("Done", "technical_writer", "network");
+  client.setQueryData(["findings", 42], [{
+    vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5,
+    finding_code: "VLN-42-001", custom_title: "Temuan jaringan", severity: "High", status: "open",
+  }]);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("Findings Code")).not.toHaveAttribute("readonly");
+  fireEvent.change(screen.getByLabelText("Findings Code"), { target: { value: "NET-001" } });
+  fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
+  await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({ finding_code: "NET-001", custom_title: "Temuan jaringan" })));
 });
 
 it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () => {

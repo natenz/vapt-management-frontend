@@ -138,6 +138,7 @@ function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
 function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone: () => void; network: boolean; projectStatus: string }) {
   const qc = useQueryClient();
   const role = useSession((s) => s.user?.role?.role_name ?? "");
+  const canEditCode = role === "technical_writer";
   const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
   const approvedCatalog = (catalog.data ?? []).filter((c) => !c.status || c.status === "approved");
   const { register, handleSubmit, watch, formState: { errors } } = useForm<EditValues>({
@@ -166,7 +167,7 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
           status_note: v.status === "closed_with_note" && (v.status_note !== (f.status_note ?? "") || v.status !== f.status) ? v.status_note : undefined,
         } : {}),
         catalog_vulna_id: v.catalog_vulna_id && Number(v.catalog_vulna_id) !== f.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
-        finding_code: v.finding_code || undefined,
+        finding_code: canEditCode ? v.finding_code || undefined : undefined,
         custom_title: v.custom_title,
         severity: v.severity,
         cvss_score: v.cvss_score === "" ? undefined : Number(v.cvss_score),
@@ -191,7 +192,7 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
         )}
       </Field>
       <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
-        <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message}>{(x) => <Input autoComplete="off" {...x} {...register("finding_code")} />}</Field>
+        <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper={!canEditCode ? "Kode finding hanya dapat diubah oleh Technical Writer." : undefined}>{(x) => <Input autoComplete="off" readOnly={!canEditCode} {...x} {...register("finding_code")} />}</Field>
         <Field label={network ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

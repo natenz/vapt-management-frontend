@@ -280,6 +280,7 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
   const overBudget = budgetError(drafts, projected) !== null;
   const allErrors = Object.values(errors).flat();
   const hasMissing = shown.some((a) => a.pentesters.length === 0);
+  const canDeleteSavedAssets = ["Draft", "Scoping"].includes(project.status?.status_name ?? "");
 
   return (
     <section className="flex flex-col gap-4 rounded-md border border-border bg-surface p-6" aria-labelledby="planner">
@@ -409,14 +410,14 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
                     <Button type="button" variant="quiet" aria-label={`Ubah asset ${label}`} onClick={() => editAsset(a)}>
                       <Pencil />
                     </Button>
-                    <Button
+                    {a.id == null || canDeleteSavedAssets ? <Button
                       type="button"
                       variant="quiet"
                       aria-label={`Hapus asset ${a.name || "baru"}`}
                       onClick={() => removeAsset(a)}
                     >
                       <Trash2 />
-                    </Button>
+                    </Button> : null}
                   </span>
                 </div>
                 {canAssign ? (

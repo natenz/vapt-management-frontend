@@ -58,6 +58,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
   const sessionUser = useSession((s) => s.user);
   // Pentester hanya boleh mencatat temuan di aset yang ditugaskan ke dia (baris mandays).
   const isPentester = sessionUser?.role?.role_name === "pentester";
+  const canEditCode = sessionUser?.role?.role_name === "technical_writer";
   const assignedIds = new Set(
     (project.mandays ?? []).filter((m) => m.pentester_id === sessionUser?.sys_user_id).map((m) => m.asset_id),
   );
@@ -73,7 +74,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
       if (!finding) {
         finding = await createFinding(id, {
         asset_id: Number(v.asset_id),
-        finding_code: v.finding_code || undefined,
+        finding_code: canEditCode ? v.finding_code || undefined : undefined,
         ...(network ? { ...networkFindingInput(v), status: v.status, status_note: v.status === "closed_with_note" ? v.status_note : undefined } : {}),
         catalog_vulna_id: v.catalog_vulna_id ? Number(v.catalog_vulna_id) : undefined,
         custom_title: v.custom_title || undefined,
@@ -130,8 +131,8 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
               </select>
             )}
           </Field>
-          <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper="Kode unik findings di proyek ini, terpisah dari judul. Kosongkan untuk kode otomatis (VLN-nomor proyek-urutan), atau isi sendiri, contoh XSS-01.">
-            {(f) => <Input placeholder="Otomatis" autoComplete="off" {...f} {...register("finding_code")} />}
+          <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper="Kode dibuat otomatis. Hanya Technical Writer yang dapat mengisi atau mengubah kode secara manual.">
+            {(f) => <Input placeholder="Otomatis" autoComplete="off" readOnly={!canEditCode} {...f} {...register("finding_code")} />}
           </Field>
           <Field label={network ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(f) => <Input {...f} {...register("custom_title")} />}</Field>
           {network ? <>
