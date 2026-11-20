@@ -107,21 +107,28 @@ it("Batal menutup modal tanpa menyimpan dan mengembalikan fokus", async () => {
   await waitFor(() => expect(trigger).toHaveFocus());
 });
 
-it("mengisi catalog otomatis dan mengirim severity serta CVSS hasil edit termasuk nol", async () => {
+it("memisahkan category dari judul finding dan mengirim severity serta CVSS hasil edit termasuk nol", async () => {
   const { createFinding } = await import("@/entities/finding");
   vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
   const client = renderPanel("Analysis");
   client.setQueryData(["catalog", "approved"], [{ vulna_id: 9, title: "XSS catalog", severity: "High", cvss_score: 8.1, status: "approved" }]);
   fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
   fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
-  fireEvent.change(screen.getByLabelText("Dari vulnerability catalog"), { target: { value: "9" } });
-  expect(screen.getByLabelText("Judul finding")).toHaveValue("XSS catalog");
+  fireEvent.change(screen.getByLabelText("Category"), { target: { value: "9" } });
+  expect(screen.getByLabelText("Judul finding")).toHaveValue("");
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  expect(await screen.findByText("Isi judul finding")).toBeInTheDocument();
+  expect(createFinding).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("Judul finding"), { target: { value: "XSS pada halaman profil" } });
+  fireEvent.change(screen.getByLabelText("Category"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("Category"), { target: { value: "9" } });
+  expect(screen.getByLabelText("Judul finding")).toHaveValue("XSS pada halaman profil");
   expect(screen.getByLabelText("Severity")).toHaveValue("High");
   expect(screen.getByLabelText("CVSS score")).toHaveValue(8.1);
   fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "Low" } });
   fireEvent.change(screen.getByLabelText("CVSS score"), { target: { value: "0" } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
-  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, severity: "Low", cvss_score: 0 })));
+  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, custom_title: "XSS pada halaman profil", severity: "Low", cvss_score: 0 })));
 });
 
 it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () => {

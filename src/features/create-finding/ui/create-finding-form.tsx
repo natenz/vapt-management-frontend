@@ -24,14 +24,13 @@ const schema = z
       .refine((v) => v === "" || /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(v), "Hanya huruf, angka, titik, garis bawah, dan strip")
       .optional(),
     catalog_vulna_id: z.string().optional(),
-    custom_title: z.string().trim().max(255).optional(),
+    custom_title: z.string().trim().min(1, "Isi judul finding").max(255),
     severity: z.string().optional(),
     cvss_score: z.string().optional(),
     endpoint: z.string().optional(),
   })
   .superRefine((v, ctx) => {
     const fromCatalog = Boolean(v.catalog_vulna_id);
-    if (!fromCatalog && !v.custom_title) ctx.addIssue({ code: "custom", path: ["custom_title"], message: "Isi judul atau pilih dari catalog" });
     if (!fromCatalog && !v.severity) ctx.addIssue({ code: "custom", path: ["severity"], message: "Pilih severity" });
     if (v.cvss_score && !(Number(v.cvss_score) >= 0 && Number(v.cvss_score) <= 10)) ctx.addIssue({ code: "custom", path: ["cvss_score"], message: "CVSS 0 sampai 10" });
   });
@@ -102,16 +101,15 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
               </select>
             )}
           </Field>
-          <Field label="Dari vulnerability catalog" helper="Judul, severity, dan CVSS terisi otomatis dari catalog. Semuanya bisa kamu ubah.">
+          <Field label="Category" helper="Pilih kategori dari catalog. Severity dan CVSS terisi otomatis dan bisa kamu ubah. Isi judul finding secara terpisah.">
             {(f) => (
               <select className={selectClass} defaultValue="" {...f} {...register("catalog_vulna_id", { onChange: (event) => {
                 const selected = approvedCatalog.find((item) => String(item.vulna_id) === event.target.value);
                 if (!selected) return;
-                setValue("custom_title", selected.title, { shouldValidate: true });
                 setValue("severity", selected.severity, { shouldValidate: true });
                 setValue("cvss_score", selected.cvss_score == null ? "" : String(selected.cvss_score), { shouldValidate: true });
               } })}>
-                <option value="">Tidak, isi sendiri</option>
+                <option value="">Tanpa category</option>
                 {(approvedCatalog).map((c) => (<option key={c.vulna_id} value={c.vulna_id}>{c.title} ({c.severity})</option>))}
               </select>
             )}
