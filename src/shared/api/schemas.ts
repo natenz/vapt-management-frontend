@@ -163,6 +163,12 @@ export type Evidence = z.infer<typeof evidenceSchema>;
 
 export const findingSchema = z.object({
   vulna_id: z.number(),
+  app_name: z.string().optional().nullable(),
+  ip_domain: z.string().optional().nullable(),
+  platform: z.string().optional().nullable(),
+  object_source: z.string().optional().nullable(),
+  tools: z.string().optional().nullable(),
+  owasp_mobile_2024: z.string().optional().nullable(),
   device_name: z.string().optional().nullable(),
   ip_address: z.string().optional().nullable(),
   test_scenario: z.string().optional().nullable(),

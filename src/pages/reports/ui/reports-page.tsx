@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { groupByAsset } from "../model/report-views";
 import { Tabs, TabsContent, TabsList, TabChip } from "@/shared/ui/tabs";
-import { downloadReportDocx, getReport, SeverityBadge, SEVERITIES, NetworkFindingDetails, isNetworkAsset, type ProjectReport } from "@/entities/finding";
+import { downloadReportDocx, getReport, SeverityBadge, SEVERITIES, FindingDetails, type ProjectReport } from "@/entities/finding";
 import { listProjects, ProjectStatusBadge, statusBetween, type Project } from "@/entities/project";
 import { useSession } from "@/entities/session";
 import { fmtDate, fmtRange, toSeverityKey } from "@/shared/lib/format";
@@ -209,7 +209,7 @@ function FindingItem({ f, showAsset }: { f: ProjectReport["findings"][number]; s
       <p className="text-body-sm text-ink-muted">
         {showAsset ? `${f.asset?.asset_name ?? `Asset ${f.asset_id}`} · ` : ""}{f.endpoint ? `${f.endpoint} · ` : ""}{f.cvss_score != null ? `CVSS ${f.cvss_score} · ` : ""}{f.status}
       </p>
-      {isNetworkAsset(f.asset?.asset_type) || f.device_name || f.test_scenario ? <NetworkFindingDetails finding={f} /> : null}
+      <FindingDetails finding={f} />
       {(f.evidences ?? []).length ? (
         <p className="text-caption text-ink-muted">Evidence: {(f.evidences ?? []).map((e) => e.file_name).join(", ")}</p>
       ) : null}

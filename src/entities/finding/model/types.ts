@@ -15,6 +15,12 @@ export { evidenceSchema, findingSchema, reportSchema, SEVERITIES, FINDING_STATUS
 export type { Evidence, Finding, FindingStatus, ProjectReport, BackendSeverity };
 
 export type FindingInput = {
+  app_name?: string;
+  ip_domain?: string;
+  platform?: string;
+  object_source?: string;
+  tools?: string;
+  owasp_mobile_2024?: string;
   status?: FindingStatus;
   status_note?: string;
   device_name?: string;

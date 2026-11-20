@@ -5,13 +5,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { listCatalog } from "@/entities/catalog";
+import { ApplicationFindingFields, applicationFindingSchema, applicationFindingInput, findingKind, FindingDetails } from "@/entities/finding";
 import {
   changeFindingStatus,
   NetworkFindingFields,
-  NetworkFindingDetails,
   networkFindingSchema,
   networkFindingInput,
-  isNetworkAsset,
   canEditFindingStatus,
   deleteFinding,
   listFindings,
@@ -41,6 +40,7 @@ const EDITABLE_STATUSES = ["Draft", "Scoping", "Assessment", "Analysis", "Initia
 const selectClass = "h-10 w-full rounded-sm border border-border-control bg-surface px-3 text-input text-ink focus-ring";
 const editSchema = z.object({
   ...networkFindingSchema.shape,
+  ...applicationFindingSchema.shape,
   status: z.enum(FINDING_STATUSES),
   status_note: z.string().max(500),
   catalog_vulna_id: z.string(),
@@ -135,8 +135,12 @@ function NoteEditor({ f, onDone }: { f: Finding; onDone: () => void }) {
   );
 }
 
-function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone: () => void; network: boolean; projectStatus: string }) {
+function EditFinding({ f, onDone, asset, projectStatus }: { f: Finding; onDone: () => void; asset?: ProjectDetail["assets"][number]; projectStatus: string }) {
   const qc = useQueryClient();
+  const kind = findingKind(asset?.asset_type);
+  const network = kind === "network";
+  const application = kind === "mobile" || kind === "application";
+  const detailed = network || application;
   const role = useSession((s) => s.user?.role?.role_name ?? "");
   const canEditCode = role === "technical_writer";
   const catalog = useQuery({ queryKey: ["catalog", "approved"], queryFn: () => listCatalog({ status: "approved" }) });
@@ -145,8 +149,11 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
     resolver: zodResolver(editSchema),
     defaultValues: {
       ...networkFindingInput(f),
-      device_name: f.device_name || f.asset?.asset_name || "",
-      ip_address: f.ip_address || f.asset?.ip_address || "",
+      ...applicationFindingInput(f, kind),
+      app_name: f.app_name || asset?.asset_name || "",
+      ip_domain: f.ip_domain || asset?.domain || asset?.ip_address || "",
+      device_name: f.device_name || asset?.asset_name || "",
+      ip_address: f.ip_address || asset?.ip_address || "",
       status: f.status as EditValues["status"],
       status_note: f.status_note ?? "",
       catalog_vulna_id: f.catalog_vulna_id == null ? "" : String(f.catalog_vulna_id),
@@ -161,8 +168,8 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
   const save = useMutation({
     mutationFn: async (v: EditValues) => {
       await updateFinding(f.vulna_id, {
-        ...(network ? {
-          ...networkFindingInput(v),
+        ...(network ? networkFindingInput(v) : application ? applicationFindingInput(v, kind) : {}),
+        ...(detailed ? {
           status: v.status !== f.status ? v.status : undefined,
           status_note: v.status === "closed_with_note" && (v.status_note !== (f.status_note ?? "") || v.status !== f.status) ? v.status_note : undefined,
         } : {}),
@@ -180,6 +187,7 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
     <form noValidate onSubmit={handleSubmit((v) => save.mutate(v))} className="mt-3 flex w-full flex-col gap-3 rounded-sm border border-border p-4">
       {save.error ? <Alert tone="error" title="Gagal menyimpan perubahan" compact>{save.error.message}</Alert> : null}
       {catalog.error ? <Alert tone="error" title="Gagal memuat category" compact>{catalog.error.message}</Alert> : null}
+      {application ? <ApplicationFindingFields section="identity" mobile={kind === "mobile"} register={register} errors={errors} /> : null}
       <Field label="Category" helper="Pilih kategori dari master catalog. Judul finding diisi secara terpisah.">
         {(x) => (
           <select className={selectClass} disabled={catalog.isLoading || save.isPending} {...x} {...register("catalog_vulna_id")}>
@@ -193,18 +201,18 @@ function EditFinding({ f, onDone, network, projectStatus }: { f: Finding; onDone
       </Field>
       <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
         <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper={!canEditCode ? "Kode finding hanya dapat diubah oleh Technical Writer." : undefined}>{(x) => <Input autoComplete="off" readOnly={!canEditCode} {...x} {...register("finding_code")} />}</Field>
-        <Field label={network ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
+        <Field label={detailed ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(x) => <Input {...x} {...register("custom_title")} />}</Field>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Severity">{(x) => <select className={selectClass} {...x} {...register("severity")}>{SEVERITIES.map((v) => <option key={v} value={v}>{v}</option>)}</select>}</Field>
-        <Field label={network ? "CVSS" : "CVSS score"} error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
+        <Field label={detailed ? "CVSS" : "CVSS score"} error={errors.cvss_score?.message}>{(x) => <Input type="number" step="0.1" min={0} max={10} {...x} {...register("cvss_score")} />}</Field>
       </div>
-      {network ? <>
+      {detailed ? <>
         <Field label="Status Pentest">{(x) => <select {...x} className={selectClass} {...register("status")}>
           {allowedFindingStatuses(f, projectStatus, role).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>}</Field>
         {watchStatus === "closed_with_note" ? <Field label="Alasan penutupan" error={errors.status_note?.message}>{(x) => <Textarea {...x} maxLength={500} {...register("status_note")} readOnly={!canEditFindingStatus(role, projectStatus)} />}</Field> : null}
-        <NetworkFindingFields register={register} errors={errors} />
+        {network ? <NetworkFindingFields register={register} errors={errors} /> : <ApplicationFindingFields section="details" mobile={kind === "mobile"} register={register} errors={errors} />}
       </> : <Field label="Endpoint">{(x) => <Input {...x} {...register("endpoint")} />}</Field>}
       <div className="flex gap-2">
         <Button type="submit" variant="solid" loading={save.isPending}>Simpan</Button>
@@ -328,7 +336,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
                   )
                 )}
               </span>
-              {isNetworkAsset(f.asset?.asset_type ?? project.assets.find((a) => a.assets_id === f.asset_id)?.asset_type) && editingId !== f.vulna_id ? <NetworkFindingDetails finding={f} /> : null}
+              {editingId !== f.vulna_id ? <FindingDetails finding={f} assetType={f.asset?.asset_type ?? project.assets.find((a) => a.assets_id === f.asset_id)?.asset_type} /> : null}
               {(f.evidences ?? []).some((evidence) => evidence.s3_bucket === "local") ? (
                 <div className="flex w-full flex-wrap gap-2" aria-label={`Evidence ${f.custom_title}`}>
                   {(f.evidences ?? []).filter((evidence) => evidence.s3_bucket === "local").map((evidence) => <EvidencePhoto key={evidence.evidence_id} evidence={evidence} />)}
@@ -336,7 +344,7 @@ export function FindingsPanel({ project }: { project: ProjectDetail }) {
               ) : null}
               {notingId === f.vulna_id ? <NoteEditor f={f} onDone={() => setNotingId(null)} /> : null}
               {editingId === f.vulna_id ? (
-                <EditFinding f={f} network={isNetworkAsset(f.asset?.asset_type ?? project.assets.find((a) => a.assets_id === f.asset_id)?.asset_type)} projectStatus={projectStatus} onDone={() => setEditingId(null)} />
+                <EditFinding f={f} asset={f.asset ?? project.assets.find((a) => a.assets_id === f.asset_id)} projectStatus={projectStatus} onDone={() => setEditingId(null)} />
               ) : null}
             </li>
           ))}

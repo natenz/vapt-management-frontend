@@ -17,7 +17,7 @@ afterEach(() => {
   useSession.getState().clear();
 });
 
-function renderPanel(status: string, role = "pentester", assetType = "web") {
+function renderPanel(status: string, role = "pentester", assetType = "web", extraAssetType?: string) {
   useSession.setState({
     user: {
       sys_user_id: 5,
@@ -35,8 +35,14 @@ function renderPanel(status: string, role = "pentester", assetType = "web") {
     projected_mandays: 10,
     pm_id: 7,
     status: { status_process_id: 1, status_name: status },
-    assets: [{ assets_id: 8, asset_name: "API pengujian", asset_type: assetType, ip_address: "192.0.2.10", mandays: 10, project_id: 42 }],
-    mandays: [{ mandays_id: 1, asset_id: 8, pentester_id: 5, allocated_mandays: 10 }],
+    assets: [
+      { assets_id: 8, asset_name: "API pengujian", asset_type: assetType, ip_address: "192.0.2.10", mandays: 10, project_id: 42 },
+      ...(extraAssetType ? [{ assets_id: 9, asset_name: "Asset kedua", asset_type: extraAssetType, domain: "portal.example.test", mandays: 5, project_id: 42 }] : []),
+    ],
+    mandays: [
+      { mandays_id: 1, asset_id: 8, pentester_id: 5, allocated_mandays: 10 },
+      ...(extraAssetType ? [{ mandays_id: 2, asset_id: 9, pentester_id: 5, allocated_mandays: 5 }] : []),
+    ],
     resources: [],
     stages: [],
   };
@@ -90,7 +96,7 @@ it("membuka modal, menyimpan, lalu menutup modal dan memperbarui daftar findings
   fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
   const modal = screen.getByRole("dialog", { name: "Tambah finding" });
   fireEvent.change(within(modal).getByLabelText("Asset"), { target: { value: "8" } });
-  fireEvent.change(within(modal).getByLabelText("Judul finding"), { target: { value: "SQL injection" } });
+  fireEvent.change(within(modal).getByLabelText("Vulnerability Name"), { target: { value: "SQL injection" } });
   fireEvent.change(within(modal).getByLabelText("Severity"), { target: { value: "High" } });
   fireEvent.click(within(modal).getByRole("button", { name: "Simpan finding" }));
   await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ asset_id: 8, custom_title: "SQL injection", severity: "High" })));
@@ -116,18 +122,18 @@ it("memisahkan category dari judul finding dan mengirim severity serta CVSS hasi
   fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
   fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "9" } });
-  expect(screen.getByLabelText("Judul finding")).toHaveValue("");
+  expect(screen.getByLabelText("Vulnerability Name")).toHaveValue("");
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
   expect(await screen.findByText("Isi judul finding")).toBeInTheDocument();
   expect(createFinding).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByLabelText("Judul finding"), { target: { value: "XSS pada halaman profil" } });
+  fireEvent.change(screen.getByLabelText("Vulnerability Name"), { target: { value: "XSS pada halaman profil" } });
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "" } });
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "9" } });
-  expect(screen.getByLabelText("Judul finding")).toHaveValue("XSS pada halaman profil");
+  expect(screen.getByLabelText("Vulnerability Name")).toHaveValue("XSS pada halaman profil");
   expect(screen.getByLabelText("Severity")).toHaveValue("High");
-  expect(screen.getByLabelText("CVSS score")).toHaveValue(8.1);
+  expect(screen.getByLabelText("CVSS")).toHaveValue(8.1);
   fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "Low" } });
-  fireEvent.change(screen.getByLabelText("CVSS score"), { target: { value: "0" } });
+  fireEvent.change(screen.getByLabelText("CVSS"), { target: { value: "0" } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
   await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({ catalog_vulna_id: 9, custom_title: "XSS pada halaman profil", severity: "Low", cvss_score: 0 })));
 });
@@ -150,8 +156,8 @@ it.each([9, undefined])("menyimpan category saat edit dengan judul tetap terpisa
   expect(screen.getByLabelText("Category")).toHaveValue(categoryId ? String(categoryId) : "");
   expect(screen.queryByRole("option", { name: /Category belum disetujui/ })).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Category"), { target: { value: "10" } });
-  expect(screen.getByLabelText("Judul finding")).toHaveValue("Tentang SQL");
-  expect(screen.getByLabelText("CVSS score")).toHaveValue(8.1);
+  expect(screen.getByLabelText("Vulnerability Name")).toHaveValue("Tentang SQL");
+  expect(screen.getByLabelText("CVSS")).toHaveValue(8.1);
   fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
     catalog_vulna_id: 10, custom_title: "Tentang SQL", finding_code: undefined, cvss_score: 8.1,
@@ -241,7 +247,7 @@ it.each(["pentester", "tech_lead", "super_admin"])("%s tidak dapat mengubah kode
   fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
   expect(screen.getByLabelText("Kode finding")).toHaveAttribute("readonly");
   fireEvent.change(screen.getByLabelText("Kode finding"), { target: { value: "MANUAL-001" } });
-  fireEvent.change(screen.getByLabelText("Judul finding"), { target: { value: "Judul diperbarui" } });
+  fireEvent.change(screen.getByLabelText("Vulnerability Name"), { target: { value: "Judul diperbarui" } });
   fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({ finding_code: undefined, custom_title: "Judul diperbarui" })));
 });
@@ -261,6 +267,87 @@ it("Technical Writer dapat mengganti kode finding", async () => {
   await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({ finding_code: "NET-001", custom_title: "Temuan jaringan" })));
 });
 
+it.each(["mobile", "web", "api"])("menyimpan field lengkap untuk %s dan tidak mengirim detail tipe lain", async (type) => {
+  const { createFinding } = await import("@/entities/finding");
+  vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
+  renderPanel("Analysis", "pentester", type);
+  fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
+  fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
+  expect(screen.getByLabelText("APP Name")).toHaveValue("API pengujian");
+  for (const [label, value] of [
+    ["APP Name", "Aplikasi Pelanggan"], ["Endpoint", "/api/session"], ["Platform", type === "mobile" ? "Android" : "REST API"],
+    ["Vulnerability Name", "Akses data tanpa otorisasi"], ["Description", "Deskripsi spesifik finding"],
+    ["Severity", "High"], ["CVSS", "8.1"], ["Impact", "Kebocoran data"],
+    ["Recommendation", "Tambahkan pemeriksaan akses"], ["References", "https://example.test/advisory"], ["CWE", "CWE-862"],
+  ]) fireEvent.change(screen.getByLabelText(label!), { target: { value } });
+  if (type === "mobile") {
+    fireEvent.change(screen.getByLabelText("Object Source"), { target: { value: "customer.apk" } });
+    fireEvent.change(screen.getByLabelText("Tools"), { target: { value: "Proxy pengujian\nAnalisis statis" } });
+    fireEvent.change(screen.getByLabelText("OWASP Mobile Top 10 2024"), { target: { value: "M3" } });
+    expect(screen.queryByLabelText("IP/DOMAIN")).not.toBeInTheDocument();
+  } else {
+    expect(screen.getByLabelText("IP/DOMAIN")).toHaveValue("192.0.2.10");
+    fireEvent.change(screen.getByLabelText("IP/DOMAIN"), { target: { value: "api.customer.internal" } });
+    expect(screen.queryByLabelText("Object Source")).not.toBeInTheDocument();
+  }
+  expect(screen.getByLabelText("Screenshot / Evidence")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  await waitFor(() => expect(createFinding).toHaveBeenCalledWith(42, expect.objectContaining({
+    app_name: "Aplikasi Pelanggan", endpoint: "/api/session", platform: type === "mobile" ? "Android" : "REST API",
+    custom_title: "Akses data tanpa otorisasi", description: "Deskripsi spesifik finding", status: "open",
+    severity: "High", cvss_score: 8.1, impact: "Kebocoran data", recommendation: "Tambahkan pemeriksaan akses",
+    references: "https://example.test/advisory", cwe: "CWE-862", finding_code: undefined,
+    ...(type === "mobile" ? { object_source: "customer.apk", tools: "Proxy pengujian\nAnalisis statis", owasp_mobile_2024: "M3" } : { ip_domain: "api.customer.internal" }),
+  })));
+  const sent = vi.mocked(createFinding).mock.calls[0]![1];
+  expect(sent).not.toHaveProperty("device_name");
+  if (type !== "mobile") expect(sent).not.toHaveProperty("object_source");
+});
+
+it("mengganti asset mobile ke web tanpa membawa field khusus mobile", async () => {
+  const { createFinding } = await import("@/entities/finding");
+  vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
+  renderPanel("Analysis", "pentester", "mobile", "web");
+  fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
+  fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
+  fireEvent.change(screen.getByLabelText("Object Source"), { target: { value: "lama.apk" } });
+  fireEvent.change(screen.getByLabelText("OWASP Mobile Top 10 2024"), { target: { value: "M9" } });
+  fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "9" } });
+  expect(screen.queryByLabelText("Object Source")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("APP Name")).toHaveValue("Asset kedua");
+  expect(screen.getByLabelText("IP/DOMAIN")).toHaveValue("portal.example.test");
+  fireEvent.change(screen.getByLabelText("Vulnerability Name"), { target: { value: "Temuan web" } });
+  fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "Low" } });
+  fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
+  await waitFor(() => expect(createFinding).toHaveBeenCalled());
+  expect(vi.mocked(createFinding).mock.calls[0]![1]).not.toHaveProperty("owasp_mobile_2024");
+});
+
+it.each(["mobile", "web", "api"])("mengedit metadata %s dan bisa mengosongkan field opsional", async (type) => {
+  const { updateFinding } = await import("@/entities/finding");
+  vi.mocked(updateFinding).mockResolvedValue({} as Awaited<ReturnType<typeof updateFinding>>);
+  const client = renderPanel("Analysis", "pentester", type);
+  client.setQueryData(["findings", 42], [{
+    vulna_id: 123, project_id: 42, asset_id: 8, pentester_id: 5, status: "open", finding_code: "VLN-42-001",
+    custom_title: "Temuan aplikasi", severity: "High", app_name: "Aplikasi tersimpan", platform: "Platform lama",
+    description: "Deskripsi lama", object_source: "lama.apk", tools: "Tool lama", owasp_mobile_2024: "M3",
+    ip_domain: "lama.example.test",
+  }]);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  expect(screen.getByLabelText("APP Name")).toHaveValue("Aplikasi tersimpan");
+  fireEvent.change(screen.getByLabelText("Description"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("Platform"), { target: { value: "Platform baru" } });
+  if (type === "mobile") {
+    expect(screen.getByLabelText("OWASP Mobile Top 10 2024")).toHaveValue("M3");
+    fireEvent.change(screen.getByLabelText("OWASP Mobile Top 10 2024"), { target: { value: "" } });
+  }
+  fireEvent.click(screen.getByRole("button", { name: /^Simpan$/ }));
+  await waitFor(() => expect(updateFinding).toHaveBeenCalledWith(123, expect.objectContaining({
+    app_name: "Aplikasi tersimpan", platform: "Platform baru", description: "", finding_code: undefined,
+    ...(type === "mobile" ? { owasp_mobile_2024: "" } : { ip_domain: "lama.example.test" }),
+  })));
+});
+
 it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () => {
   const { createFinding, uploadEvidence } = await import("@/entities/finding");
   vi.mocked(createFinding).mockResolvedValue({ vulna_id: 123 } as Awaited<ReturnType<typeof createFinding>>);
@@ -268,10 +355,10 @@ it("mengunggah foto dan retry kegagalan tanpa membuat findings ganda", async () 
   renderPanel("Analysis");
   fireEvent.click(screen.getByRole("button", { name: "Tambah finding" }));
   fireEvent.change(screen.getByLabelText("Asset"), { target: { value: "8" } });
-  fireEvent.change(screen.getByLabelText("Judul finding"), { target: { value: "SQL injection" } });
+  fireEvent.change(screen.getByLabelText("Vulnerability Name"), { target: { value: "SQL injection" } });
   fireEvent.change(screen.getByLabelText("Severity"), { target: { value: "High" } });
   const file = new File(["photo"], "bukti.png", { type: "image/png" });
-  fireEvent.change(screen.getByLabelText("Foto evidence"), { target: { files: [file] } });
+  fireEvent.change(screen.getByLabelText("Screenshot / Evidence"), { target: { files: [file] } });
   fireEvent.click(screen.getByRole("button", { name: "Simpan finding" }));
   expect(await screen.findByText("Unggah gagal")).toBeInTheDocument();
   expect(screen.getByRole("dialog")).toBeInTheDocument();
