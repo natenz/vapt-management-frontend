@@ -65,6 +65,7 @@ export type AssetInput = {
 export type CreateProjectInput = {
   project_name: string;
   client_name: string;
+  project_code?: string;
   start_date: string;
   end_date: string;
   pm_id: number;

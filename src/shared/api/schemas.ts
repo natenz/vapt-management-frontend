@@ -75,6 +75,8 @@ export const projectSchema = z.object({
   s_id: z.number().optional().nullable(),
   project_name: z.string(),
   client_name: z.string(),
+  /** Awalan kode finding (<kode proyek>-<severity>-<nomor>); kosong = "P<id proyek>". */
+  project_code: z.string().optional().nullable(),
   total_mandays: z.number(),
   /** Jatah mandays dari Tech Lead; total mandays aset tidak boleh melebihinya. 0 = belum ditetapkan. */
   projected_mandays: z.number().optional().default(0),
@@ -178,7 +180,7 @@ export const findingSchema = z.object({
   references: z.string().optional().nullable(),
   cwe: z.string().optional().nullable(),
   pentester_note: z.string().optional().nullable(),
-  /** Kode temuan otomatis dari BE (VLN-<proyek>-<urut>), terpisah dari judul. Kosong untuk data yang belum ber-kode. */
+  /** Kode finding otomatis dari BE (<kode proyek>-<severity>-<nomor>, mis. SKD-H-001), terpisah dari judul. */
   finding_code: z.string().optional().default(""),
   custom_title: z.string(),
   severity: z.string(),

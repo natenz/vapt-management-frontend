@@ -33,7 +33,7 @@ export type FindingInput = {
   cwe?: string;
   pentester_note?: string;
   asset_id: number;
-  /** Kosong = kode otomatis dari BE (VLN-<proyek>-<urut>). */
+  /** Kosong = kode otomatis dari BE (<kode proyek>-<severity>-<nomor>). */
   finding_code?: string;
   catalog_vulna_id?: number;
   custom_title?: string;

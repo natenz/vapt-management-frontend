@@ -17,6 +17,7 @@ const schema = z
   .object({
     project_name: z.string().trim().min(1, "Nama proyek wajib diisi"),
     client_name: z.string().trim().min(1, "Nama klien wajib diisi"),
+    project_code: z.string().trim().regex(/^[A-Za-z0-9]{0,10}$/, "Cuma huruf dan angka, maksimal 10 karakter"),
     start_date: z.string().min(1, "Tanggal mulai wajib diisi"),
     end_date: z.string().min(1, "Tanggal selesai wajib diisi"),
     pm_id: z.string().min(1, "Pilih Project Manager"),
@@ -50,6 +51,7 @@ export function ProjectNewPage() {
     defaultValues: {
       resource_user_ids: [],
       projected_mandays: "",
+      project_code: "",
       start_date: isoParam("mulai") ?? "",
       end_date: isoParam("selesai") ?? "",
     },
@@ -65,6 +67,7 @@ export function ProjectNewPage() {
       createProject({
         project_name: v.project_name,
         client_name: v.client_name,
+        project_code: v.project_code.toUpperCase(),
         start_date: v.start_date,
         end_date: v.end_date,
         pm_id: Number(v.pm_id),
@@ -98,6 +101,13 @@ export function ProjectNewPage() {
         <FieldGroup>
           <Field label="Nama proyek" error={errors.project_name?.message}>{(f) => <Input {...f} {...register("project_name")} />}</Field>
           <Field label="Nama klien" error={errors.client_name?.message}>{(f) => <Input {...f} {...register("client_name")} />}</Field>
+          <Field
+            label="Kode proyek"
+            error={errors.project_code?.message}
+            helper="Dipakai di kode finding, contoh SKD jadi SKD-H-001. Boleh dikosongkan, nanti pakai nomor proyek (P12-H-001)."
+          >
+            {(f) => <Input placeholder="SKD" maxLength={10} autoComplete="off" className="uppercase" {...f} {...register("project_code")} />}
+          </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Tanggal mulai" error={errors.start_date?.message}>{(f) => <Input type="date" {...f} {...register("start_date")} />}</Field>
             <Field label="Tanggal selesai" error={errors.end_date?.message}>{(f) => <Input type="date" {...f} {...register("end_date")} />}</Field>

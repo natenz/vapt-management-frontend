@@ -153,7 +153,7 @@ export function CreateFindingForm({ project, onSuccess, onCancel }: {
               </select>
             )}
           </Field>
-          <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper="Kode dibuat otomatis. Hanya Technical Writer yang dapat mengisi atau mengubah kode secara manual.">
+          <Field label={network ? "Findings Code" : "Kode finding"} error={errors.finding_code?.message} helper="Dibuat otomatis: kode proyek, huruf severity, lalu nomor urut (contoh SKD-H-001). Cuma Technical Writer yang bisa mengubahnya.">
             {(f) => <Input placeholder="Otomatis" autoComplete="off" readOnly={!canEditCode} {...f} {...register("finding_code")} />}
           </Field>
           <Field label={detailed ? "Vulnerability Name" : "Judul finding"} error={errors.custom_title?.message}>{(f) => <Input {...f} {...register("custom_title")} />}</Field>
