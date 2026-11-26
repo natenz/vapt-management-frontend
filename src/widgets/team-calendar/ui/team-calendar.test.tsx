@@ -48,6 +48,13 @@ describe("TeamCalendar", () => {
     expect(within(screen.getByRole("button", { name: /^3 Desember 2026/ })).getByText("Libur kantor")).toBeInTheDocument();
   });
 
+  it("tampilan bulan: hari libur dan akhir pekan tidak menampilkan penugasan", () => {
+    renderCalendar("bulan");
+    // Penugasan HRS Budi mencakup 1–4 Des, tapi 3 Des hari libur.
+    expect(within(screen.getByRole("button", { name: /^3 Desember 2026/ })).queryByText("Budi · HRS")).not.toBeInTheDocument();
+    expect(within(screen.getByRole("button", { name: /^4 Desember 2026/ })).getByText("Budi · HRS")).toBeInTheDocument();
+  });
+
   it("klik tanggal membuka detail tiap orang beserta peringatan", async () => {
     renderCalendar("bulan");
     await userEvent.click(screen.getByRole("button", { name: /^1 Desember 2026/ }));

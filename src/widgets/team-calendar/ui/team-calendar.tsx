@@ -24,6 +24,8 @@ interface Line {
 
 function dayLines(day: DayInfo): Line[] {
   const lines: Line[] = [];
+  // Penugasan dan cuti hanya berarti di hari kerja; akhir pekan dan hari libur cukup diberi label.
+  if (day.weekend || day.holiday) return lines;
   for (const e of day.entries) {
     if (e.leave) {
       lines.push({
