@@ -43,10 +43,12 @@ export function SeverityCard({
   totals,
   isLoading,
   failed,
+  colSpan = 4,
 }: {
   totals: FindingTotals;
   isLoading: boolean;
   failed: number;
+  colSpan?: 4 | 5;
 }) {
   const segments = Object.entries(totals.openBySeverity).map(([label, value]) => ({
     id: label,
@@ -57,7 +59,7 @@ export function SeverityCard({
   const hasOpen = totals.open > 0;
   return (
     <BentoCard
-      colSpan={4}
+      colSpan={colSpan}
       role="region"
       aria-label="Severity Findings Terbuka"
       title="Severity Findings Terbuka"

@@ -1,18 +1,20 @@
 import {
   evidenceSchema,
+  exposureSchema,
   findingSchema,
   reportSchema,
   SEVERITIES,
   FINDING_STATUSES,
   type Evidence,
+  type Exposure,
   type Finding,
   type FindingStatus,
   type ProjectReport,
   type Severity as BackendSeverity,
 } from "@/shared/api/schemas";
 
-export { evidenceSchema, findingSchema, reportSchema, SEVERITIES, FINDING_STATUSES };
-export type { Evidence, Finding, FindingStatus, ProjectReport, BackendSeverity };
+export { evidenceSchema, exposureSchema, findingSchema, reportSchema, SEVERITIES, FINDING_STATUSES };
+export type { Evidence, Exposure, Finding, FindingStatus, ProjectReport, BackendSeverity };
 
 export type FindingInput = {
   app_name?: string;

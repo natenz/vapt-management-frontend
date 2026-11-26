@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogVulna } from "@/entities/catalog";
+import type { Exposure } from "@/entities/finding";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
 import { TechLeadDashboard } from "./techlead-dashboard";
@@ -134,12 +135,24 @@ const mockDetails = [
   },
 ] as ProjectDetail[];
 
+const mockExposure: Exposure = {
+  total: 5,
+  by_severity: { Critical: 1, High: 3, Medium: 1 },
+  projects: [
+    { project_id: 101, project_name: "Web Portal SSO Telkom", client_name: "Divisi IT", critical: 1, high: 2, open: 4 },
+    { project_id: 103, project_name: "Audit API Gateway Legacy", client_name: "Enterprise", critical: 0, high: 1, open: 1 },
+  ],
+};
+
 function renderDashboard(props: {
   projects?: Project[];
   users?: User[];
   catalogQueue?: CatalogVulna[];
   loadMap?: Record<number, ResourceLoad>;
   isLoading?: boolean;
+  exposure?: Exposure | null;
+  exposureLoading?: boolean;
+  exposureError?: unknown;
 } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -156,6 +169,9 @@ function renderDashboard(props: {
           isLoading={props.isLoading ?? false}
           details={mockDetails}
           approvedCount={12}
+          exposure={props.exposure === undefined ? mockExposure : props.exposure}
+          exposureLoading={props.exposureLoading ?? false}
+          exposureError={props.exposureError}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -223,6 +239,24 @@ describe("TechLeadDashboard", () => {
     expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
+  });
+
+  it("menampilkan exposure temuan terbuka dan proyek paling berisiko dari BE", () => {
+    renderDashboard();
+    const severity = screen.getByRole("region", { name: "Severity Findings Terbuka" });
+    expect(within(severity).getByText("5")).toBeInTheDocument();
+    const risky = screen.getByRole("region", { name: "Proyek Paling Berisiko" });
+    const links = within(risky).getAllByRole("link");
+    expect(links[0]).toHaveTextContent("Web Portal SSO Telkom");
+    expect(links[0]).toHaveAttribute("href", "/projects/101/report");
+    expect(within(risky).getByText("Audit API Gateway Legacy")).toBeInTheDocument();
+    expect(within(risky).getAllByText("Done").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("memberi tahu bila exposure gagal dimuat", () => {
+    renderDashboard({ exposure: null, exposureError: new Error("boom") });
+    expect(screen.getByText("Exposure vulnerability belum bisa dimuat")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Severity Findings Terbuka" })).not.toBeInTheDocument();
   });
 
   it("kartu persetujuan usulan vulnerability catalog tidak lagi ada di bento dashboard Tech Lead", () => {

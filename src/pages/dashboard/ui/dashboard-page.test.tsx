@@ -20,7 +20,14 @@ const projectsResponse = {
   data: [p(1, "Proyek Uji", "Assessment"), p(4, "Proyek Remediasi", "Remediasi"), p(2, "Proyek Report", "Initial Report")],
   meta: { page: 1, limit: 100, total: 3 },
 };
-const api = vi.hoisted(() => ({ getReport: vi.fn() }));
+const api = vi.hoisted(() => ({
+  getReport: vi.fn(),
+  getExposure: vi.fn(async () => ({
+    total: 7,
+    by_severity: { High: 7 },
+    projects: [{ project_id: 1, project_name: "Proyek Uji", client_name: "PT Uji", critical: 0, high: 7, open: 7 }],
+  })),
+}));
 
 vi.mock("@/entities/project", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/project")>()),
@@ -70,6 +77,7 @@ vi.mock("@/entities/finding", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/finding")>()),
   listFindings: async () => [],
   getReport: api.getReport,
+  getExposure: api.getExposure,
 }));
 
 async function mount(role: string) {
@@ -121,6 +129,18 @@ describe("DashboardPage", () => {
     // CTA Linimasa Tim dihapus dari dashboard Tech Lead
     expect(screen.queryByRole("link", { name: "Linimasa Tim" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Buat Template Proyek" })).toHaveAttribute("href", "/projects/new");
+
+    // Exposure vulnerability dari GET /dashboard/exposure
+    const severitySec = screen.getByRole("region", { name: "Severity Findings Terbuka" });
+    expect((await within(severitySec).findAllByText("7")).length).toBeGreaterThanOrEqual(1);
+    expect(api.getExposure).toHaveBeenCalled();
+  });
+
+  it("role selain tech lead tidak memanggil endpoint exposure", async () => {
+    api.getExposure.mockClear();
+    await mount("pentester");
+    await screen.findByRole("region", { name: "Ringkasan Kerja Pentester" });
+    expect(api.getExposure).not.toHaveBeenCalled();
   });
 
   it("role lain tidak melihat kotak ringkasan Tech Lead", async () => {

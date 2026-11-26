@@ -224,6 +224,23 @@ export const reportSchema = z.object({
 });
 export type ProjectReport = z.infer<typeof reportSchema>;
 
+/** GET /dashboard/exposure: temuan open per severity dari proyek Assessment sampai Done. */
+export const exposureSchema = z.object({
+  total: z.number(),
+  by_severity: z.record(z.string(), z.number()),
+  projects: z.array(
+    z.object({
+      project_id: z.number(),
+      project_name: z.string(),
+      client_name: z.string(),
+      critical: z.number(),
+      high: z.number(),
+      open: z.number(),
+    }),
+  ),
+});
+export type Exposure = z.infer<typeof exposureSchema>;
+
 /** Pembungkus respons BE: { success, message, data, meta, errors }. */
 export function envelope<T extends z.ZodType>(data: T) {
   return z.object({

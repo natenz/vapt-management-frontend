@@ -2,17 +2,22 @@
  * Dashboard Tech Lead — ringkasan eksekutif dan pemantauan proyek:
  * 1. Ringkasan KPI: Proyek Berjalan dan Usulan Katalog (dengan CTA peninjauan).
  * 2. Pemantauan proyek berjalan dan progres tahapannya.
+ * 3. Exposure vulnerability: temuan Open lintas proyek per severity dan proyek paling berisiko.
  */
 import { ArrowRight, BookCheck, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import type { CatalogVulna } from "@/entities/catalog";
+import type { Exposure } from "@/entities/finding";
 import type { Project, ProjectDetail, ResourceLoad } from "@/entities/project";
 import type { User } from "@/entities/user";
+import { Alert } from "@/shared/ui/alert";
 import { BentoGrid } from "@/shared/ui/bento-grid";
 import { Button } from "@/shared/ui/button";
 import { SummaryTile } from "@/shared/ui/summary-tile";
+import { exposureRiskRows, exposureTotals } from "../model/exposure-metrics";
 import { completedProjects, runningProjects } from "../model/techlead-metrics";
+import { RiskiestProjectsCard, SeverityCard } from "./superadmin/finding-cards";
 import { CompletedProjectsCard } from "./techlead/completed-projects-card";
 import { RunningProjectsCard } from "./techlead/running-projects-card";
 
@@ -28,15 +33,24 @@ export interface TechLeadDashboardProps {
   detailsError?: unknown;
   /** Jumlah kerentanan baku di katalog; null bila belum termuat. */
   approvedCount?: number | null;
+  /** GET /dashboard/exposure. */
+  exposure?: Exposure | null;
+  exposureLoading?: boolean;
+  exposureError?: unknown;
 }
 
 export function TechLeadDashboard({
   projects,
   catalogQueue,
   isLoading,
+  exposure,
+  exposureLoading = false,
+  exposureError,
 }: TechLeadDashboardProps) {
   const running = useMemo(() => runningProjects(projects), [projects]);
   const completed = useMemo(() => completedProjects(projects), [projects]);
+  const totals = useMemo(() => exposureTotals(exposure), [exposure]);
+  const risky = useMemo(() => exposureRiskRows(exposure, projects), [exposure, projects]);
 
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
@@ -76,8 +90,23 @@ export function TechLeadDashboard({
       <BentoGrid aria-label="Bento dashboard Tech Lead">
         {/* Pemantauan */}
         <RunningProjectsCard rows={running} isLoading={isLoading} colSpan={12} />
+
+        {/* Exposure vulnerability lintas proyek */}
+        {exposureError ? null : (
+          <>
+            <SeverityCard totals={totals} isLoading={exposureLoading} failed={0} colSpan={5} />
+            <RiskiestProjectsCard rows={risky} isLoading={exposureLoading} failed={0} />
+          </>
+        )}
+
         <CompletedProjectsCard projects={completed} isLoading={isLoading} />
       </BentoGrid>
+
+      {exposureError ? (
+        <Alert tone="error" title="Exposure vulnerability belum bisa dimuat">
+          {exposureError instanceof Error ? exposureError.message : "Coba muat ulang halaman."}
+        </Alert>
+      ) : null}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { apiBlobRequest, apiRequest } from "@/shared/api";
 import {
   evidenceSchema,
+  exposureSchema,
   findingSchema,
   reportSchema,
   type EvidenceInput,
@@ -32,6 +33,10 @@ export const deleteFinding = async (id: number) =>
 
 export const addEvidence = async (id: number, body: EvidenceInput) =>
   (await apiRequest(`/vulnas/${id}/evidences`, { method: "POST", body }, evidenceSchema)).data;
+
+/** Temuan open lintas proyek per severity (super admin dan tech lead). */
+export const getExposure = async () =>
+  (await apiRequest("/dashboard/exposure", { method: "GET" }, exposureSchema)).data;
 
 export const getReport = async (projectId: number) =>
   (await apiRequest(`/projects/${projectId}/report`, { method: "GET" }, reportSchema)).data;

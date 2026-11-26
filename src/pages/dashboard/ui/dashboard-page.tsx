@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { listCatalog } from "@/entities/catalog";
-import { listFindings } from "@/entities/finding";
+import { getExposure, listFindings } from "@/entities/finding";
 import {
   currentMonth,
   getResourceLoad,
@@ -206,6 +206,13 @@ export function DashboardPage() {
   });
   const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
 
+  // Tech Lead: temuan Open lintas proyek, dihitung BE.
+  const exposure = useQuery({
+    queryKey: ["exposure"],
+    queryFn: getExposure,
+    enabled: isTechLead,
+  });
+
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
@@ -259,6 +266,9 @@ export function DashboardPage() {
           detailsLoading={details.isLoading}
           detailsError={details.error}
           approvedCount={approved.data ? approved.data.length : null}
+          exposure={exposure.data}
+          exposureLoading={exposure.isLoading}
+          exposureError={exposure.error}
         />
       ) : isPentester ? (
         <PentesterDashboard
