@@ -59,20 +59,28 @@ describe("SeverityBadge", () => {
 });
 
 describe("SeverityChip", () => {
-  it("merender chip ikon borderless dan kata di luar chip untuk setiap severity", () => {
+  it("merender pill berwarna dengan ikon dan kata di dalamnya untuk setiap severity", () => {
     for (const severity of SEVERITY_ORDER) {
       const { container, unmount } = render(<SeverityChip severity={severity} />);
       const chip = container.querySelector('[data-slot="severity-chip"]');
 
       expect(chip, `${severity} harus merender chip`).not.toBeNull();
       expect(chip?.className).toContain(`bg-sev-${severity}-bg`);
-      expect(chip?.className).toContain("border-0");
+      expect(chip?.className).toContain(`text-sev-${severity}-fg`);
+      expect(chip?.className).toContain(`border-sev-${severity}-border`);
       expect(chip?.querySelector("svg"), `${severity} harus punya ikon`).not.toBeNull();
-      // Kata berada di luar chip (chip hanya ikon, aria-hidden)
-      expect(chip?.textContent).toBe("");
-      expect(container.textContent?.trim()).not.toBe("");
+      // Kata berada di dalam pill, jadi warna dan teks satu blok.
+      expect(chip?.textContent?.trim(), `${severity} harus punya kata`).not.toBe("");
 
       unmount();
     }
+  });
+
+  it("menandai severity lewat data-attribute", () => {
+    render(<SeverityChip severity="medium" />);
+    expect(screen.getByText("Medium").closest("[data-severity]")).toHaveAttribute(
+      "data-severity",
+      "medium",
+    );
   });
 });

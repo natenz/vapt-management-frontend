@@ -129,8 +129,8 @@ type StatusChipProps = Omit<React.ComponentPropsWithoutRef<"span">, "children"> 
 
 /**
  * Chip ikon borderless `size-6` + kata di luar chip. Pola yang sama dengan
- * RoleBadge, ProjectStatusBadge, dan SeverityChip agar kolom status di semua
- * tabel selaras.
+ * RoleBadge dan ProjectStatusBadge agar kolom status di semua tabel selaras.
+ * Severity sengaja berbeda: SeverityChip berupa pill berwarna penuh.
  */
 function StatusChip({ className, tone, icon, children, ...props }: StatusChipProps) {
   return (

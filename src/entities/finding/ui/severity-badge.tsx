@@ -109,26 +109,14 @@ function SeverityBadge({ severity, count, className, ...props }: SeverityBadgePr
   );
 }
 
-/**
- * Ground + ikon chip per severity untuk sel tabel. Tetap memakai token sev-*
- * (tanpa border) agar urutan lightness Critical → Info sama dengan badge pill.
- */
-const SEVERITY_CHIP_CLASS: Record<Severity, string> = {
-  critical: "bg-sev-critical-bg text-sev-critical-fg",
-  high: "bg-sev-high-bg text-sev-high-fg",
-  medium: "bg-sev-medium-bg text-sev-medium-fg",
-  low: "bg-sev-low-bg text-sev-low-fg",
-  info: "bg-sev-info-bg text-sev-info-fg",
-};
-
 type SeverityChipProps = Omit<React.ComponentPropsWithoutRef<"span">, "children"> & {
   severity: Severity;
 };
 
 /**
- * Varian tabel: chip ikon borderless `size-6` + kata severity di luar chip.
- * Mengikuti pola RoleBadge dan ProjectStatusBadge supaya kolom severity
- * selaras dengan kolom Role/Status di tabel lain.
+ * Varian tabel dan card: pill berwarna penuh (ground + border + teks sev-*) dengan ikon di dalamnya,
+ * sedikit lebih lapang dari SeverityBadge supaya sinyal warna mudah dibaca dari jauh. Token dan
+ * urutan lightness Critical → Info sama dengan SeverityBadge: hanya Critical yang solid.
  */
 function SeverityChip({ severity, className, ...props }: SeverityChipProps) {
   const meta = SEVERITY_META[severity];
@@ -136,22 +124,17 @@ function SeverityChip({ severity, className, ...props }: SeverityChipProps) {
 
   return (
     <span
-      data-slot="severity-chip-badge"
+      data-slot="severity-chip"
       data-severity={severity}
-      className={cn("inline-flex items-center gap-2 whitespace-nowrap", className)}
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-badge",
+        meta.className,
+        className,
+      )}
       {...props}
     >
-      <span
-        data-slot="severity-chip"
-        className={cn(
-          "inline-flex size-6 shrink-0 items-center justify-center rounded-sm border-0",
-          SEVERITY_CHIP_CLASS[severity],
-        )}
-        aria-hidden="true"
-      >
-        <Icon className="size-3.5 shrink-0" />
-      </span>
-      <span className="text-body-sm font-normal text-ink">{meta.label}</span>
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+      {meta.label}
     </span>
   );
 }
