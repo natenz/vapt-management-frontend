@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AuthLayout, DashboardLayout } from "@/app/layouts";
 import { RequireAuth, RequireGuest } from "@/features/auth";
 import { AccountPage } from "@/pages/account";
+import { CalendarPage } from "@/pages/calendar";
 import { CatalogPage } from "@/pages/catalog";
 import { DashboardPage } from "@/pages/dashboard";
 import { FindingFormPage } from "@/pages/finding-form";
@@ -56,6 +57,14 @@ export const routes: RouteObject[] = [
         element: (
           <RequireAuth roles={["tech_lead", "super_admin"]}>
             <ResourcesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/calendar",
+        element: (
+          <RequireAuth roles={["super_admin", "tech_lead", "project_manager", "pentester"]}>
+            <CalendarPage />
           </RequireAuth>
         ),
       },

@@ -70,6 +70,18 @@ vi.mock("@/entities/user", async (importOriginal) => {
   };
 });
 
+vi.mock("@/entities/leave", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/leave")>()),
+  listLeaves: async () => [],
+  listHolidays: async () => [],
+}));
+
+vi.mock("@/entities/calendar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/calendar")>()),
+  getCalendar: async () => ({ from: "2026-11-30", to: "2027-01-03", holidays: [], people: [] }),
+  checkSchedule: async () => ({ workdays: 0, warnings: [] }),
+}));
+
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
   globalThis.ResizeObserver = class {
@@ -108,6 +120,9 @@ describe("Router Pages Smoke Tests", () => {
     { path: "/projects/1/findings/new", label: "New Finding" },
     { path: "/projects/1/report", label: "Project Report" },
     { path: "/resources", label: "Resources" },
+    { path: "/calendar", label: "Calendar" },
+    { path: "/calendar?tab=cuti", label: "Calendar leave" },
+    { path: "/calendar?tab=libur", label: "Calendar holidays" },
     { path: "/reports", label: "Reports Index" },
     { path: "/catalog", label: "Catalog" },
     { path: "/users", label: "Users" },
