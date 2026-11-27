@@ -34,8 +34,8 @@ export function CalendarPage() {
         title="Kalender"
         description={
           isPentester
-            ? "Jadwal penugasan kamu dan hari libur."
-            : "Jadwal penugasan tim dan hari libur. Bentrok jadwal hanya jadi peringatan."
+            ? "Jadwal penugasan kamu per proyek dan hari libur."
+            : "Jadwal pengujian per proyek. Sorot atau ketuk batang untuk melihat pentesternya; bentrok hanya jadi peringatan."
         }
       />
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-5">

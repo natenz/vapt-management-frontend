@@ -1,22 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { getCalendar, type TeamCalendar as CalendarData } from "@/entities/calendar";
+import { getCalendar } from "@/entities/calendar";
 import { ScheduleRangeControls, type ScheduleRangeValue } from "@/features/schedule-range";
 import { Alert } from "@/shared/ui/alert";
 import { currentMonthSchedule, TeamCalendar, toIsoDate } from "@/widgets/team-calendar";
 
 const select = "h-9 rounded-sm border border-border-control bg-surface px-3 text-body-sm text-ink focus-ring";
-
-/** Penyaringan di FE: peringatan tetap dihitung BE dari seluruh jadwal orang itu. */
-function applyFilters(data: CalendarData | undefined, personId: number, projectId: number): CalendarData | undefined {
-  if (!data || (!personId && !projectId)) return data;
-  const people = data.people
-    .filter((p) => !personId || p.sys_user_id === personId)
-    .map((p) => (projectId ? { ...p, bookings: p.bookings.filter((b) => b.project_id === projectId) } : p))
-    .filter((p) => !projectId || p.bookings.length > 0);
-  return { ...data, people };
-}
 
 export function CalendarTab({ isPentester }: { isPentester: boolean }) {
   const [sp, setSp] = useSearchParams();
@@ -48,7 +38,7 @@ export function CalendarTab({ isPentester }: { isPentester: boolean }) {
     }
     return [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [calendar.data]);
-  const shown = useMemo(() => applyFilters(calendar.data, personId, projectId), [calendar.data, personId, projectId]);
+  const filters = useMemo(() => ({ personId, projectId }), [personId, projectId]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -81,7 +71,13 @@ export function CalendarTab({ isPentester }: { isPentester: boolean }) {
           {calendar.error.message}
         </Alert>
       ) : (
-        <TeamCalendar data={shown} isLoading={calendar.isLoading} schedule={schedule} onScheduleChange={setSchedule} />
+        <TeamCalendar
+          data={calendar.data}
+          isLoading={calendar.isLoading}
+          schedule={schedule}
+          onScheduleChange={setSchedule}
+          filters={filters}
+        />
       )}
     </div>
   );

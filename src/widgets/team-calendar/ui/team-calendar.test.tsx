@@ -14,44 +14,30 @@ type GanttProps = {
   columns: { id: string; cell?: ComponentType<{ row: Row }> }[];
   taskTemplate: ComponentType<{ data: Row }>;
   highlightTime: (date: Date, unit: string) => string;
-  init?: (api: { on: () => void; exec: () => void; getTask: (id: string) => Row | undefined }) => void;
 };
 
 const gantt = vi.hoisted(() => ({ props: null as unknown }));
 
 // SVAR menggambar ke kanvas berukuran nyata; di jsdom cukup render sel dan batang tiap task.
-vi.mock("@svar-ui/react-gantt", async () => {
-  const { useEffect, useRef } = await import("react");
-  return {
-    Gantt: (props: GanttProps) => {
-      gantt.props = props;
-      const tasks = useRef(props.tasks);
-      tasks.current = props.tasks;
-      // Seperti SVAR asli, init dipanggil sekali.
-      useEffect(() => {
-        props.init?.({ on: () => {}, exec: () => {}, getTask: (id) => tasks.current.find((t) => t.id === id) });
-      }, []);
-      const Bar = props.taskTemplate;
-      return (
-        <div data-testid="calendar-gantt" className="wx-chart">
-          {props.tasks.map((t) => (
-            <div key={t.id} data-row={t.id}>
-              {props.columns.map((c) => (c.cell ? <c.cell key={c.id} row={t} /> : null))}
-              <div className="wx-bar" data-task-id={t.id}>
-                <Bar data={t} />
-              </div>
+vi.mock("@svar-ui/react-gantt", () => ({
+  Gantt: (props: GanttProps) => {
+    gantt.props = props;
+    const Bar = props.taskTemplate;
+    return (
+      <div data-testid="calendar-gantt" className="wx-chart">
+        {props.tasks.map((t) => (
+          <div key={t.id} data-row-id={t.id}>
+            {props.columns.map((c) => (c.cell ? <c.cell key={c.id} row={t} /> : null))}
+            <div className="wx-bar">
+              <Bar data={t} />
             </div>
-          ))}
-        </div>
-      );
-    },
-    Willow: ({ children }: { children: ReactNode }) => <>{children}</>,
-    locateTask: (event: Event) => {
-      const id = (event.target as HTMLElement).closest("[data-task-id]")?.getAttribute("data-task-id");
-      return id ? { id } : null;
-    },
-  };
-});
+          </div>
+        ))}
+      </div>
+    );
+  },
+  Willow: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
 vi.mock("@svar-ui/react-gantt/all.css", () => ({}));
 
 const booking = (over: Partial<CalendarBooking> = {}): CalendarBooking => ({
@@ -69,12 +55,20 @@ const data: CalendarData = {
       bookings: [
         booking(),
         booking({
-          mandays_id: 2, masked: true, project_id: 0, project_name: "", project_code: "", asset_name: "",
-          start_date: "2026-12-14", end_date: "2026-12-15", warnings: [],
+          mandays_id: 2, project_id: 4, project_name: "VAPT Billing", asset_name: "API",
+          start_date: "2026-12-08", end_date: "2026-12-11",
         }),
       ],
     },
-    { sys_user_id: 6, name: "Citra", workdays: 22, bookings: [] },
+    {
+      sys_user_id: 6, name: "Citra", workdays: 22,
+      bookings: [
+        booking({
+          mandays_id: 3, masked: true, project_id: 0, project_name: "", project_code: "", asset_name: "",
+          start_date: "2026-12-14", end_date: "2026-12-15", allocated_mandays: 2, warnings: [],
+        }),
+      ],
+    },
   ],
 };
 
@@ -87,13 +81,15 @@ function ProjectStub() {
   return <p>Detail proyek {useParams().projectId}</p>;
 }
 
-function mount(calendar: CalendarData | undefined = data, isLoading = false) {
+const onScheduleChange = vi.fn();
+
+function mount(calendar: CalendarData | undefined = data) {
   return render(
     <MemoryRouter initialEntries={["/calendar"]}>
       <Routes>
         <Route
           path="/calendar"
-          element={<TeamCalendar data={calendar} isLoading={isLoading} schedule={schedule} onScheduleChange={onScheduleChange} />}
+          element={<TeamCalendar data={calendar} isLoading={false} schedule={schedule} onScheduleChange={onScheduleChange} />}
         />
         <Route path="/projects/:projectId" element={<ProjectStub />} />
       </Routes>
@@ -101,12 +97,17 @@ function mount(calendar: CalendarData | undefined = data, isLoading = false) {
   );
 }
 
-const onScheduleChange = vi.fn();
+const row = (id: string) => document.querySelector<HTMLElement>(`[data-row-id="${id}"]`)!;
+const segments = (id: string) => [...row(id).querySelectorAll<HTMLElement>('[data-slot="calendar-segment"]')];
+/** Meniru perangkat: lebar/sempit dan punya hover atau tidak. */
+const device = (wide: boolean, hover: boolean) =>
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("min-width") ? wide : query.includes("hover") ? hover : false,
+    addEventListener() {},
+    removeEventListener() {},
+  }));
 
-const bar = (id: string) => document.querySelector<HTMLElement>(`[data-task-id="${id}"]`)!;
-const row = (id: string) => document.querySelector<HTMLElement>(`[data-row="${id}"]`)!;
-
-describe("TeamCalendar (Gantt)", () => {
+describe("TeamCalendar (Gantt per proyek)", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 11, 2, 9)); // Rabu, 2 Des 2026
@@ -116,49 +117,70 @@ describe("TeamCalendar (Gantt)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("di layar lebar nama pentester ada di kolom, bukan di chart", () => {
+  it("menampilkan satu baris per proyek tanpa nama pentester", () => {
     mount();
-    expect((gantt.props as GanttProps).displayMode).toBe("all");
-    expect(within(bar("user:5")).queryByText("Budi Santoso")).not.toBeInTheDocument();
+    expect((gantt.props as GanttProps).tasks.map((t) => t.id)).toEqual(["project:3", "project:4", "project:masked"]);
+    expect(within(row("project:3")).getByText("VAPT HRIS")).toBeInTheDocument();
+    expect(within(row("project:masked")).getByText("Proyek lain")).toBeInTheDocument();
+    expect(screen.queryByText(/Budi Santoso|Citra/)).not.toBeInTheDocument();
   });
 
-  it("di layar sempit hanya chart yang tampil, dengan nama pentester di barisnya", () => {
-    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  it("memutus batang di hari nonkerja dan menandai hari yang bentrok", () => {
     mount();
-    expect((gantt.props as GanttProps).displayMode).toBe("chart");
-    expect(within(bar("user:5")).getByText("Budi Santoso")).toBeInTheDocument();
-    expect(within(bar("user:6")).getByText("Citra · Kosong")).toBeInTheDocument();
-  });
-
-  it("nama di layar sempit ikut bergeser saat chart digulir", () => {
-    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
-    mount();
-    fireEvent.scroll(screen.getByTestId("calendar-gantt"), { target: { scrollLeft: 120 } });
-    expect(screen.getByRole("region", { name: "Jadwal tim" }).style.getPropertyValue("--calendar-scroll")).toBe("120px");
-    expect(within(bar("user:5")).getByText("Budi Santoso").style.transform).toBe("translateX(var(--calendar-scroll, 0px))");
-  });
-
-  it("menampilkan pentester, penugasan, penanda bentrok, dan yang masih kosong", () => {
-    mount();
-    expect(within(row("user:5")).getAllByText("Budi Santoso").length).toBeGreaterThan(0);
-    expect(within(bar("booking:1")).getByText("VAPT HRIS · Portal")).toBeInTheDocument();
-    expect(within(bar("booking:1")).getByLabelText("Ada peringatan bentrok")).toBeInTheDocument();
-    expect(within(bar("booking:2")).getByText("Proyek lain")).toBeInTheDocument();
-    expect(within(bar("booking:2")).queryByLabelText("Ada peringatan bentrok")).not.toBeInTheDocument();
-    expect(within(row("user:6")).getByText("Kosong")).toBeInTheDocument();
-  });
-
-  it("memutus batang di akhir pekan dan hari libur", () => {
-    mount();
-    const segments = [...bar("booking:1").querySelectorAll('[data-slot="calendar-work-segment"]')].map((s) => [
-      s.getAttribute("data-start"),
-      s.getAttribute("data-end"),
+    expect(segments("project:3").map((s) => [s.dataset.start, s.dataset.end, s.dataset.conflict ?? ""])).toEqual([
+      ["2026-12-04", "2026-12-04", ""],
+      ["2026-12-07", "2026-12-07", ""],
+      ["2026-12-08", "2026-12-08", "true"],
+      ["2026-12-10", "2026-12-10", "true"],
     ]);
-    expect(segments).toEqual([
-      ["2026-12-04", "2026-12-04"],
-      ["2026-12-07", "2026-12-08"],
-      ["2026-12-10", "2026-12-10"],
-    ]);
+    expect(within(row("project:3")).getByLabelText("Ada peringatan bentrok")).toBeInTheDocument();
+    expect(within(row("project:masked")).queryByLabelText("Ada peringatan bentrok")).not.toBeInTheDocument();
+  });
+
+  it("baru menampilkan pentester saat batang disorot", () => {
+    mount();
+    fireEvent.pointerMove(segments("project:4")[0]!);
+    const tooltip = screen.getByRole("tooltip");
+    expect(tooltip).toHaveTextContent("VAPT Billing");
+    expect(tooltip).toHaveTextContent("Budi Santoso · API");
+    expect(tooltip).toHaveTextContent("8 Des 2026 – 11 Des 2026 · 4 MD");
+    expect(tooltip).toHaveTextContent("Bentrok dengan VAPT HRIS");
+    fireEvent.pointerMove(row("project:4"));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("klik batang membuka proyeknya", () => {
+    mount();
+    fireEvent.click(segments("project:3")[0]!);
+    expect(screen.getByText("Detail proyek 3")).toBeInTheDocument();
+  });
+
+  it("proyek yang disamarkan tidak bisa dibuka", () => {
+    mount();
+    fireEvent.click(segments("project:masked")[0]!);
+    expect(screen.queryByText(/Detail proyek/)).not.toBeInTheDocument();
+  });
+
+  it("di layar sentuh, ketuk batang menampilkan pentester dulu lalu tautan ke proyek", () => {
+    device(true, false);
+    mount();
+    fireEvent.click(segments("project:3")[0]!);
+    expect(screen.queryByText(/Detail proyek/)).not.toBeInTheDocument();
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Budi Santoso · Portal");
+    fireEvent.click(within(screen.getByRole("tooltip")).getByRole("button", { name: "Tutup" }));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    fireEvent.click(segments("project:3")[0]!);
+    fireEvent.click(screen.getByRole("link", { name: "Buka proyek" }));
+    expect(screen.getByText("Detail proyek 3")).toBeInTheDocument();
+  });
+
+  it("di layar sentuh, proyek yang disamarkan tidak punya tautan", () => {
+    device(true, false);
+    mount();
+    fireEvent.click(segments("project:masked")[0]!);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Citra");
+    expect(screen.queryByRole("link", { name: "Buka proyek" })).not.toBeInTheDocument();
   });
 
   it("mengarsir akhir pekan dan hari libur, dan menandai hari ini, pada skala harian", () => {
@@ -176,28 +198,23 @@ describe("TeamCalendar (Gantt)", () => {
     expect(screen.getByRole("list", { name: "Hari libur di rentang ini" })).toHaveTextContent("9 Des 2026 · Libur kantor");
   });
 
-  it("menampilkan rincian dan peringatan saat batang disorot", () => {
+  it("di layar lebar nama proyek ada di kolom, bukan di chart", () => {
     mount();
-    fireEvent.pointerMove(within(bar("booking:1")).getByText("VAPT HRIS · Portal"));
-    const tooltip = screen.getByRole("tooltip");
-    expect(tooltip).toHaveTextContent("4 Des 2026 – 10 Des 2026");
-    expect(tooltip).toHaveTextContent("4 MD");
-    expect(tooltip).toHaveTextContent("Bentrok: Proyek lain");
+    expect((gantt.props as GanttProps).displayMode).toBe("all");
+    expect(within(row("project:3").querySelector<HTMLElement>(".wx-bar")!).queryByText("VAPT HRIS")).not.toBeInTheDocument();
   });
 
-  it("klik batang membuka proyeknya", () => {
+  it("di layar sempit hanya chart yang tampil, dengan nama proyek di barisnya yang ikut bergeser", () => {
+    device(false, false);
     mount();
-    fireEvent.click(within(bar("booking:1")).getByText("VAPT HRIS · Portal"));
-    expect(screen.getByText("Detail proyek 3")).toBeInTheDocument();
+    expect((gantt.props as GanttProps).displayMode).toBe("chart");
+    const name = within(row("project:3").querySelector<HTMLElement>(".wx-bar")!).getByText("VAPT HRIS");
+    fireEvent.scroll(screen.getByTestId("calendar-gantt"), { target: { scrollLeft: 120 } });
+    expect(screen.getByRole("region", { name: "Jadwal tim" }).style.getPropertyValue("--calendar-scroll")).toBe("120px");
+    expect(name.style.transform).toBe("translateX(var(--calendar-scroll, 0px))");
   });
 
-  it("proyek yang disamarkan tidak bisa dibuka", () => {
-    mount();
-    fireEvent.click(within(bar("booking:2")).getByText("Proyek lain"));
-    expect(screen.queryByText(/Detail proyek/)).not.toBeInTheDocument();
-  });
-
-  it("memberi tahu bila tidak ada pentester yang cocok", () => {
+  it("memberi tahu bila tidak ada jadwal yang cocok", () => {
     mount({ ...data, people: [] });
     expect(screen.getByText("Tidak ada jadwal yang cocok")).toBeInTheDocument();
     expect(screen.queryByTestId("calendar-gantt")).not.toBeInTheDocument();

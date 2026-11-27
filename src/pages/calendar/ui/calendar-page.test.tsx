@@ -76,6 +76,7 @@ async function mount(role: string, path = "/calendar") {
 }
 
 const rows = () => [...document.querySelectorAll("[data-row]")].map((r) => r.getAttribute("data-row"));
+// Dua penugasan mulai di hari yang sama, jadi urut nama proyek: Billing (4) lalu HRIS (3).
 
 describe("CalendarPage", () => {
   beforeEach(() => {
@@ -119,14 +120,14 @@ describe("CalendarPage", () => {
     const user = userEvent.setup();
     await mount("tech_lead");
     await screen.findByTestId("calendar-gantt");
-    expect(rows()).toEqual(["user:5", "booking:1", "user:6", "booking:2"]);
+    expect(rows()).toEqual(["project:4", "project:3"]);
 
     await user.selectOptions(screen.getByLabelText("Filter pentester"), "6");
-    expect(rows()).toEqual(["user:6", "booking:2"]);
+    expect(rows()).toEqual(["project:4"]);
 
     await user.selectOptions(screen.getByLabelText("Filter pentester"), "");
     await user.selectOptions(screen.getByLabelText("Filter proyek"), "3");
-    expect(rows()).toEqual(["user:5", "booking:1"]);
+    expect(rows()).toEqual(["project:3"]);
   });
 
   it("pentester tidak punya filter pentester", async () => {
