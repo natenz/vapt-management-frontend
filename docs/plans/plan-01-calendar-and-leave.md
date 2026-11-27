@@ -1,6 +1,6 @@
 # Plan 01: Calendar and leave
 
-Status: **partly back since 27 Nov 2026.** The PM asked for the calendar as a Gantt chart and no leave for now. The "Kalender" menu is back with a Gantt view (one row per pentester), holidays, schedule conflict warnings and per-pentester dates. Leave requests, leave approval and everything that depends on leave stay on hold. Where the text below describes a month or week grid, or leave, it no longer matches the code; it is the original plan, kept for reference.
+Status: **partly back since 27 Nov 2026.** The PM asked for the calendar as a Gantt chart and no leave for now. The "Kalender" menu is back with a Gantt view (one row per project; pentesters show on hover or tap), holidays, schedule conflict warnings and per-pentester dates. Leave requests, leave approval and everything that depends on leave stay on hold. Where the text below describes a month or week grid, or leave, it no longer matches the code; it is the original plan, kept for reference.
 
 Original status: planning only. Derived from item 2 of the revision planning notes. Rewritten on 26 Nov 2026. Sources: the 24 Nov meeting notes ("calendar planner and leave"), the decisions made on 26 Nov (leave is approved by the tech lead, schedule conflicts are warnings only), the prototype (checked directly on 26 Nov), and the code in both repos.
 
