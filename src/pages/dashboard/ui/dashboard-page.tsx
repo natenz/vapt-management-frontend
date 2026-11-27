@@ -14,7 +14,6 @@ import {
 import { Link } from "react-router";
 import { listCatalog } from "@/entities/catalog";
 import { getExposure, listFindings } from "@/entities/finding";
-import { listLeaves } from "@/entities/leave";
 import {
   currentMonth,
   getResourceLoad,
@@ -207,13 +206,6 @@ export function DashboardPage() {
   });
   const pendingRows = [...(pending.data ?? [])].sort((a, b) => b.vulna_id - a.vulna_id);
 
-  // Tech Lead: antrean cuti yang perlu ditinjau (key sama dengan tab Cuti di halaman Kalender).
-  const pendingLeaves = useQuery({
-    queryKey: ["leaves", "pending"],
-    queryFn: () => listLeaves({ status: "pending" }),
-    enabled: isTechLead,
-  });
-
   // Tech Lead: temuan Open lintas proyek, dihitung BE.
   const exposure = useQuery({
     queryKey: ["exposure"],
@@ -277,7 +269,6 @@ export function DashboardPage() {
           exposure={exposure.data}
           exposureLoading={exposure.isLoading}
           exposureError={exposure.error}
-          pendingLeaveCount={pendingLeaves.data ? pendingLeaves.data.length : pendingLeaves.error ? 0 : null}
         />
       ) : isPentester ? (
         <PentesterDashboard

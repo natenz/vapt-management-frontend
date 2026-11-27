@@ -4,7 +4,7 @@
  * 2. Pemantauan proyek berjalan dan progres tahapannya.
  * 3. Exposure vulnerability: temuan Open lintas proyek per severity dan proyek paling berisiko.
  */
-import { ArrowRight, BookCheck, CalendarClock, FolderKanban } from "lucide-react";
+import { ArrowRight, BookCheck, FolderKanban } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import type { CatalogVulna } from "@/entities/catalog";
@@ -37,8 +37,6 @@ export interface TechLeadDashboardProps {
   exposure?: Exposure | null;
   exposureLoading?: boolean;
   exposureError?: unknown;
-  /** Jumlah cuti yang menunggu persetujuan; null bila belum termuat. */
-  pendingLeaveCount?: number | null;
 }
 
 export function TechLeadDashboard({
@@ -48,7 +46,6 @@ export function TechLeadDashboard({
   exposure,
   exposureLoading = false,
   exposureError,
-  pendingLeaveCount = null,
 }: TechLeadDashboardProps) {
   const running = useMemo(() => runningProjects(projects), [projects]);
   const completed = useMemo(() => completedProjects(projects), [projects]);
@@ -58,7 +55,7 @@ export function TechLeadDashboard({
   return (
     <div className="flex flex-col gap-5" data-slot="techlead-dashboard">
       <section
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2"
         aria-label="Ringkasan Operasional Tech Lead"
       >
         <SummaryTile
@@ -82,26 +79,6 @@ export function TechLeadDashboard({
               className="h-7 gap-1 border-ink-inverse/30 bg-transparent px-2.5 text-caption font-medium text-ink-inverse hover:border-ink-inverse hover:bg-ink-inverse/15 hover:text-ink-inverse"
             >
               <Link to="/catalog">
-                <span>Tinjau</span>
-                <ArrowRight className="size-3" aria-hidden="true" />
-              </Link>
-            </Button>
-          }
-        />
-        <SummaryTile
-          label="Cuti Menunggu"
-          value={pendingLeaveCount}
-          unit="Pengajuan"
-          icon={<CalendarClock />}
-          fill="info"
-          loading={pendingLeaveCount === null}
-          action={
-            <Button
-              asChild
-              variant="outline"
-              className="h-7 gap-1 border-ink-inverse/30 bg-transparent px-2.5 text-caption font-medium text-ink-inverse hover:border-ink-inverse hover:bg-ink-inverse/15 hover:text-ink-inverse"
-            >
-              <Link to="/calendar?tab=cuti&status=pending" aria-label="Tinjau cuti">
                 <span>Tinjau</span>
                 <ArrowRight className="size-3" aria-hidden="true" />
               </Link>

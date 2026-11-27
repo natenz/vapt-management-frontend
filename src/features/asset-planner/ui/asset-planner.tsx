@@ -454,7 +454,6 @@ export function AssetPlanner({ project, canAssign }: { project: ProjectDetail; c
         canAssign={canAssign}
         people={people}
         defaultRange={range}
-        projectId={project.project_id}
         check={checkDraft}
         onApply={applyDraft}
         onClose={() => setEditing(null)}

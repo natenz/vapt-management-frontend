@@ -6,7 +6,6 @@ import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { allocate, ASSET_TYPES, newKey, num, type DraftAsset, type DraftPentester } from "../model/asset-plan";
-import { PentesterScheduleWarnings } from "./schedule-warnings";
 
 const sel = "h-9 w-full rounded-sm border border-border-control bg-surface px-3 text-body-sm text-ink focus-ring";
 const fmt = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100) : "-");
@@ -24,8 +23,6 @@ export interface AssetDialogProps {
   canAssign: boolean;
   people: readonly PentesterPerson[];
   defaultRange: { start: string; end: string };
-  /** Proyek pemilik asset; diisi supaya dialog bisa menampilkan peringatan bentrok jadwal dari BE. */
-  projectId?: number;
   /** Kembalikan daftar error untuk draf ini; kosong = boleh diterapkan. */
   check: (draft: DraftAsset) => string[];
   onApply: (draft: DraftAsset) => void;
@@ -36,7 +33,7 @@ export interface AssetDialogProps {
  * Modal isian satu aset beserta pentester-nya. Hanya mengubah draf lokal modal;
  * "Terapkan" memindahkan hasilnya ke daftar aset (masih draf sampai Simpan).
  */
-export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, projectId, check, onApply, onClose }: AssetDialogProps) {
+export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, check, onApply, onClose }: AssetDialogProps) {
   const [a, setA] = useState<DraftAsset | null>(initial);
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -199,10 +196,11 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, p
               {a.pentesters.map((r, i) => {
                 const person = people.find((u) => u.sys_user_id === r.pentesterId);
                 const pName = person?.name || (r.pentesterId ? `Pentester ${r.pentesterId}` : "Belum dipilih");
-                const share = r.md.trim() !== "" ? num(r.md) : (alloc.shares[i] ?? 0);
                 return (
-                  <div key={r.key} className="flex flex-col gap-2.5 rounded-md border border-border bg-surface p-3">
-                  <div className="flex items-center gap-2.5">
+                  <div
+                    key={r.key}
+                    className="flex items-center gap-2.5 rounded-md border border-border bg-surface p-3"
+                  >
                     <label className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="text-caption font-medium text-ink">Pentester {i + 1}</span>
                       <select
@@ -258,45 +256,6 @@ export function AssetDialog({ initial, isNew, canAssign, people, defaultRange, p
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
-                  </div>
-
-                  {/* Jadwal penugasan: default seluruh rentang proyek, bisa dipersempit. */}
-                  <div className="grid gap-2.5 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-caption text-ink-muted">Mulai</span>
-                      <Input
-                        aria-label={`Mulai pentester ${i + 1}`}
-                        type="date"
-                        value={r.start}
-                        min={defaultRange.start || undefined}
-                        max={defaultRange.end || undefined}
-                        onChange={(e) => patchRow(r.key, { start: e.target.value })}
-                        className="h-9"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-caption text-ink-muted">Selesai</span>
-                      <Input
-                        aria-label={`Selesai pentester ${i + 1}`}
-                        type="date"
-                        value={r.end}
-                        min={defaultRange.start || undefined}
-                        max={defaultRange.end || undefined}
-                        onChange={(e) => patchRow(r.key, { end: e.target.value })}
-                        className="h-9"
-                      />
-                    </label>
-                  </div>
-
-                  <PentesterScheduleWarnings
-                    index={i + 1}
-                    projectId={projectId}
-                    pentesterId={r.pentesterId}
-                    start={r.start}
-                    end={r.end}
-                    md={share}
-                    mandaysId={r.mandaysId}
-                  />
                   </div>
                 );
               })}

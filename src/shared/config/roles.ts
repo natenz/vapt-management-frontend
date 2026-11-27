@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  CalendarDays,
   ClipboardCheck,
   FileText,
   FolderKanban,
@@ -45,7 +44,6 @@ export const NAV: readonly NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, roles: ALL, section: "operasi" },
   { label: "Proyek", to: "/projects", icon: FolderKanban, roles: ALL, section: "operasi" },
   { label: "Resource", to: "/resources", icon: Users, roles: ["super_admin", "tech_lead"], section: "operasi" },
-  { label: "Kalender", to: "/calendar", icon: CalendarDays, roles: ["super_admin", "tech_lead", "project_manager", "pentester"], section: "operasi" },
   { label: "Reports", to: "/reports", icon: ClipboardCheck, roles: ["technical_writer", "project_manager"], section: "operasi" },
   { label: "Catalog", to: "/catalog", icon: FileText, roles: ALL, section: "operasi" },
   { label: "Kelola User", to: "/users", icon: UsersRound, roles: ["super_admin"], section: "akun" },

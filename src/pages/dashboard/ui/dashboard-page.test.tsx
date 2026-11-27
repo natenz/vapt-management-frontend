@@ -73,11 +73,6 @@ vi.mock("@/widgets/project-timeline", () => ({
   ),
 }));
 
-vi.mock("@/entities/leave", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/entities/leave")>()),
-  listLeaves: async () => [],
-}));
-
 vi.mock("@/entities/finding", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/finding")>()),
   listFindings: async () => [],
@@ -114,8 +109,7 @@ describe("DashboardPage", () => {
     await mount("tech_lead");
     const summarySec = await screen.findByRole("region", { name: "Ringkasan Operasional Tech Lead" });
     expect(summarySec).toBeInTheDocument();
-    expect(within(summarySec).getByRole("link", { name: "Tinjau" })).toHaveAttribute("href", "/catalog");
-    expect(within(summarySec).getByRole("link", { name: "Tinjau cuti" })).toHaveAttribute("href", "/calendar?tab=cuti&status=pending");
+    expect(within(summarySec).getByRole("link", { name: /Tinjau/ })).toHaveAttribute("href", "/catalog");
     expect(within(summarySec).queryByText("Mandays Tim")).not.toBeInTheDocument();
 
     const projectsSec = screen.getByRole("region", { name: "Proyek Berjalan & Progres" });

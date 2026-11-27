@@ -153,7 +153,6 @@ function renderDashboard(props: {
   exposure?: Exposure | null;
   exposureLoading?: boolean;
   exposureError?: unknown;
-  pendingLeaveCount?: number | null;
 } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -173,7 +172,6 @@ function renderDashboard(props: {
           exposure={props.exposure === undefined ? mockExposure : props.exposure}
           exposureLoading={props.exposureLoading ?? false}
           exposureError={props.exposureError}
-          pendingLeaveCount={props.pendingLeaveCount === undefined ? 3 : props.pendingLeaveCount}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -205,7 +203,7 @@ describe("TechLeadDashboard", () => {
     // Usulan Katalog dengan Call To Action menuju /catalog
     expect(within(summarySection).getByText("Usulan Catalog")).toBeInTheDocument();
     expect(within(summarySection).getByText("01")).toBeInTheDocument();
-    const ctaLink = within(summarySection).getByRole("link", { name: "Tinjau" });
+    const ctaLink = within(summarySection).getByRole("link", { name: /Tinjau/ });
     expect(ctaLink).toHaveAttribute("href", "/catalog");
 
     // Sub KPI card (keterangan terlambat, sesuai jadwal, dan basis data mutakhir) sudah dihapus
@@ -241,17 +239,6 @@ describe("TechLeadDashboard", () => {
     expect(screen.queryByRole("region", { name: "Penugasan Pentester Mingguan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Mandays Pentester" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Perencana Slot Proyek Baru" })).not.toBeInTheDocument();
-  });
-
-  it("tile Cuti menunggu mengarah ke antrean cuti di halaman Kalender", () => {
-    renderDashboard();
-    const summarySection = screen.getByRole("region", { name: "Ringkasan Operasional Tech Lead" });
-    expect(within(summarySection).getByText("Cuti Menunggu")).toBeInTheDocument();
-    expect(within(summarySection).getByText("03")).toBeInTheDocument();
-    expect(within(summarySection).getByRole("link", { name: "Tinjau cuti" })).toHaveAttribute(
-      "href",
-      "/calendar?tab=cuti&status=pending",
-    );
   });
 
   it("menampilkan exposure temuan terbuka dan proyek paling berisiko dari BE", () => {

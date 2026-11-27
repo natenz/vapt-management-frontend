@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   ArrowRight,
   CalendarRange,
   Clock,
@@ -11,7 +10,6 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router";
-import { getCalendar, warningShort } from "@/entities/calendar";
 import {
   changeProjectStatus,
   getProject,
@@ -98,23 +96,6 @@ export function ProjectDetailPage() {
     });
     return Array.from(new Map(list.map((m) => [m.id ?? m.name, m])).values());
   }, [pData?.resources]);
-
-  // Peringatan bentrok per penugasan (proyek lain, cuti, MD > hari kerja). Hanya peringatan, tidak memblokir.
-  const scheduleFrom = pData?.start_date?.slice(0, 10);
-  const scheduleTo = pData?.end_date?.slice(0, 10);
-  const schedule = useQuery({
-    queryKey: ["calendar", "project", id, scheduleFrom, scheduleTo],
-    queryFn: () => getCalendar({ from: scheduleFrom!, to: scheduleTo!, project_id: id }),
-    enabled: Boolean(scheduleFrom && scheduleTo) && ["super_admin", "tech_lead", "project_manager", "pentester"].includes(role),
-    retry: false,
-  });
-  const warningsByMandays = useMemo(() => {
-    const out = new Map<number, string[]>();
-    for (const p of schedule.data?.people ?? []) {
-      for (const b of p.bookings) if (b.warnings.length > 0) out.set(b.mandays_id, b.warnings);
-    }
-    return out;
-  }, [schedule.data]);
 
   if (project.isLoading) return <Skeleton className="h-96" />;
   if (project.error || !project.data) {
@@ -353,19 +334,8 @@ export function ProjectDetailPage() {
                           <span>{a.mandays} md</span>
                           {rows.length === 0 ? <span className="text-ink-muted">belum ada pentester</span> : rows.map((m) => {
                             const pentesterProfile = toUserProfileInfo(m.pentester, `User ${m.pentester_id}`);
-                            const warnings = warningsByMandays.get(m.mandays_id);
                             return (
-                              <span key={m.mandays_id} className="inline-flex items-center gap-1">
-                              {warnings ? (
-                                <span
-                                  className="inline-flex items-center gap-1 rounded-xs bg-error-bg px-1.5 py-0.5 text-caption text-error"
-                                  title={warnings.map(warningShort).join(", ")}
-                                >
-                                  <AlertTriangle className="size-3" aria-hidden />
-                                  Bentrok
-                                </span>
-                              ) : null}
-                              <UserProfilePopover user={pentesterProfile} align="end">
+                              <UserProfilePopover key={m.mandays_id} user={pentesterProfile} align="end">
                                 <button
                                   type="button"
                                   className="group inline-flex items-center gap-1.5 rounded-xs px-1 py-0.5 text-caption text-ink-muted hover:bg-surface-subtle hover:text-ink focus-ring transition-colors"
@@ -382,7 +352,6 @@ export function ProjectDetailPage() {
                                   <span className="text-ink-secondary">· {m.allocated_mandays} md</span>
                                 </button>
                               </UserProfilePopover>
-                              </span>
                             );
                           })}
                           {rows.length > 0 && left > 0 ? <span className="text-caption text-warning">belum dialokasikan {left} md</span> : null}
