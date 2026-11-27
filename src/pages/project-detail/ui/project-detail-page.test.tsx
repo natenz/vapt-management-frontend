@@ -92,6 +92,29 @@ vi.mock("@/entities/project", async (importOriginal) => {
   };
 });
 
+const calendarApi = vi.hoisted(() => ({
+  getCalendar: vi.fn(async () => ({
+    from: "2026-11-01",
+    to: "2026-11-30",
+    holidays: [],
+    people: [
+      {
+        sys_user_id: 5, name: "Budi Santoso", workdays: 20,
+        bookings: [
+          {
+            mandays_id: 100, project_id: 7, project_name: "Audit Keamanan Portal", project_code: "P7", asset_name: "Web Portal",
+            start_date: "2026-11-05", end_date: "2026-11-15", allocated_mandays: 10, masked: false, warnings: ["other_project", "exceeds_workdays"],
+          },
+        ],
+      },
+    ],
+  })),
+}));
+vi.mock("@/entities/calendar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/calendar")>()),
+  getCalendar: calendarApi.getCalendar,
+}));
+
 function mount(role: string, sysUserId: number, project: Partial<ProjectDetail> = {}) {
   mockProjectDetail = { ...baseProjectDetail, ...project } as ProjectDetail;
   useSession.setState({
@@ -160,5 +183,20 @@ describe("ProjectDetailPage", () => {
     expect(screen.getByText("Andi Saputra")).toBeInTheDocument();
     expect(screen.getByText("20 md")).toBeInTheDocument();
     expect(screen.getByText(/1 asset · 1 orang/)).toBeInTheDocument();
+  });
+  it("tech lead melihat badge Bentrok pada penugasan yang punya peringatan jadwal", async () => {
+    calendarApi.getCalendar.mockClear();
+    mount("tech_lead", 2);
+    const asset = await screen.findByRole("region", { name: "Asset" });
+    const badge = await within(asset).findByText("Bentrok");
+    expect(badge.closest("[title]")).toHaveAttribute("title", "Proyek lain, MD > hari kerja");
+    expect(calendarApi.getCalendar).toHaveBeenCalledWith({ from: "2026-11-01", to: "2026-11-30", project_id: 7 });
+  });
+
+  it("technical writer tidak meminta data kalender", async () => {
+    calendarApi.getCalendar.mockClear();
+    mount("technical_writer", 8);
+    await screen.findByRole("region", { name: "Asset" });
+    expect(calendarApi.getCalendar).not.toHaveBeenCalled();
   });
 });

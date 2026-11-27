@@ -224,6 +224,73 @@ export const reportSchema = z.object({
 });
 export type ProjectReport = z.infer<typeof reportSchema>;
 
+/* ---------- Hari libur dan kalender tim ---------- */
+
+/** Penugasan (trx_mandays) yang jatuh di hari libur. */
+export const scheduleConflictSchema = z.object({
+  mandays_id: z.number(),
+  project_id: z.number(),
+  project_name: z.string(),
+  asset_name: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+});
+export type ScheduleConflict = z.infer<typeof scheduleConflictSchema>;
+
+export const holidaySchema = z.object({ holiday_id: z.number(), date: z.string(), name: z.string() });
+export type Holiday = z.infer<typeof holidaySchema>;
+
+export const holidayCreatedSchema = holidaySchema.extend({ conflicts: z.array(scheduleConflictSchema).default([]) });
+export type HolidayCreated = z.infer<typeof holidayCreatedSchema>;
+
+export const SCHEDULE_WARNINGS = ["other_project", "exceeds_workdays"] as const;
+export type ScheduleWarningCode = (typeof SCHEDULE_WARNINGS)[number];
+
+/** Peringatan bentrok jadwal. Tidak pernah menolak simpan. */
+export const scheduleWarningSchema = z.object({
+  code: z.string(),
+  dates: z.array(z.string()).optional().nullable(),
+  /** 0/kosong bila proyeknya tidak boleh dilihat (PM proyek lain). */
+  project_id: z.number().optional().nullable(),
+  project_name: z.string().optional().nullable(),
+  message: z.string().optional().nullable(),
+});
+export type ScheduleWarning = z.infer<typeof scheduleWarningSchema>;
+
+export const scheduleCheckSchema = z.object({ workdays: z.number(), warnings: z.array(scheduleWarningSchema) });
+export type ScheduleCheck = z.infer<typeof scheduleCheckSchema>;
+
+export const calendarBookingSchema = z.object({
+  mandays_id: z.number(),
+  project_id: z.number(),
+  project_name: z.string(),
+  project_code: z.string(),
+  asset_name: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+  allocated_mandays: z.number(),
+  /** true: proyek PM lain, nama disembunyikan. */
+  masked: z.boolean(),
+  warnings: z.array(z.string()),
+});
+export type CalendarBooking = z.infer<typeof calendarBookingSchema>;
+
+export const calendarPersonSchema = z.object({
+  sys_user_id: z.number(),
+  name: z.string(),
+  workdays: z.number(),
+  bookings: z.array(calendarBookingSchema),
+});
+export type CalendarPerson = z.infer<typeof calendarPersonSchema>;
+
+export const calendarSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  holidays: z.array(holidaySchema),
+  people: z.array(calendarPersonSchema),
+});
+export type TeamCalendar = z.infer<typeof calendarSchema>;
+
 /** GET /dashboard/exposure: temuan open per severity dari proyek Assessment sampai Done. */
 export const exposureSchema = z.object({
   total: z.number(),
